@@ -1,0 +1,6 @@
+[build-system]
+requires = ["setuptools >= 40.9.0", "wheel"]
+build-backend = 'setuptools.build_meta'
+
+# Add any other build dependencies here
+# requires = ["setuptools", "wheel", "dependency1", "dependency2"]
