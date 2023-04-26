@@ -1,6 +1,27 @@
-[build-system]
-requires = ["setuptools >= 40.9.0", "wheel"]
-build-backend = 'setuptools.build_meta'
+[project]
+name = "gaohn-common-utils"
+version = "0.0.1"
+authors = [
+  { name="Gao Hongnan", email="hongnangao@gmail.com" },
+]
+description = "A small utility package"
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "numpy",
+    "pandas"
+    ]
 
-# Add any other build dependencies here
-# requires = ["setuptools", "wheel", "dependency1", "dependency2"]
+[project.urls]
+"Homepage" = "https://github.com/gao-hongnan/common-utils"
+"Bug Tracker" = "https://github.com/gao-hongnan/common-utils/issues"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
