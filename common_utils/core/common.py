@@ -1,7 +1,8 @@
 import json
 import os
 import random
-from typing import Dict, Optional, Type, Any
+from pathlib import Path
+from typing import Any, Dict, Optional, Type, Union
 
 import numpy as np
 import torch
@@ -96,3 +97,56 @@ def seed_worker(_worker_id: int, seed_torch: bool = True) -> None:
     )
     np.random.seed(worker_seed)
     random.seed(worker_seed)
+
+
+def list_files_recursively(start_path: Union[str, Path]) -> None:
+    """
+    List all files and directories recursively in the given path using markdown
+    style.
+
+    Parameters
+    ----------
+    start_path : Union[str, Path]
+        The path where the function should start listing the files and
+        directories.
+
+    Returns
+    -------
+    None
+    """
+
+    start_path = Path(start_path)
+
+    def _list_files(path: Path, level: int, is_last: bool) -> None:
+        """
+        Helper function to list files and directories at the given path.
+
+        Parameters
+        ----------
+        path : Path
+            The path to list files and directories from.
+        level : int
+            The current depth in the file hierarchy.
+        is_last : bool
+            Indicates whether the current path is the last item in its parent
+            directory.
+
+        Returns
+        -------
+        None
+        """
+        prefix = (
+            "    " * (level - 1) + ("└── " if is_last else "├── ") if level > 0 else ""
+        )
+        print(f"{prefix}{path.name}/")
+        children = sorted(list(path.iterdir()), key=lambda x: x.name)
+        for i, child in enumerate(children):
+            if child.is_file():
+                child_prefix = "    " * level + (
+                    "└── " if i == len(children) - 1 else "├── "
+                )
+                print(f"{child_prefix}{child.name}")
+            elif child.is_dir():
+                _list_files(child, level + 1, i == len(children) - 1)
+
+    _list_files(start_path, 0, False)
