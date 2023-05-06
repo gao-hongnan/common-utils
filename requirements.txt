@@ -2,3 +2,7 @@ numpy
 requests
 prettytable
 rich
+torch
+torchvision
+torchaudio
+pandas
