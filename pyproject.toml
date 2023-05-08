@@ -1,6 +1,6 @@
 [project]
 name = "gaohn-common-utils"
-version = "0.0.5"
+version = "0.0.7"
 authors = [
   { name="Gao Hongnan", email="hongnangao@gmail.com" },
 ]
@@ -14,8 +14,14 @@ classifiers = [
 ]
 dependencies = [
     "numpy",
-    "pandas"
-    ]
+    "requests",
+    "prettytable",
+    "rich",
+    "torch",
+    "torchvision",
+    "torchaudio",
+    "pandas",
+]
 
 [project.urls]
 "Homepage" = "https://github.com/gao-hongnan/common-utils"

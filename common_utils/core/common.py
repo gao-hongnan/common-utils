@@ -1,11 +1,50 @@
+"""
+common_utils/core/common.py
+
+This module contains common utility functions for various purposes.
+"""
 import json
 import os
 import random
+import subprocess
 from pathlib import Path
 from typing import Any, Dict, Optional, Type, Union
 
 import numpy as np
 import torch
+
+
+def get_git_commit_hash(working_dir: Optional[str] = None) -> str:
+    """
+    Get the current Git commit hash.
+
+    If Git is not installed or the working directory is not a Git repository,
+    the function returns "N/A".
+
+    Parameters
+    ----------
+    working_dir : str, optional
+        The path of the working directory where the Git command should be executed,
+        by default None. If None, it uses the current working directory.
+
+    Returns
+    -------
+    str
+        The Git commit hash, or "N/A" if Git is not installed or the working
+        directory is not a Git repository.
+    """
+    git_command = ["git", "rev-parse", "HEAD"]
+
+    try:
+        commit_hash = (
+            subprocess.check_output(git_command, cwd=working_dir)
+            .decode("ascii")
+            .strip()
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        commit_hash = "N/A"
+
+    return commit_hash
 
 
 def load_dict(filepath: str) -> Dict[str, Any]:
@@ -18,16 +57,16 @@ def load_dict(filepath: str) -> Dict[str, Any]:
 
     Returns
     -------
-    Dict[str, Any]
+    data: Dict[str, Any]
         Dictionary loaded from the JSON file.
     """
-    with open(filepath) as fp:
-        d = json.load(fp)
-    return d
+    with open(filepath, "r", encoding="utf-8") as file:
+        data = json.load(file)
+    return data
 
 
 def save_dict(
-    d: Dict[str, Any],
+    data: Dict[str, Any],
     filepath: str,
     cls: Optional[Type] = None,
     sort_keys: bool = False,
@@ -37,7 +76,7 @@ def save_dict(
 
     Parameters
     ----------
-    d : Dict
+    data : Dict[str, Any]
         Data to save.
     filepath : str
         Location of where to save the data.
@@ -46,9 +85,9 @@ def save_dict(
     sortkeys : bool, optional
         Whether to sort keys alphabetically, by default False.
     """
-    with open(filepath, "w") as fp:
-        json.dump(d, indent=2, fp=fp, cls=cls, sort_keys=sort_keys)
-        fp.write("\n")
+    with open(filepath, "w", encoding="utf-8") as file:
+        json.dump(data, indent=2, fp=file, cls=cls, sort_keys=sort_keys)
+        file.write("\n")
 
 
 def seed_all(seed: Optional[int] = 1992, seed_torch: bool = True) -> None:
