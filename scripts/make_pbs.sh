@@ -1,15 +1,17 @@
 #!/bin/bash
+HOME_DIR=~
+TMP_DIR=$HOME_DIR/tmp
 
 function create_pbs_script() {
-    local username pbs_name="qsub_job" log_dir="log" ncpus="4" mem="64gb" walltime="24:00:00" queue="normal" project_id="11003281"
+    local username a="qsub_job" log_dir="${TMP_DIR}/log" ncpus="4" mem="64gb" walltime="24:00:00" queue="normal" project_id="11003281"
 
-    while getopts "u:pbs_name:l:n:m:w:q:p:" opt; do
+    while getopts "u:a:l:n:m:w:q:p:" opt; do
         case ${opt} in
             u)
                 username=$OPTARG
                 ;;
-            pbs_name)
-                pbs_name=$OPTARG
+            a)
+                a=$OPTARG
                 ;;
             l)
                 log_dir=$OPTARG
@@ -43,9 +45,9 @@ function create_pbs_script() {
         exit 1
     fi
 
-    cat << EOF > ${pbs_name}.pbs
+    cat << EOF > ${a}.pbs
 #!/bin/bash
-#PBS -N ${pbs_name}
+#PBS -N ${a}
 #PBS -l select=1:ncpus=${ncpus}:mem=${mem}
 #PBS -l walltime=${walltime}
 #PBS -q ${queue}
@@ -80,7 +82,14 @@ run_job() {
     hostname > ${log_dir}/\${PBS_JOBID}_\${PBS_JOBNAME}.txt 2>&1
 }
 
-source ${pbs_name}.sh
+start_mlflow_server() {
+    mlflow server --host 0.0.0.0 >> ${log_dir}/\${PBS_JOBID}_\${PBS_JOBNAME}_mlflow_server.txt 2>&1 &
+}
+
+run_mlflow() {
+    python ${TMP_DIR}/mlflow/examples/pytorch/MNIST/mnist_autolog_example.py --trainer.max_epochs 100
+}
+
 
 # Execute functions
 cd \$PBS_O_WORKDIR
@@ -89,10 +98,9 @@ print_modules
 print_environment
 print_working_folder
 run_job
-main
+start_mlflow_server
+run_mlflow
 EOF
 }
 
 create_pbs_script "$@"
-
-
