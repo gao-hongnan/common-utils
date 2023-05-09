@@ -31,7 +31,7 @@ if [[ -z "${DATA_FILE}" ]]; then
 fi
 
 # Install DVC
-pip install dvc
+pip install dvc dvc-gc
 
 # Initialize DVC in the project
 dvc init
@@ -40,6 +40,8 @@ dvc init
 if [[ -n "${REMOTE_URL}" && -n "${BUCKET}" && -n "${PATH}" ]]; then
     dvc remote add -d myremote "${REMOTE_URL}${BUCKET}/${PATH}"
 fi
+
+dvc remote modify --local gcs-gaohn credentialpath <path-to-credentials-file>
 
 # Track the data file with DVC
 dvc add "${DATA_FILE}"
