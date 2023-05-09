@@ -47,8 +47,8 @@ function create_pbs_script() {
 #PBS -l walltime=${walltime}
 #PBS -q ${queue}
 #PBS -koed
-#PBS -o /home/users/${username}/${log_dir}
-#PBS -e /home/users/${username}/${log_dir}
+#PBS -o ${log_dir}
+#PBS -e ${log_dir}
 #PBS -P ${project_id}
 
 print_hostname() {
@@ -74,7 +74,7 @@ print_working_folder() {
 
 run_job() {
     echo The job \${PBS_JOBNAME} is running on \`cat \$PBS_NODEFILE\`.
-    hostname > /home/users/${username}/${log_dir}/\${PBS_JOBID}_\${PBS_JOBNAME}.txt 2>&1
+    hostname > ${log_dir}/\${PBS_JOBID}_\${PBS_JOBNAME}.txt 2>&1
 }
 
 source run_mlflow.sh
