@@ -1,12 +1,15 @@
 #!/bin/bash
 
 function create_pbs_script() {
-    local username log_dir="log" ncpus="4" mem="64gb" walltime="24:00:00" queue="normal" project_id="11003281"
+    local username pbs_name="qsub_job" log_dir="log" ncpus="4" mem="64gb" walltime="24:00:00" queue="normal" project_id="11003281"
 
-    while getopts "u:l:n:m:w:q:p:" opt; do
+    while getopts "u:pbs_name:l:n:m:w:q:p:" opt; do
         case ${opt} in
             u)
                 username=$OPTARG
+                ;;
+            pbs_name)
+                pbs_name=$OPTARG
                 ;;
             l)
                 log_dir=$OPTARG
@@ -40,9 +43,9 @@ function create_pbs_script() {
         exit 1
     fi
 
-    cat << EOF > job.pbs
+    cat << EOF > ${pbs_name}.pbs
 #!/bin/bash
-#PBS -N run_mlflow
+#PBS -N ${pbs_name}
 #PBS -l select=1:ncpus=${ncpus}:mem=${mem}
 #PBS -l walltime=${walltime}
 #PBS -q ${queue}
@@ -77,7 +80,7 @@ run_job() {
     hostname > ${log_dir}/\${PBS_JOBID}_\${PBS_JOBNAME}.txt 2>&1
 }
 
-source run_mlflow.sh
+source ${pbs_name}.sh
 
 # Execute functions
 cd \$PBS_O_WORKDIR
@@ -86,10 +89,10 @@ print_modules
 print_environment
 print_working_folder
 run_job
-start_mlflow_server
-run_mlflow
+main
 EOF
 }
 
 create_pbs_script "$@"
+
 
