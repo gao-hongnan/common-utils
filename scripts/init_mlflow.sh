@@ -26,7 +26,7 @@ function create_requirements() {
 
 function make_venv() {
     curl -o "$TMP_DIR/make_venv.sh" https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/devops/make_venv.sh
-    bash "$TMP_DIR/make_venv.sh" venv "$TMP_DIR/requirements.txt"
+    bash "$TMP_DIR/make_venv.sh" $TMP_DIR/venv "$TMP_DIR/requirements.txt"
 }
 
 function main() {
