@@ -1,6 +1,6 @@
 #!/bin/bash
 # make venv without setup.cfg/setup.py/pyproject.toml.
-# curl -o make_venv.sh https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/make_venv.sh
+# curl -o scripts/make_venv.sh https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/devops/make_venv.sh
 
 function create_venv() {
   local venv_name="$1"

@@ -6,45 +6,11 @@ This module contains common utility functions for various purposes.
 import json
 import os
 import random
-import subprocess
 from pathlib import Path
 from typing import Any, Dict, Optional, Type, Union
 
 import numpy as np
 import torch
-
-
-def get_git_commit_hash(working_dir: Optional[str] = None) -> str:
-    """
-    Get the current Git commit hash.
-
-    If Git is not installed or the working directory is not a Git repository,
-    the function returns "N/A".
-
-    Parameters
-    ----------
-    working_dir : str, optional
-        The path of the working directory where the Git command should be executed,
-        by default None. If None, it uses the current working directory.
-
-    Returns
-    -------
-    str
-        The Git commit hash, or "N/A" if Git is not installed or the working
-        directory is not a Git repository.
-    """
-    git_command = ["git", "rev-parse", "HEAD"]
-
-    try:
-        commit_hash = (
-            subprocess.check_output(git_command, cwd=working_dir)
-            .decode("ascii")
-            .strip()
-        )
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        commit_hash = "N/A"
-
-    return commit_hash
 
 
 def load_dict(filepath: str) -> Dict[str, Any]:
