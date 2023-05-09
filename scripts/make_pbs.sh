@@ -92,5 +92,3 @@ EOF
 }
 
 create_pbs_script "$@"
-
-create_pbs_script "$@"
