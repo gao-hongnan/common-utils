@@ -1,6 +1,7 @@
 #!/bin/bash
 HOME_DIR=~
 TMP_DIR=$HOME_DIR/tmp
+VENV_NAME=venv
 
 function create_pbs_script() {
     local username a="qsub_job" log_dir="${TMP_DIR}/log" ncpus="4" mem="64gb" walltime="24:00:00" queue="normal" project_id="11003281"
@@ -83,10 +84,12 @@ run_job() {
 }
 
 start_mlflow_server() {
+    source ${TMP_DIR}/${VENV_NAME}/bin/activate
     mlflow server --host 0.0.0.0 >> ${log_dir}/\${PBS_JOBID}_\${PBS_JOBNAME}_mlflow_server.txt 2>&1 &
 }
 
 run_mlflow() {
+    source ${TMP_DIR}/${VENV_NAME}/bin/activate
     python ${TMP_DIR}/mlflow/examples/pytorch/MNIST/mnist_autolog_example.py --trainer.max_epochs 100
 }
 
