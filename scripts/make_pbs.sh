@@ -4,15 +4,18 @@ TMP_DIR=$HOME_DIR/tmp
 VENV_NAME=venv
 
 function create_pbs_script() {
-    local username a="qsub_job" log_dir="${TMP_DIR}/log" ncpus="4" mem="64gb" walltime="24:00:00" queue="normal" project_id="11003281"
+    local username a="qsub_job" s="1800" log_dir="${TMP_DIR}/log" ncpus="4" mem="64gb" walltime="24:00:00" queue="normal" project_id="11003281"
 
-    while getopts "u:a:l:n:m:w:q:p:" opt; do
+    while getopts "u:a:s:l:n:m:w:q:p:" opt; do
         case ${opt} in
             u)
                 username=$OPTARG
                 ;;
             a)
                 a=$OPTARG
+                ;;
+            s)
+                s=$OPTARG
                 ;;
             l)
                 log_dir=$OPTARG
@@ -83,6 +86,10 @@ run_job() {
     hostname > ${log_dir}/\${PBS_JOBID}_\${PBS_JOBNAME}.txt 2>&1
 }
 
+sleep_after_job() {
+    sleep ${s}
+}
+
 start_mlflow_server() {
     source ${TMP_DIR}/${VENV_NAME}/bin/activate
     mlflow server --host 0.0.0.0 >> ${log_dir}/\${PBS_JOBID}_\${PBS_JOBNAME}_mlflow_server.txt 2>&1 &
@@ -103,6 +110,7 @@ print_working_folder
 run_job
 start_mlflow_server
 run_mlflow
+sleep_after_job
 EOF
 }
 
