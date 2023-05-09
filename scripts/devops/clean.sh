@@ -5,7 +5,15 @@
 # These include: *.DS_Store, __pycache__, *.pyc, *.pyo, .pytest_cache, .ipynb_checkpoints, .trash, and .coverage files.
 
 function clean_project() {
-    read -p "Are you sure you want to clean the project directory? [y/N] " confirm
+    # Set text color to yellow
+    yellow='\033[1;33m'
+    # Reset text color to default
+    reset='\033[0m'
+
+    # Display the "WARNING" text in yellow followed by the prompt
+    printf "${yellow}WARNING${reset}: Are you sure you want to clean the project directory? [y/N] "
+    read confirm
+
     confirm=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')  # tolower
     if [[ $confirm =~ ^(yes|y)$ ]]; then
         echo "Cleaning project..."
