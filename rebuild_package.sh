@@ -1,5 +1,22 @@
 #!/bin/bash
 
+# # Configuration file
+# config_file="pyproject.toml"
+
+# # Extract the current version
+# current_version=$(grep -E '^version = "[0-9]+\.[0-9]+\.[0-9]+"' "$config_file" | sed 's/version = "\(.*\)"/\1/')
+
+# # Increment the version
+# IFS='.' read -ra version_parts <<< "$current_version"
+# version_parts[2]=$((version_parts[2] + 1))
+# new_version="${version_parts[0]}.${version_parts[1]}.${version_parts[2]}"
+# echo "Current version: $current_version"
+# echo "New version: $new_version"
+
+# # Update the version in the configuration file
+# sed -i "s/version = \"$current_version\"/version = \"$new_version\"/" "$config_file"
+
+# Re-create distribution directories
 rm -rf dist
 rm -rf gaohn_common_utils.egg-info
 
