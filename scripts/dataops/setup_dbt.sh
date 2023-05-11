@@ -105,8 +105,9 @@ function check_venv() {
 # Function to create .dbt directory
 function create_dbt_directory() {
     local username="$1"
-    mkdir -p "/Users/$username/.dbt"
-    # mkdir -p ~/.dbt
+    # mkdir -p "/Users/$username/.dbt"
+    echo "Creating .dbt directory in $username's home directory"
+    mkdir -p "$HOME/.dbt"
 }
 
 # Function to install dbt CLI
@@ -116,15 +117,15 @@ function install_dbt() {
     if [ "$architecture" = "arm64" ]; then
         # If system is arm64, use Homebrew for installation
         brew update
-        brew install git # skip if you already have git installed
+        # brew install git # skip if you already have git installed
         brew tap dbt-labs/dbt
+
         brew install \
-            dbt-core \
             dbt-bigquery \
             dbt-postgres \
             dbt-redshift \
-            dbt-snowflake \
-            dbt-trino
+            dbt-snowflake
+            # dbt-trino # there is no dbt-trino for arm64 yet in Homebrew
     else
         # Otherwise, use pip for installation
         pip install \
@@ -151,7 +152,7 @@ function initialize_dbt_project() {
     local project_directory="${10}"
 
     # Initialize a new dbt project with predefined responses
-    profile_path="/home/users/nus/gaohn/.dbt/profiles.yml"
+    profile_path="$HOME/.dbt/profiles.yml" # "$~/.dbt/profiles.yml"
 
     cat << EOF > "$profile_path"
 $project_name:
