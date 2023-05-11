@@ -2,7 +2,19 @@
 
 # Function to print usage instructions
 function usage {
-    echo "Usage: $0 [-t type] [-m method] [-k keyfile] [-j project] [-d dataset] [-f threads] [-e job_execution_timeout_seconds] [-l location] [-u username] [-p project_name] [-q project_dir]"
+    echo "Usage: $0"\
+    " [-t type]"\
+    " [-m method]"\
+    " [-k keyfile]"\
+    " [-j project]"\
+    " [-d dataset]"\
+    " [-f threads]"\
+    " [-e job_execution_timeout_seconds]"\
+    " [-l location]"\
+    " [-u username]"\
+    " [-p project_name]"\
+    " [-q project_dir]"
+
     echo
     echo "Options:"
     echo "  -t TYPE          The type of the dbt project (e.g., bigquery)"
@@ -79,16 +91,26 @@ if [ -z "${type}" ] || [ -z "${method}" ] || [ -z "${keyfile}" ] || [ -z "${proj
     usage
 fi
 
+function check_venv() {
+    # Set text color to yellow
+    yellow='\033[1;33m'
+    # Reset text color to default
+    reset='\033[0m'
+
+    # Display the "WARNING" text in yellow followed by the prompt
+    printf "${yellow}WARNING${reset}: Are you in a virtual environment? [y/N] "
+    read confirm
+}
 
 # Function to create .dbt directory
-create_dbt_directory() {
+function create_dbt_directory() {
     local username="$1"
-    # mkdir -p "/Users/$username/.dbt"
-    mkdir -p ~/.dbt
+    mkdir -p "/Users/$username/.dbt"
+    # mkdir -p ~/.dbt
 }
 
 # Function to install dbt CLI
-install_dbt() {
+function install_dbt() {
     architecture=$(uname -m)
 
     if [ "$architecture" = "arm64" ]; then
@@ -116,7 +138,7 @@ install_dbt() {
 }
 
 # Function to initialize a new dbt project
-initialize_dbt_project() {
+function initialize_dbt_project() {
     local type="$1"
     local method="$2"
     local keyfile="$3"
@@ -143,6 +165,8 @@ $project_name:
       threads: $threads
       job_execution_timeout_seconds: $timeout
       location: $location
+      job_retries: 1
+      priority: interactive
   target: dev
 EOF
 
@@ -154,7 +178,7 @@ EOF
 
 
 # Main function to call the other functions
-main() {
+function main() {
     local type="$1"
     local method="$2"
     local keyfile="$3"
@@ -167,11 +191,37 @@ main() {
     local project_name="${10}"
     local project_dir="${11}"
 
-    create_dbt_directory "$username"
+    check_venv
+
+    create_dbt_directory \
+        "$username"
     install_dbt
     # Call the initialize_dbt_project function with parsed command line arguments
-    initialize_dbt_project "$type" "$method" "$keyfile" "$project" "$dataset" "$threads" "$timeout" "$location" "$project_name" "$project_dir"
+    # Call the initialize_dbt_project function with parsed command line arguments
+    initialize_dbt_project \
+        "$type" \
+        "$method" \
+        "$keyfile" \
+        "$project" \
+        "$dataset" \
+        "$threads" \
+        "$timeout" \
+        "$location" \
+        "$project_name" \
+        "$project_dir"
 }
 
+
 # Call the main function with command line arguments
-main "$type" "$method" "$keyfile" "$project" "$dataset" "$threads" "$timeout" "$location" "$username" "$project_name" "$project_dir"
+main \
+    "$type" \
+    "$method" \
+    "$keyfile" \
+    "$project" \
+    "$dataset" \
+    "$threads" \
+    "$timeout" \
+    "$location" \
+    "$username" \
+    "$project_name" \
+    "$project_dir"
