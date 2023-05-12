@@ -1,6 +1,6 @@
 #!/bin/bash
-# curl -o scripts/setup_dbt.sh \
-#     https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/dataops/setup_dbt.sh
+# curl -o scripts/dbt_setup.sh \
+#     https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/dataops/dbt/dbt_setup.sh
 
 
 # Function to print usage instructions

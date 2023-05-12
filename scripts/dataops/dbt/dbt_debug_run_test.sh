@@ -1,6 +1,6 @@
 #!/bin/bash
-# curl -o scripts/debug_run_test_dbt.sh \
-#     https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/dataops/debug_run_test_dbt.sh
+# curl -o scripts/dbt_debug_run_test.sh \
+#     https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/dataops/dbt/dbt_debug_run_test.sh
 
 
 # Function to change into the dbt project directory
