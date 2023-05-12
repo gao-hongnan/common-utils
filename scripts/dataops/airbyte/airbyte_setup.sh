@@ -49,7 +49,10 @@ shift $((OPTIND-1))
 
 # Function to clone Airbyte repository
 clone_airbyte() {
-    git clone https://github.com/airbytehq/airbyte.git
+    # Clone Airbyte repository if it doesn't already exist
+    if [ ! -d "airbyte" ]; then
+        git clone https://github.com/airbytehq/airbyte.git
+    fi
     cd airbyte
 }
 

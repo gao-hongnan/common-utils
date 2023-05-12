@@ -14,6 +14,12 @@ re-running the terminal.
 brew install node
 ```
 
+### Tree
+
+```bash
+brew install tree
+```
+
 ### P10K
 
 Follow closely
