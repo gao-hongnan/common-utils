@@ -4,7 +4,7 @@
 # This script cleans the project directory by removing unwanted files and directories.
 # These include: *.DS_Store, __pycache__, *.pyc, *.pyo, .pytest_cache, .ipynb_checkpoints, .trash, and .coverage files.
 
-function clean_project() {
+function clean_project {
     # Set text color to yellow
     yellow='\033[1;33m'
     # Reset text color to default

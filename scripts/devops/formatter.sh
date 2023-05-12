@@ -1,6 +1,6 @@
 #!/bin/sh -eu
 
-black_check() {
+function black_check {
   fail="0"
 
   black --version
@@ -17,7 +17,7 @@ black_check() {
   fi
 }
 
-main() {
+function main {
   black_check
   echo "CHECKCODE: CONGRATULATIONS, ALL TESTS SUCCESSFUL!!"
 }

@@ -1,4 +1,7 @@
 #!/bin/bash
+# curl -o scripts/setup_dbt.sh \
+#     https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/dataops/setup_dbt.sh
+
 
 # Function to print usage instructions
 function usage {
@@ -91,7 +94,7 @@ if [ -z "${type}" ] || [ -z "${method}" ] || [ -z "${keyfile}" ] || [ -z "${proj
     usage
 fi
 
-function check_venv() {
+function check_venv {
     # Set text color to yellow
     yellow='\033[1;33m'
     # Reset text color to default
@@ -103,7 +106,7 @@ function check_venv() {
 }
 
 # Function to create .dbt directory
-function create_dbt_directory() {
+function create_dbt_directory {
     local username="$1"
     # mkdir -p "/Users/$username/.dbt"
     echo "Creating .dbt directory in $username's home directory"
@@ -111,7 +114,7 @@ function create_dbt_directory() {
 }
 
 # Function to install dbt CLI
-function install_dbt() {
+function install_dbt {
     architecture=$(uname -m)
 
     if [ "$architecture" = "arm64" ]; then
@@ -126,6 +129,13 @@ function install_dbt() {
             dbt-redshift \
             dbt-snowflake
             # dbt-trino # there is no dbt-trino for arm64 yet in Homebrew
+
+        pip install \
+            dbt-core \
+            dbt-bigquery \
+            dbt-postgres \
+            dbt-redshift \
+            dbt-snowflake
     else
         # Otherwise, use pip for installation
         pip install \
@@ -139,7 +149,7 @@ function install_dbt() {
 }
 
 # Function to initialize a new dbt project
-function initialize_dbt_project() {
+function initialize_dbt_project {
     local type="$1"
     local method="$2"
     local keyfile="$3"
@@ -179,7 +189,7 @@ EOF
 
 
 # Main function to call the other functions
-function main() {
+function main {
     local type="$1"
     local method="$2"
     local keyfile="$3"

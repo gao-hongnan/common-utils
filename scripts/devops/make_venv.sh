@@ -2,21 +2,21 @@
 # make venv without setup.cfg/setup.py/pyproject.toml.
 # curl -o scripts/make_venv.sh https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/devops/make_venv.sh
 
-function create_venv() {
+function create_venv {
   local venv_name="$1"
   python -m venv "$venv_name"
 }
 
-function activate_venv() {
+function activate_venv {
   local venv_name="$1"
   source "$venv_name/bin/activate" || source "$venv_name/Scripts/activate"
 }
 
-function upgrade_pip() {
+function upgrade_pip {
   python -m pip install --upgrade pip setuptools wheel
 }
 
-function install_dependencies() {
+function install_dependencies {
   local requirements_path="$1"
   local dev_requirements_path="$2"
   if [ -f "$requirements_path" ]; then
@@ -27,7 +27,7 @@ function install_dependencies() {
   fi
 }
 
-function main() {
+function main {
   local venv_name="${1}"
   local requirements_path="${2:-requirements.txt}"
   local dev_requirements_path="${3}"
