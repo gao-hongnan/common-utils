@@ -1,4 +1,7 @@
 #!/bin/bash
+# curl -o scripts/debug_run_test_dbt.sh \
+#     https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/dataops/debug_run_test_dbt.sh
+
 
 # Function to change into the dbt project directory
 function cd_into_dbt_dir {
@@ -35,4 +38,4 @@ function main {
 }
 
 # Call the main function with your project directory as argument
-main "<project-dir>"
+main "$@"
