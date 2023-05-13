@@ -1,6 +1,8 @@
 """Decorator Functions."""
 import time
 from typing import Any, Callable, TypeVar
+import numpy as np
+
 from prettytable import PrettyTable
 from rich.pretty import pprint
 
@@ -36,9 +38,12 @@ def timer(func: F) -> F:
 
 
 @timer
-def add(a: int, b: int) -> int:
-    return a + b
+def add_two_arrays(array_1: np.ndarray, array_2: np.ndarray) -> np.ndarray:
+    """Add two arrays together."""
+    return array_1 + array_2
 
 
 if __name__ == "__main__":
-    add(1, 2)
+    array_1 = np.random.randint(0, 100, size=(10000, 10000))
+    array_2 = np.random.randint(0, 100, size=(10000, 10000))
+    add_two_arrays(array_1, array_2)
