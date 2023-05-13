@@ -2,21 +2,34 @@
 # make venv without setup.cfg/setup.py/pyproject.toml.
 # curl -o scripts/make_venv.sh https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/devops/make_venv.sh
 
-function create_venv {
+usage() {
+    echo "Usage: $0 <venv_name> [requirements_path] [dev_requirements_path]"
+    echo
+    echo "Creates a virtual environment and installs dependencies."
+    echo
+    echo "Arguments:"
+    echo "  venv_name                The name of the virtual environment to create."
+    echo "  requirements_path        The path to the requirements file. Defaults to 'requirements.txt'."
+    echo "  dev_requirements_path    The path to the development requirements file."
+    echo
+    exit 1
+}
+
+create_venv() {
   local venv_name="$1"
   python -m venv "$venv_name"
 }
 
-function activate_venv {
+activate_venv() {
   local venv_name="$1"
   source "$venv_name/bin/activate" || source "$venv_name/Scripts/activate"
 }
 
-function upgrade_pip {
+upgrade_pip() {
   python -m pip install --upgrade pip setuptools wheel
 }
 
-function install_dependencies {
+install_dependencies() {
   local requirements_path="$1"
   local dev_requirements_path="$2"
   if [ -f "$requirements_path" ]; then
@@ -27,7 +40,11 @@ function install_dependencies {
   fi
 }
 
-function main {
+main() {
+  if [ $# -lt 1 ]; then
+    usage
+  fi
+
   local venv_name="${1}"
   local requirements_path="${2:-requirements.txt}"
   local dev_requirements_path="${3}"

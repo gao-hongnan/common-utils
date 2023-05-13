@@ -3,10 +3,10 @@
 #     https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/dataops/airbyte/airbyte_setup_octavia.sh
 
 # Define colors
-yellow='\033[1;33m'
-green='\033[0;32m'
+YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
 # Reset text color to default
-reset='\033[0m'
+RESET='\033[0m'
 
 usage() {
     echo "Usage: $0"
@@ -29,9 +29,9 @@ fi
 
 # Function to prompt user for Airbyte credentials
 prompt_for_credentials() {
-    echo -e "${yellow}Please enter your Airbyte username:${reset}"
+    echo -e "${YELLOW}Please enter your Airbyte username:${RESET}"
     read username
-    echo -e "${yellow}Please enter your Airbyte password:${reset}"
+    echo -e "${YELLOW}Please enter your Airbyte password:${RESET}"
     read -s password
     echo "$username"
     echo "$password"
@@ -41,16 +41,16 @@ prompt_for_credentials() {
 install_octavia_cli() {
     local username=$1
     local password=$2
-    echo -e "${yellow}Installing Octavia CLI...${reset}"
+    echo -e "${YELLOW}Installing Octavia CLI...${RESET}"
     curl -s -o- https://raw.githubusercontent.com/airbytehq/airbyte/master/octavia-cli/install.sh | bash
     echo "AIRBYTE_USERNAME=${username}" >> ~/.octavia
     echo "AIRBYTE_PASSWORD=${password}" >> ~/.octavia
-    echo -e "${green}Octavia CLI installed and credentials added to ~/.octavia${reset}"
+    echo -e "${GREEN}Octavia CLI installed and credentials added to ~/.octavia${RESET}"
 }
 
 # Function to prompt user for project directory
 prompt_for_directory() {
-    echo -e "${yellow}Please enter the directory for the Octavia project:${reset}"
+    echo -e "${YELLOW}Please enter the directory for the Octavia project:${RESET}"
     read project_dir
     echo "$project_dir"
 }
@@ -59,9 +59,9 @@ prompt_for_directory() {
 initialize_octavia() {
     local project_dir=$1
     mkdir -p "$project_dir" && cd "$project_dir"
-    echo -e "${yellow}Initializing Octavia in ${project_dir}...${reset}"
+    echo -e "${YELLOW}Initializing Octavia in ${project_dir}...${RESET}"
     octavia init
-    echo -e "${green}Octavia has been initialized in ${project_dir}${reset}"
+    echo -e "${GREEN}Octavia has been initialized in ${project_dir}${RESET}"
 }
 
 # Call the functions
