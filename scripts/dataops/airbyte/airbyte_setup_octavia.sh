@@ -33,18 +33,16 @@ prompt_for_credentials() {
     read username
     echo -e "${YELLOW}Please enter your Airbyte password:${RESET}"
     read -s password
-    echo "$username"
-    echo "$password"
+    USERNAME=$username
+    PASSWORD=$password
 }
 
 # Function to install Octavia CLI and add username and password
 install_octavia_cli() {
-    local username=$1
-    local password=$2
     echo -e "${YELLOW}Installing Octavia CLI...${RESET}"
     curl -s -o- https://raw.githubusercontent.com/airbytehq/airbyte/master/octavia-cli/install.sh | bash
-    echo "AIRBYTE_USERNAME=${username}" >> ~/.octavia
-    echo "AIRBYTE_PASSWORD=${password}" >> ~/.octavia
+    echo "AIRBYTE_USERNAME=${USERNAME}" >> ~/.octavia
+    echo "AIRBYTE_PASSWORD=${PASSWORD}" >> ~/.octavia
     echo -e "${GREEN}Octavia CLI installed and credentials added to ~/.octavia${RESET}"
 }
 
@@ -52,20 +50,19 @@ install_octavia_cli() {
 prompt_for_directory() {
     echo -e "${YELLOW}Please enter the directory for the Octavia project:${RESET}"
     read project_dir
-    echo "$project_dir"
+    PROJECT_DIR=$project_dir
 }
 
 # Function to initialize Octavia
 initialize_octavia() {
-    local project_dir=$1
-    mkdir -p "$project_dir" && cd "$project_dir"
-    echo -e "${YELLOW}Initializing Octavia in ${project_dir}...${RESET}"
+    mkdir -p "$PROJECT_DIR" && cd "$PROJECT_DIR"
+    echo -e "${YELLOW}Initializing Octavia in ${PROJECT_DIR}...${RESET}"
     octavia init
-    echo -e "${GREEN}Octavia has been initialized in ${project_dir}${RESET}"
+    echo -e "${GREEN}Octavia has been initialized in ${PROJECT_DIR}${RESET}"
 }
 
 # Call the functions
-credentials=($(prompt_for_credentials))
-install_octavia_cli "${credentials[0]}" "${credentials[1]}"
-project_dir=$(prompt_for_directory)
-initialize_octavia "$project_dir"
+prompt_for_credentials
+install_octavia_cli
+prompt_for_directory
+initialize_octavia

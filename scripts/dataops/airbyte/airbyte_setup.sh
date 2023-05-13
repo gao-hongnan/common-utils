@@ -56,20 +56,20 @@ clone_airbyte() {
     cd airbyte
 }
 
-# Function to update .env file with provided username and password
-update_env() {
-    sed -i -e "s/BASIC_AUTH_USERNAME=airbyte/BASIC_AUTH_USERNAME=${USERNAME}/" .env
-    sed -i -e "s/BASIC_AUTH_PASSWORD=password/BASIC_AUTH_PASSWORD=${PASSWORD}/" .env
-}
-
 # Function to run Airbyte
 run_airbyte() {
     ./run-ab-platform.sh
 }
 
+# Function to update .env file with provided username and password
+# this is only after the first run of the platform because .env is created after the first run.
+update_env() {
+    sed -i -e "s/BASIC_AUTH_USERNAME=airbyte/BASIC_AUTH_USERNAME=${USERNAME}/" .env
+    sed -i -e "s/BASIC_AUTH_PASSWORD=password/BASIC_AUTH_PASSWORD=${PASSWORD}/" .env
+}
+
 # Main script execution
 clone_airbyte
-update_env
 run_airbyte
-
+update_env
 
