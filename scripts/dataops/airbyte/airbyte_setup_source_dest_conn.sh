@@ -1,7 +1,4 @@
-bash install_octavia_cli.sh
-cat ~/.octavia # to add password
-mkdir airbyte-configuration && cd airbyte-configuration
-octavia init
+# SOME MISC COMMANDS. NOT TO BE CALLED AS A SCRIPT DIRECTLY.
 
 octavia list connectors sources # to list all sources
 octavia list connectors destinations # to list all destinations
@@ -29,6 +26,6 @@ octavia apply --file <path-to-destination-configuration>.yaml # to apply the con
 octavia generate connection --source <path-to-source-configuration>.yaml --destination <path-to-destination-configuration>.yaml <connection_name>
 
 # example
-octavia generate connection --source sources/ed_postgres/configuration.yaml --destination destinations/hn_bigquery_qtstrats/configuration.yaml ed_postgres_to_hn_bigquery_qtstrats
+octavia generate connection --source sources/my_custom_postgres/configuration.yaml --destination destinations/my_custom_bigquery/configuration.yaml my_postgres_to_my_bigquery
 
 octavia apply --file <path-to-connection-configuration>.yaml # to apply the config
