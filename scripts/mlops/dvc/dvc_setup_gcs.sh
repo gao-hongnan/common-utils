@@ -1,6 +1,6 @@
 #!/bin/bash
 # curl -o dvc_setup_gcs.sh \
-#     https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/mlops/dvc_setup_gcs.sh
+#     https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/mlops/dvc/dvc_setup_gcs.sh
 
 # TODO: to expand this script to support other cloud storage providers (e.g., AWS S3, Azure Blob Storage)
 
