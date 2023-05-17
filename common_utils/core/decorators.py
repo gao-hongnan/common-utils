@@ -3,7 +3,7 @@ import functools
 import os
 import threading
 import time
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, TypeVar, Dict
 
 import numpy as np
 import psutil
@@ -17,7 +17,7 @@ F = TypeVar("F", bound=Callable[..., Any])
 def timer(func: F) -> F:
     """Timer decorator."""
 
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
+    def wrapper(*args: Any, **kwargs: Dict[str, Any]) -> Any:
         start_time = time.time()
         result = func(*args, **kwargs)
         end_time = time.time()
@@ -41,9 +41,11 @@ def timer(func: F) -> F:
     return wrapper
 
 
-def record_memory_usage(func):
+def record_memory_usage(func: F) -> F:
+    """Memory usage decorator."""
+
     @functools.wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Dict[str, Any]) -> Any:
         # Get initial memory usage
         process = psutil.Process(os.getpid())
         mem_info_before = process.memory_info()
