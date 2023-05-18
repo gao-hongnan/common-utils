@@ -6,13 +6,13 @@ This module contains common utility functions for various purposes.
 import json
 import os
 import random
-from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, Optional, Type, Union
+from typing import Any, Dict, Optional, Union
 
 import numpy as np
 import torch
 import yaml
+from yaml import FullLoader
 
 from common_utils.core.base import DictPersistence
 
@@ -36,7 +36,7 @@ class JsonAdapter(DictPersistence):
             Whether to sort keys alphabetically, by default False.
         """
         with open(filepath, "w") as f:
-            json.dump(data, f, indent=2, **kwargs)
+            json.dump(data, f, **kwargs)
 
     def load_to_dict(self, filepath: str, **kwargs: Dict[str, Any]) -> Dict[str, Any]:
         """Load a dictionary from a JSON's filepath.
@@ -52,7 +52,7 @@ class JsonAdapter(DictPersistence):
             Dictionary loaded from the JSON file.
         """
         with open(filepath, "r") as f:
-            data = json.load_to_dict(f, **kwargs)
+            data = json.load(f, **kwargs)
         return data
 
 
@@ -61,11 +61,11 @@ class YamlAdapter(DictPersistence):
         self, data: Dict[str, Any], filepath: str, **kwargs: Dict[str, Any]
     ) -> None:
         with open(filepath, "w") as f:
-            yaml.safe_dump(data, f, **kwargs)
+            yaml.dump(data, f, **kwargs)
 
     def load_to_dict(self, filepath: str, **kwargs: Dict[str, Any]) -> Dict[str, Any]:
         with open(filepath, "r") as f:
-            data = yaml.safe_load(f, **kwargs)
+            data = yaml.load(f, Loader=FullLoader, **kwargs)
         return data
 
 
