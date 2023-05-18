@@ -6,54 +6,67 @@ This module contains common utility functions for various purposes.
 import json
 import os
 import random
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, Optional, Type, Union
 
 import numpy as np
 import torch
+import yaml
+
+from common_utils.core.base import DictPersistence
 
 
-def load_dict(filepath: str) -> Dict[str, Any]:
-    """Load a dictionary from a JSON's filepath.
+class JsonAdapter(DictPersistence):
+    def save_as_dict(
+        self, data: Dict[str, Any], filepath: str, **kwargs: Dict[str, Any]
+    ) -> None:
+        """
+        Save a dictionary to a specific location.
 
-    Parameters
-    ----------
-    filepath : str
-        Location of the JSON file.
+        Parameters
+        ----------
+        data : Dict[str, Any]
+            Data to save.
+        filepath : str
+            Location of where to save the data.
+        cls : Type, optional
+            Encoder to use on dict data, by default None.
+        sortkeys : bool, optional
+            Whether to sort keys alphabetically, by default False.
+        """
+        with open(filepath, "w") as f:
+            json.dump(data, f, indent=2, **kwargs)
 
-    Returns
-    -------
-    data: Dict[str, Any]
-        Dictionary loaded from the JSON file.
-    """
-    with open(filepath, "r", encoding="utf-8") as file:
-        data = json.load(file)
-    return data
+    def load_to_dict(self, filepath: str, **kwargs: Dict[str, Any]) -> Dict[str, Any]:
+        """Load a dictionary from a JSON's filepath.
+
+        Parameters
+        ----------
+        filepath : str
+            Location of the JSON file.
+
+        Returns
+        -------
+        data: Dict[str, Any]
+            Dictionary loaded from the JSON file.
+        """
+        with open(filepath, "r") as f:
+            data = json.load_to_dict(f, **kwargs)
+        return data
 
 
-def save_dict(
-    data: Dict[str, Any],
-    filepath: str,
-    cls: Optional[Type] = None,
-    sort_keys: bool = False,
-) -> None:
-    """
-    Save a dictionary to a specific location.
+class YamlAdapter(DictPersistence):
+    def save_as_dict(
+        self, data: Dict[str, Any], filepath: str, **kwargs: Dict[str, Any]
+    ) -> None:
+        with open(filepath, "w") as f:
+            yaml.safe_dump(data, f, **kwargs)
 
-    Parameters
-    ----------
-    data : Dict[str, Any]
-        Data to save.
-    filepath : str
-        Location of where to save the data.
-    cls : Type, optional
-        Encoder to use on dict data, by default None.
-    sortkeys : bool, optional
-        Whether to sort keys alphabetically, by default False.
-    """
-    with open(filepath, "w", encoding="utf-8") as file:
-        json.dump(data, indent=2, fp=file, cls=cls, sort_keys=sort_keys)
-        file.write("\n")
+    def load_to_dict(self, filepath: str, **kwargs: Dict[str, Any]) -> Dict[str, Any]:
+        with open(filepath, "r") as f:
+            data = yaml.safe_load(f, **kwargs)
+        return data
 
 
 def seed_all(seed: Optional[int] = 1992, seed_torch: bool = True) -> None:
@@ -70,15 +83,14 @@ def seed_all(seed: Optional[int] = 1992, seed_torch: bool = True) -> None:
     print(f"Using Seed Number {seed}")
 
     # fmt: off
-    os.environ["PYTHONHASHSEED"] = str(seed) # set PYTHONHASHSEED env var at fixed value
-    np.random.seed(seed)                     # numpy pseudo-random generator
-    random.seed(seed)                        # python's built-in pseudo-random generator
-
+    os.environ["PYTHONHASHSEED"] = str(seed)        # set PYTHONHASHSEED env var at fixed value
+    np.random.seed(seed)                            # numpy pseudo-random generator
+    random.seed(seed)                               # python's built-in pseudo-random generator
 
     if seed_torch:
         torch.manual_seed(seed)
         torch.cuda.manual_seed_all(seed)
-        torch.cuda.manual_seed(seed)         # pytorch (both CPU and CUDA)
+        torch.cuda.manual_seed(seed)                # pytorch (both CPU and CUDA)
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
         torch.backends.cudnn.enabled = False
