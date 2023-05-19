@@ -1,6 +1,12 @@
 #!/bin/bash
 # make venv without setup.cfg/setup.py/pyproject.toml.
-# curl -o scripts/make_venv.sh https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/devops/make_venv.sh
+# curl -o make_venv.sh \
+#     https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/devops/make_venv.sh
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+RESET='\033[0m' # No Color
 
 usage() {
     echo "Usage: $0 <venv_name> [requirements_path] [dev_requirements_path]"
@@ -13,6 +19,14 @@ usage() {
     echo "  dev_requirements_path    The path to the development requirements file."
     echo
     exit 1
+}
+
+check_input() {
+    if [ -z "$1" ]; then
+        echo "Error: Virtual environment name not provided."
+        usage
+        exit 1
+    fi
 }
 
 create_venv() {
@@ -49,11 +63,7 @@ main() {
   local requirements_path="${2:-requirements.txt}"
   local dev_requirements_path="${3}"
 
-  if [ -z "$venv_name" ]; then
-    echo "Error: Virtual environment name not provided."
-    echo "Usage: ./setup_venv.sh <venv_name> [requirements_path] [dev_requirements_path]"
-    exit 1
-  fi
+  check_input "$venv_name"
 
   create_venv "$venv_name"
   activate_venv "$venv_name"
