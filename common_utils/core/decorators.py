@@ -3,10 +3,12 @@ import functools
 import os
 import threading
 import time
-from typing import Any, Callable, TypeVar, Dict
+from datetime import datetime
+from typing import Any, Callable, Dict, TypeVar
 
 import numpy as np
 import psutil
+from fastapi import Request
 from prettytable import PrettyTable
 from rich.pretty import pprint
 
@@ -14,9 +16,38 @@ from rich.pretty import pprint
 F = TypeVar("F", bound=Callable[..., Any])
 
 
+def construct_response(func: F) -> F:
+    """Construct a JSON response for an endpoint.
+
+    Supported Frameworks:
+    - FastAPI
+    To support Flask and Django.
+
+    Reference:
+    https://madewithml.com/courses/mlops/api/#decorators
+    """
+
+    @functools.wraps(func)
+    def wrap(request: Request, *args: Any, **kwargs: Dict[str, Any]) -> Dict[str, Any]:
+        results = func(request, *args, **kwargs)
+        response = {
+            "message": results["message"],
+            "method": request.method,
+            "status-code": results["status-code"],
+            "timestamp": datetime.now().isoformat(),
+            "url": request.url,  # ._url
+        }
+        if "data" in results:
+            response["data"] = results["data"]
+        return response
+
+    return wrap
+
+
 def timer(func: F) -> F:
     """Timer decorator."""
 
+    @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Dict[str, Any]) -> Any:
         start_time = time.time()
         result = func(*args, **kwargs)
@@ -100,7 +131,7 @@ class MemoryMonitor:
 
 def monitor_memory_usage(func):
     @functools.wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Dict[str, Any]) -> Any:
         monitor = MemoryMonitor()
         monitor.start()
 
