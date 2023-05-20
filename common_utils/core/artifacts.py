@@ -50,14 +50,14 @@ def get_git_commit_hash(working_dir: Optional[str] = None) -> str:
                 .strip()
             )
         else:
-            logger.warning(
+            logger.error(
                 "There are untracked or uncommitted files in the working directory."
             )
-            # raise RuntimeError(
-            #     "There are untracked or uncommitted files in the working directory."
-            #     " Please commit or stash them before running training as the commit hash"
-            #     " will be used to tag the model."
-            # )
+            raise RuntimeError(
+                "There are untracked or uncommitted files in the working directory."
+                " Please commit or stash them before running training as the commit hash"
+                " will be used to tag the model."
+            )
     # pylint: disable=invalid-name
     except (subprocess.CalledProcessError, FileNotFoundError) as e:
         commit_hash = "N/A"
