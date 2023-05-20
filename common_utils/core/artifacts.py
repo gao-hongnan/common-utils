@@ -1,5 +1,15 @@
+import logging
 import subprocess
 from typing import Optional
+
+from rich.logging import RichHandler
+
+# Setup logging
+logging.basicConfig(
+    level="INFO", format="%(message)s", datefmt="[%X]", handlers=[RichHandler()]
+)
+
+logger = logging.getLogger("rich")
 
 
 def get_git_commit_hash(working_dir: Optional[str] = None) -> str:
@@ -40,11 +50,14 @@ def get_git_commit_hash(working_dir: Optional[str] = None) -> str:
                 .strip()
             )
         else:
-            raise RuntimeError(
+            logger.warning(
                 "There are untracked or uncommitted files in the working directory."
-                " Please commit or stash them before running training as the commit hash"
-                " will be used to tag the model."
             )
+            # raise RuntimeError(
+            #     "There are untracked or uncommitted files in the working directory."
+            #     " Please commit or stash them before running training as the commit hash"
+            #     " will be used to tag the model."
+            # )
     # pylint: disable=invalid-name
     except (subprocess.CalledProcessError, FileNotFoundError) as e:
         commit_hash = "N/A"
