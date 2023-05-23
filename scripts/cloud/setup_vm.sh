@@ -18,6 +18,7 @@ sudo ufw enable
 # Install necessary software (example installs Python3 and pip)
 sudo apt-get install -y python3
 sudo apt-get install -y python3-pip
+sudo apt-get install python3-venv
 
 # Set up user (replace 'newuser' with actual username)
 sudo adduser gaohn

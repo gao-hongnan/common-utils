@@ -2,7 +2,7 @@
 
 function create_venv {
   local venv_name="$1"
-  python -m venv "$venv_name"
+  python3 -m venv "$venv_name"
 }
 
 function activate_venv {
@@ -11,15 +11,15 @@ function activate_venv {
 }
 
 function upgrade_pip {
-  python -m pip install --upgrade pip setuptools wheel
+  python3 -m pip install --upgrade pip setuptools wheel
 }
 
 function install_dependencies {
   local dev="$1"
   if [ "$dev" = "dev" ]; then
-    python -m pip install -e .[dev]
+    python3 -m pip install -e .[dev]
   else
-    python -m pip install -e .
+    python3 -m pip install -e .
   fi
 }
 

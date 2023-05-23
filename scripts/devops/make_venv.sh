@@ -40,17 +40,17 @@ activate_venv() {
 }
 
 upgrade_pip() {
-  python3 -m pip3 install --upgrade pip3 setuptools wheel
+  python3 -m pip install --upgrade pip setuptools wheel
 }
 
 install_dependencies() {
   local requirements_path="$1"
   local dev_requirements_path="$2"
   if [ -f "$requirements_path" ]; then
-    python3 -m pip3 install -r "$requirements_path"
+    python3 -m pip install -r "$requirements_path"
   fi
   if [ -f "$dev_requirements_path" ]; then
-    python3 -m pip3 install -r "$dev_requirements_path"
+    python3 -m pip install -r "$dev_requirements_path"
   fi
 }
 
