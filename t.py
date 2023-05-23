@@ -18,3 +18,10 @@ gcloud compute instances create imdb \
     --scopes https://www.googleapis.com/auth/cloud-platform \
     --description="IMDB VM instance"
 
+
+
+mkdir mlruns
+mlflow server \
+    --backend-store-uri ./mlruns \
+    --default-artifact-root gs://gao-hongnan/imdb \
+    --host 0.0.0.0
