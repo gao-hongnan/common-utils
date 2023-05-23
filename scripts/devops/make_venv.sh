@@ -31,7 +31,7 @@ check_input() {
 
 create_venv() {
   local venv_name="$1"
-  python -m venv "$venv_name"
+  python3 -m venv "$venv_name"
 }
 
 activate_venv() {
@@ -40,22 +40,22 @@ activate_venv() {
 }
 
 upgrade_pip() {
-  python -m pip install --upgrade pip setuptools wheel
+  python3 -m pip3 install --upgrade pip3 setuptools wheel
 }
 
 install_dependencies() {
   local requirements_path="$1"
   local dev_requirements_path="$2"
   if [ -f "$requirements_path" ]; then
-    python -m pip install -r "$requirements_path"
+    python3 -m pip3 install -r "$requirements_path"
   fi
   if [ -f "$dev_requirements_path" ]; then
-    python -m pip install -r "$dev_requirements_path"
+    python3 -m pip3 install -r "$dev_requirements_path"
   fi
 }
 
 main() {
-  if [ $# -lt 1 ]; then
+  if [ $# -lt 1 ] || [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
     usage
   fi
 

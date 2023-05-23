@@ -2,6 +2,8 @@
 # curl -o setup_vm.sh \
 #     https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/cloud/setup_vm.sh
 
+# TODO: NOT REFINED! NEED TO BE REFINED!
+
 # Update the system
 sudo apt-get update
 sudo apt-get upgrade -y
@@ -14,6 +16,7 @@ sudo ufw allow 5000
 sudo ufw enable
 
 # Install necessary software (example installs Python3 and pip)
+sudo apt-get install -y python3
 sudo apt-get install -y python3-pip
 
 # Set up user (replace 'newuser' with actual username)
