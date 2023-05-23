@@ -1,5 +1,10 @@
 #!/bin/bash
 # This script installs the Google Cloud SDK on a macOS M1 machine.
+# Google Cloud SDK 431.0.0
+# bq 2.0.92
+# core 2023.05.12
+# gcloud-crc32c 1.0.0
+# gsutil 5.23
 
 # Define colors as global variables
 YELLOW='\033[1;33m'
