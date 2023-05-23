@@ -1,6 +1,6 @@
 #!/bin/bash
-curl -o setup_vm.sh \
-    https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/cloud/setup_vm.sh
+# curl -o setup_vm.sh \
+#     https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/cloud/setup_vm.sh
 
 # Update the system
 sudo apt-get update
