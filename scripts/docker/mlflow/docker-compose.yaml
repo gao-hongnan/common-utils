@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  mlflow:
+    image: mlflow-docker-example:latest
+    ports:
+      - "5000:5000"
+    command:
+      [
+        "mlflow",
+        "server",
+        "--backend-store-uri",
+        "postgresql://postgres:password@db:5432/mlflow",
+        "--default-artifact-root",
+        "gs://gaohn/imdb",
+        "--host",
+        "0.0.0.0"
+      ]
+  db:
+    image: postgres:13
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mlflow
