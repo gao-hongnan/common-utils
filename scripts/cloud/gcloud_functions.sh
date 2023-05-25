@@ -25,10 +25,6 @@ usage() {
     echo "Call functions inside this script by running: function_name"
 }
 
-
-
-
-
 empty_line() {
     printf "\n"
 }
@@ -75,22 +71,178 @@ logger() {
     printf "${color}$TIMESTAMP [$PADDED_LOG_LEVEL]: ${message}${RESET}\n" "$level"
 }
 
-list_all_service_accounts() {
-    logger "INFO" "This function lists all service accounts in the current project.\n"
-    logger "INFO" "For more detailed information, please refer to the official Google Cloud documentation:"
-    logger "LINK" "https://cloud.google.com/sdk/gcloud/reference/iam/service-accounts/list"
-    empty_line
-
-    logger "TIP" "You can set gcloud global flags as well. For example, to set the project ID, run the following command:"
-    logger "CODE" "$ gcloud iam service-accounts list --project <PROJECT_ID>"
-    empty_line
-
-    logger "INFO" "Now, let's proceed with listing all service accounts..."
-    gcloud iam service-accounts list
+# Function to check for --help flag
+check_for_help() {
+    for arg in "$@"
+    do
+        if [ "$arg" = "--help" ] || [ "$arg" = "-h" ]
+        then
+            return 0
+        fi
+    done
+    return 1
 }
 
-# # Function to SSH into a Google Cloud VM instance
+log_gcloud_global_flags_info() {
+    # Combine the command components into a single string
+    local command="$*"
+    logger "TIP" "You can set gcloud global flags as well. For example, to set the project ID, run the following command:"
+    logger "CODE" "$ ${command} --project <PROJECT_ID>"
+    empty_line
+}
 
+log_command_info() {
+    local description="$1"
+    local documentation_link="$2"
+
+    logger "INFO" "${description}"
+    logger "INFO" "For more detailed information, please refer to the official Google Cloud documentation:"
+    logger "LINK" "${documentation_link}"
+    empty_line
+}
+
+list_all_service_accounts() {
+    # We define the full command as an array
+    local command=("gcloud" "iam" "service-accounts" "list")
+
+    # Check if the first argument is --help
+    if check_for_help "$@"; then
+        # We use "${command[@]}" to correctly expand the array as a command and its arguments
+        "${command[@]}" --help
+        return
+    fi
+
+    log_command_info "This function lists all service accounts in the current project." \
+                     "https://cloud.google.com/sdk/gcloud/reference/iam/service-accounts/list"
+
+    log_gcloud_global_flags_info "${command[@]}"
+
+    logger "INFO" "Now, let's proceed with listing all service accounts..."
+    "${command[@]}"
+}
+
+list_all_docker_images() {
+    # We define the full command as an array
+    local command=("gcloud" "container" "images" "list")
+
+    # Check if the first argument is --help
+    if check_for_help "$@"; then
+        # We use "${command[@]}" to correctly expand the array as a command and its arguments
+        "${command[@]}" --help
+        return
+    fi
+
+    log_command_info "This function lists all Docker images in the current project." \
+                     "https://cloud.google.com/sdk/gcloud/reference/container/images/list"
+
+    log_gcloud_global_flags_info "${command[@]}"
+
+    logger "INFO" "Now, let's proceed with listing all Docker images..."
+    "${command[@]}"
+}
+
+list_all_vms() {
+    # We define the full command as an array
+    local command=("gcloud" "compute" "instances" "list")
+
+    # Check if the first argument is --help
+    if check_for_help "$@" "${command[@]}"; then
+        return
+    fi
+
+    log_command_info "This function lists all VMs in the current project." \
+                     "https://cloud.google.com/sdk/gcloud/reference/compute/instances/list"
+
+    provide_gcloud_global_flags_info "${command[@]}"
+
+    logger "INFO" "Now, let's proceed with listing all VMs..."
+    "${command[@]}"
+}
+
+
+############# Functions for VM instance #############
+
+# Function to create a Google Cloud VM instance
+create_vm() {
+    # Define default parameters
+    local instance_name="my-instance"
+    local machine_type="e2-medium"
+    local zone="us-west2-a"
+    local boot_disk_size="10GB"
+    local image="ubuntu-1804-bionic-v20230510"
+    local image_project="ubuntu-os-cloud"
+    local project_id=""
+    local service_account=""
+    local scopes="https://www.googleapis.com/auth/cloud-platform"
+    local description="A VM instance"
+
+    # Process user-provided parameters
+    while (( "$#" )); do
+        case "$1" in
+            --instance-name)
+                instance_name="$2"
+                shift 2
+                ;;
+            --machine-type)
+                machine_type="$2"
+                shift 2
+                ;;
+            --zone)
+                zone="$2"
+                shift 2
+                ;;
+            --boot-disk-size)
+                boot_disk_size="$2"
+                shift 2
+                ;;
+            --image)
+                image="$2"
+                shift 2
+                ;;
+            --image-project)
+                image_project="$2"
+                shift 2
+                ;;
+            --project)
+                project_id="$2"
+                shift 2
+                ;;
+            --service-account)
+                service_account="$2"
+                shift 2
+                ;;
+            --scopes)
+                scopes="$2"
+                shift 2
+                ;;
+            --description)
+                description="$2"
+                shift 2
+                ;;
+            *)
+                echo "Error: Invalid argument"
+                return 1
+                ;;
+        esac
+    done
+
+    # Construct the command
+    local command=("gcloud" "compute" "instances" "create" "$instance_name" \
+        "--machine-type=$machine_type" \
+        "--zone=$zone" \
+        "--boot-disk-size=$boot_disk_size" \
+        "--image=$image" \
+        "--image-project=$image_project" \
+        "--project=$project_id" \
+        "--service-account=$service_account" \
+        "--scopes=$scopes" \
+        "--description=\"$description\"")
+
+    # Execute the command
+    "${command[@]}"
+}
+
+# Function to SSH into a Google Cloud VM instance
 ssh_to_gcp_instance() {
     logger "INFO" "This function SSHes into a Google Cloud VM instance."
     logger "INFO" "Here's a sample command:"
