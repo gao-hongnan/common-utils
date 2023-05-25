@@ -159,56 +159,64 @@ list_all_vms() {
     "${command[@]}"
 }
 
-other_vm_commands() {
+############# Functions for VM instance #############
+
+vm_other_commands() {
     gcloud compute instances delete --help
     gcloud compute instances start --help
     gcloud compute instances stop --help
     gcloud compute instances describe --help
 }
 
-############# Functions for VM instance #############
+vm_create_usage() {
+    logger "INFO" "USAGE"
+    empty_line
+    echo "vm_create \\
+    --instance-name INSTANCE_NAME \\
+    --machine-type MACHINE_TYPE \\
+    --zone ZONE \\
+    --boot-disk-size BOOT_DISK_SIZE \\
+    --image IMAGE \\
+    --image-project IMAGE_PROJECT \\
+    --project PROJECT_ID \\
+    --service-account SERVICE_ACCOUNT \\
+    --scopes SCOPES \\
+    --description DESCRIPTION"
 
-usage_vm() {
-    echo "Usage: $0 \\
-      --instance-name INSTANCE_NAME \\
-      --machine-type MACHINE_TYPE \\
-      --zone ZONE \\
-      --boot-disk-size BOOT_DISK_SIZE \\
-      --image IMAGE \\
-      --image-project IMAGE_PROJECT \\
-      --project PROJECT_ID \\
-      --service-account SERVICE_ACCOUNT \\
-      --scopes SCOPES \\
-      --description DESCRIPTION"
-    echo
-    echo "Options:"
-    echo "  --instance-name INSTANCE_NAME       Name of the instance (default: 'my-instance')"
-    echo "  --machine-type MACHINE_TYPE         Type of machine to use (default: 'e2-medium')"
-    echo "  --zone ZONE                         Zone to create the instance in (default: 'us-west2-a')"
-    echo "  --boot-disk-size BOOT_DISK_SIZE     Size of boot disk (default: '10GB')"
-    echo "  --image IMAGE                       Image to use for the instance (default: 'ubuntu-1804-bionic-v20230510')"
-    echo "  --image-project IMAGE_PROJECT       Image project to use (default: 'ubuntu-os-cloud')"
-    echo "  --project PROJECT_ID                Project ID to use"
-    echo "  --service-account SERVICE_ACCOUNT   Service account to assign to the instance"
-    echo "  --scopes SCOPES                     Scopes to assign to the instance (default: 'https://www.googleapis.com/auth/cloud-platform')"
-    echo "  --description DESCRIPTION           Description for the instance (default: 'A VM instance')"
-    echo "  --help                              Display this help and exit"
+    empty_line
+
+    logger "INFO" "If you want to add additional flags, you can do so by passing in the --additional-flags flag."
+    logger "INFO" "For example, to add the --tags flag, you can run the following command:"
+    logger "CODE" "$ vm_create --additional-flags \"--tags=tag1,tag2\""
+
+    empty_line
+
+    logger "INFO" "Options:"
+    logger "INFO" "  --instance-name INSTANCE_NAME       Name of the instance (default: 'my-instance')"
+    logger "INFO" "  --machine-type MACHINE_TYPE         Type of machine to use (default: 'e2-medium')"
+    logger "INFO" "  --zone ZONE                         Zone to create the instance in (default: 'us-west2-a')"
+    logger "INFO" "  --boot-disk-size BOOT_DISK_SIZE     Size of boot disk (default: '10GB')"
+    logger "INFO" "  --image IMAGE                       Image to use for the instance (default: 'ubuntu-1804-bionic-v20230510')"
+    logger "INFO" "  --image-project IMAGE_PROJECT       Image project to use (default: 'ubuntu-os-cloud')"
+    logger "INFO" "  --project PROJECT_ID                Project ID to use"
+    logger "INFO" "  --service-account SERVICE_ACCOUNT   Service account to assign to the instance"
+    logger "INFO" "  --scopes SCOPES                     Scopes to assign to the instance (default: 'https://www.googleapis.com/auth/cloud-platform')"
+    logger "INFO" "  --description DESCRIPTION           Description for the instance (default: 'A VM instance')"
+    logger "INFO" "  --help                              Display this help and exit"
 }
 
-
-check_required_args_vm() {
+vm_check_required_args() {
     if [[ -z "${instance_name}" || -z "${machine_type}" || -z "${zone}" ]]; then
-        echo "Error: Missing required argument(s)"
-        usage_vm
+        logger "ERROR" "Missing required argument(s)"
+        vm_create_usage
         echo "Sleeping for 60 seconds..."
         sleep 60
         exit 1
     fi
 }
 
-
 # Function to create a Google Cloud VM instance
-create_vm() {
+vm_create() {
     # Define default parameters
     local instance_name="" # my-instance
     local machine_type="e2-medium"
@@ -224,6 +232,7 @@ create_vm() {
 
     # Check if the first argument is --help
     if check_for_help "$@"; then
+        logger "INFO" "Help on the way..."
         gcloud compute instances create --help
         return
     fi
@@ -276,15 +285,15 @@ create_vm() {
                 shift 2
                 ;;
             *)
-                echo "Error: Invalid argument"
-                usage_vm
+                logger "ERROR" "Unknown argument: $1"
+                vm_create_usage
                 return 1
                 ;;
         esac
     done
 
     # Check for required arguments
-    check_required_args_vm
+    vm_check_required_args
 
     # Construct the command
     local command=("gcloud" "compute" "instances" "create" "$instance_name" \
@@ -309,7 +318,7 @@ create_vm() {
 }
 
 # Function to SSH into a Google Cloud VM instance
-ssh_to_gcp_instance() {
+vm_ssh_to_gcp_instance() {
     logger "INFO" "This function SSHes into a Google Cloud VM instance."
     logger "INFO" "Here's a sample command:"
     empty_line
