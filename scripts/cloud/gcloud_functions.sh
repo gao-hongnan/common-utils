@@ -153,19 +153,64 @@ list_all_vms() {
     log_command_info "This function lists all VMs in the current project." \
                      "https://cloud.google.com/sdk/gcloud/reference/compute/instances/list"
 
-    provide_gcloud_global_flags_info "${command[@]}"
+    log_gcloud_global_flags_info "${command[@]}"
 
     logger "INFO" "Now, let's proceed with listing all VMs..."
     "${command[@]}"
 }
 
+other_vm_commands() {
+    gcloud compute instances delete --help
+    gcloud compute instances start --help
+    gcloud compute instances stop --help
+    gcloud compute instances describe --help
+}
 
 ############# Functions for VM instance #############
+
+usage_vm() {
+    echo "Usage: $0 \\
+      --instance-name INSTANCE_NAME \\
+      --machine-type MACHINE_TYPE \\
+      --zone ZONE \\
+      --boot-disk-size BOOT_DISK_SIZE \\
+      --image IMAGE \\
+      --image-project IMAGE_PROJECT \\
+      --project PROJECT_ID \\
+      --service-account SERVICE_ACCOUNT \\
+      --scopes SCOPES \\
+      --description DESCRIPTION"
+    echo
+    echo "Options:"
+    echo "  --instance-name INSTANCE_NAME       Name of the instance (default: 'my-instance')"
+    echo "  --machine-type MACHINE_TYPE         Type of machine to use (default: 'e2-medium')"
+    echo "  --zone ZONE                         Zone to create the instance in (default: 'us-west2-a')"
+    echo "  --boot-disk-size BOOT_DISK_SIZE     Size of boot disk (default: '10GB')"
+    echo "  --image IMAGE                       Image to use for the instance (default: 'ubuntu-1804-bionic-v20230510')"
+    echo "  --image-project IMAGE_PROJECT       Image project to use (default: 'ubuntu-os-cloud')"
+    echo "  --project PROJECT_ID                Project ID to use"
+    echo "  --service-account SERVICE_ACCOUNT   Service account to assign to the instance"
+    echo "  --scopes SCOPES                     Scopes to assign to the instance (default: 'https://www.googleapis.com/auth/cloud-platform')"
+    echo "  --description DESCRIPTION           Description for the instance (default: 'A VM instance')"
+    echo "  --help                              Display this help and exit"
+}
+
+
+check_required_args_vm() {
+    if [[ -z "${instance_name}" || -z "${machine_type}" || -z "${zone}" ]]; then
+        echo "Error: Missing required argument(s)"
+        usage_vm
+        echo "Sleeping for 60 seconds..."
+        sleep 60
+        exit 1
+    fi
+}
+
 
 # Function to create a Google Cloud VM instance
 create_vm() {
     # Define default parameters
-    local instance_name="my-instance"
+    local instance_name="" # my-instance
     local machine_type="e2-medium"
     local zone="us-west2-a"
     local boot_disk_size="10GB"
@@ -175,9 +220,16 @@ create_vm() {
     local service_account=""
     local scopes="https://www.googleapis.com/auth/cloud-platform"
     local description="A VM instance"
+    local additional_flags=""
+
+    # Check if the first argument is --help
+    if check_for_help "$@"; then
+        gcloud compute instances create --help
+        return
+    fi
 
     # Process user-provided parameters
-    while (( "$#" )); do
+    while (( $# )); do
         case "$1" in
             --instance-name)
                 instance_name="$2"
@@ -219,12 +271,20 @@ create_vm() {
                 description="$2"
                 shift 2
                 ;;
+            --additional-flags)
+                additional_flags="$2"
+                shift 2
+                ;;
             *)
                 echo "Error: Invalid argument"
+                usage_vm
                 return 1
                 ;;
         esac
     done
+
+    # Check for required arguments
+    check_required_args_vm
 
     # Construct the command
     local command=("gcloud" "compute" "instances" "create" "$instance_name" \
@@ -237,6 +297,12 @@ create_vm() {
         "--service-account=$service_account" \
         "--scopes=$scopes" \
         "--description=\"$description\"")
+
+    # Append the additional flags if they are not empty
+    if [[ -n "$additional_flags" ]]; then
+        # Here we are using the additional_flags as string
+        command+=($additional_flags)
+    fi
 
     # Execute the command
     "${command[@]}"
