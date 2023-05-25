@@ -160,6 +160,7 @@ list_all_vms() {
 }
 
 ############# Functions for VM instance #############
+# https://cloud.google.com/compute/docs/instances/create-start-instance#publicimage
 
 vm_other_commands() {
     gcloud compute instances delete --help
