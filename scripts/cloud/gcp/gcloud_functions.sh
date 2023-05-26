@@ -1,6 +1,6 @@
 #!/bin/bash
 # This script details various cli functions for Google Cloud SDK.
-# curl -o gcloud_functions.sh https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/cloud/gcloud_functions.sh
+# curl -o gcloud_functions.sh https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/cloud/gcp/gcloud_functions.sh
 
 # Google Cloud SDK 431.0.0
 # bq 2.0.92
