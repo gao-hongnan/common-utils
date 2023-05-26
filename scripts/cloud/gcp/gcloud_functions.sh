@@ -54,7 +54,7 @@ logger() {
             ;;
         "CODE_MULTI")
             color=$CYAN
-            printf "${color}$TIMESTAMP [$PADDED_LOG_LEVEL]:\n    ${message}${RESET}\n"
+            printf "${color}$TIMESTAMP [$PADDED_LOG_LEVEL]:\n\n    ${message}${RESET}\n"
             return
             ;;
         "TIP")
@@ -82,6 +82,10 @@ check_for_help() {
         fi
     done
     return 1
+}
+
+useful_commands() {
+    gcloud services list --enabled
 }
 
 log_gcloud_global_flags_info() {
@@ -142,6 +146,78 @@ list_all_docker_images() {
     "${command[@]}"
 }
 
+
+
+################################## Functions for Artifacts Registry ##################################
+
+gar_docker_setup() {
+    logger "INFO" "Step 1. Enable the Artifacts Registry API"
+
+    service="artifactregistry.googleapis.com"
+    if gcloud services list --enabled | grep -q "$service"; then
+        logger "INFO" "$service is already enabled. Skipping to Step 2..."
+    else
+        logger "WARN" "$service is not enabled. Enabling now..."
+        gcloud services enable "$service"
+    fi
+
+    empty_line
+
+    logger "INFO" "Step 2. Create a Docker repository in Artifact Registry"
+    logger "INFO" "Here's a sample command:"
+    logger "CODE_MULTI" \
+        "$ gcloud artifacts repositories create <REPO_NAME> \\
+            --repository-format=docker \\
+            --location=<REGION> \\
+            --description=\"Docker repository for storing images\""
+
+    empty_line
+    logger "INFO" "Run the following command to verify your repository was created:"
+    logger "CODE" "$ gcloud artifacts repositories list"
+    empty_line
+
+    logger "INFO" "Step 3. Configure Docker to use Artifact Registry"
+    logger "CODE" "$ gcloud auth configure-docker <LOCATION>-docker.pkg.dev"
+    empty_line
+
+    logger "INFO" "Step 4. Tag a Docker image"
+    logger "CODE_MULTI" \
+        "$ docker tag <IMAGE_NAME> \\
+            <LOCATION>-docker.pkg.dev/<PROJECT_ID>/<REPO_NAME>/<IMAGE_NAME>:<TAG>"
+    empty_line
+
+    logger "INFO" "Step 5. Push a Docker image"
+    logger "CODE" "$ docker push <LOCATION>-docker.pkg.dev/<PROJECT_ID>/<REPO_NAME>/<IMAGE_NAME>:<TAG>"
+    empty_line
+
+    logger "TIP" "To check the images in your repository, run the following command:"
+    logger "CODE" "$ gcloud artifacts docker images list <LOCATION>-docker.pkg.dev/<PROJECT_ID>/<REPO_NAME>"
+    empty_line
+
+    logger "INFO" "Step 6. Pull a Docker image"
+    logger "CODE" "$ docker pull <LOCATION>-docker.pkg.dev/<PROJECT_ID>/<REPO_NAME>/<IMAGE_NAME>:<TAG>"
+    empty_line
+
+    logger "INFO" "Step 7. Tear down - Delete a Docker repository"
+    logger "CODE" "$ gcloud artifacts repositories delete <REPO_NAME> --location=<REGION>"
+    empty_line
+
+    logger "TIP" "For more detailed information, please refer to the official Google Cloud documentation:"
+    logger "LINK" "https://cloud.google.com/artifact-registry/docs/docker/store-docker-container-images"
+}
+
+################################## Google Compute Engine (GCE)  ##################################
+
+################################## Virtual Machine (VM) instances  ##################################
+# https://cloud.google.com/compute/docs/instances/create-start-instance#publicimage
+
+vm_other_commands() {
+    gcloud compute instances delete --help
+    gcloud compute instances start --help
+    gcloud compute instances stop --help
+    gcloud compute instances describe --help
+}
+
 list_all_vms() {
     # We define the full command as an array
     local command=("gcloud" "compute" "instances" "list")
@@ -158,16 +234,6 @@ list_all_vms() {
 
     logger "INFO" "Now, let's proceed with listing all VMs..."
     "${command[@]}"
-}
-
-############# Functions for VM instance #############
-# https://cloud.google.com/compute/docs/instances/create-start-instance#publicimage
-
-vm_other_commands() {
-    gcloud compute instances delete --help
-    gcloud compute instances start --help
-    gcloud compute instances stop --help
-    gcloud compute instances describe --help
 }
 
 vm_create_usage() {
