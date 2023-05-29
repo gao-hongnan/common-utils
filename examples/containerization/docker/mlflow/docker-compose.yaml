@@ -20,7 +20,7 @@ services:
       - "${POSTGRES_PORT}:5432" # HOST:CONTAINER
     volumes:
       # db: must match the volume name below
-      - db:/var/lib/postgresql/data
+      - db:/var/lib/postgresql/data # HOST:CONTAINER
     networks:
       - mlflow-gaohn
   mlflow:
