@@ -81,6 +81,20 @@ while getopts "u:p:" flag; do
 done
 shift $((OPTIND-1))
 
+# If in VM, we do minimal build
+is_vm() {
+    logger "WARN" "If you are running this script in a VM, we will do a minimal build."
+    read -r -p "Are you running this script in a VM? [y/N] " response
+    case "$response" in
+        [yY][eE][sS]|[yY])
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
 # Function to clone Airbyte repository
 clone_airbyte() {
     logger "INFO" "Cloning Airbyte repository..."
@@ -108,9 +122,19 @@ update_env() {
 
 # Main function to call the functions
 main() {
-    clone_airbyte
-    run_airbyte
-    update_env
+    if is_vm; then
+        logger "INFO" "Running in VM, performing minimal build..."
+        mkdir airbyte && cd airbyte
+        curl -sOOO https://raw.githubusercontent.com/airbytehq/airbyte-platform/main/{.env,flags.yml,docker-compose.yaml}
+        docker compose up -d
+        logger "INFO" "Minimal build completed."
+    else
+        logger "INFO" "Not running in VM, performing full build..."
+        clone_airbyte
+        run_airbyte
+        update_env
+        logger "INFO" "Full build completed."
+    fi
 }
 
 # Run the main function
