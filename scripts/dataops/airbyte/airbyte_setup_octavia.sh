@@ -57,15 +57,15 @@ prompt_for_directory() {
 
 # Source the .bashrc or .bash_profile file
 if [ -f ~/.bashrc ]; then
-    . ~/.bashrc
+    source ~/.bashrc
 fi
 
 if [ -f ~/.bash_profile ]; then
-    . ~/.bash_profile
+    source ~/.bash_profile
 fi
 
 if [ -f ~/.zshrc ]; then
-    . ~/.zshrc
+    source ~/.zshrc
 fi
 
 # Initialize Octavia
