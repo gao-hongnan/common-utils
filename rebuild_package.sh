@@ -30,4 +30,8 @@ python3 -m build
 python3 -m pip install --upgrade twine
 
 # Upload package to Test PyPI
+source .env
+export TWINE_USERNAME=__token__
+export TWINE_PASSWORD=$PYPI_TOKEN
+
 python3 -m twine upload --repository testpypi dist/*

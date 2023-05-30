@@ -146,8 +146,6 @@ list_all_docker_images() {
     "${command[@]}"
 }
 
-
-
 ################################## Functions for Artifacts Registry ##################################
 
 gar_docker_setup() {
