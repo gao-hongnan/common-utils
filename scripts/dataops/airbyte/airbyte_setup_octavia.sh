@@ -1,68 +1,75 @@
 #!/bin/bash
-# curl -o scripts/airbyte_setup_octavia.sh \
+# curl -o airbyte_setup_octavia.sh \
 #     https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/dataops/airbyte/airbyte_setup_octavia.sh
 
-# Define colors
-YELLOW='\033[1;33m'
-GREEN='\033[0;32m'
-# Reset text color to default
-RESET='\033[0m'
+set -e # Exit immediately if a command exits with a non-zero status
+set -o pipefail # Fail a pipe if any sub-command fails
+
+# Fetch the utils.sh script from a URL and source it
+UTILS_SCRIPT=$(curl -s https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/utils.sh)
+source /dev/stdin <<<"$UTILS_SCRIPT"
+logger "INFO" "Fetched the utils.sh script from a URL and sourced it"
 
 usage() {
-    echo "Usage: $0"
-    echo "This script automates the deployment of Airbyte Open Source."
-    echo
-    echo "The script will perform the following steps:"
-    echo "  1. Install Octavia CLI."
-    echo "  2. Prompt user for Airbyte credentials."
-    echo "  3. Initialize Octavia in the specified directory."
-    echo
-    echo "Please make sure Docker is installed and running before executing this script."
-    echo
-    exit 1;
+    logger "INFO" "Usage: $0"
+    logger "INFO" "This script automates the deployment of Airbyte Open Source."
+    logger "INFO" ""
+    logger "INFO" "The script will perform the following steps:"
+    logger "INFO" "  1. Install Octavia CLI."
+    logger "INFO" "  2. Prompt user for Airbyte credentials."
+    logger "INFO" "  3. Initialize Octavia in the specified directory."
+    logger "INFO" ""
+    logger "INFO" "Please make sure Docker is installed and running before executing this script."
+    logger "INFO" ""
+    exit 1
 }
 
-# Check if the user asked for help
-if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
-    usage
-fi
-
-# Function to prompt user for Airbyte credentials
+# Prompt user for Airbyte credentials
 prompt_for_credentials() {
-    echo -e "${YELLOW}Please enter your Airbyte username:${RESET}"
-    read username
-    echo -e "${YELLOW}Please enter your Airbyte password:${RESET}"
-    read -s password
-    USERNAME=$username
-    PASSWORD=$password
+    logger "INFO" "Please enter your Airbyte username:"
+    read -r username
+    logger "INFO" "Please enter your Airbyte password:"
+    read -r -s password
+    airbyte_username="$username"
+    airbyte_password="$password"
 }
 
-# Function to install Octavia CLI and add username and password
+# Install Octavia CLI and add username and password
 install_octavia_cli() {
-    echo -e "${YELLOW}Installing Octavia CLI...${RESET}"
+    logger "INFO" "Installing Octavia CLI..."
     curl -s -o- https://raw.githubusercontent.com/airbytehq/airbyte/master/octavia-cli/install.sh | bash
-    echo "AIRBYTE_USERNAME=${USERNAME}" >> ~/.octavia
-    echo "AIRBYTE_PASSWORD=${PASSWORD}" >> ~/.octavia
-    echo -e "${GREEN}Octavia CLI installed and credentials added to ~/.octavia${RESET}"
+    printf "AIRBYTE_USERNAME=%s\n" "$airbyte_username" >> ~/.octavia
+    printf "AIRBYTE_PASSWORD=%s\n" "$airbyte_password" >> ~/.octavia
+    logger "INFO" "Octavia CLI installed and credentials added to ~/.octavia"
 }
 
-# Function to prompt user for project directory
+# Prompt user for project directory
 prompt_for_directory() {
-    echo -e "${YELLOW}Please enter the directory for the Octavia project:${RESET}"
-    read project_dir
-    PROJECT_DIR=$project_dir
+    logger "INFO" "Please enter the directory for the Octavia project:"
+    read -r project_dir
+    octavia_project_dir="$project_dir"
 }
 
-# Function to initialize Octavia
+# Initialize Octavia
 initialize_octavia() {
-    mkdir -p "$PROJECT_DIR" && cd "$PROJECT_DIR"
-    echo -e "${YELLOW}Initializing Octavia in ${PROJECT_DIR}...${RESET}"
+    mkdir -p "$octavia_project_dir" && cd "$octavia_project_dir" || exit
+    logger "INFO" "Initializing Octavia in ${octavia_project_dir}..."
     octavia init
-    echo -e "${GREEN}Octavia has been initialized in ${PROJECT_DIR}${RESET}"
+    logger "INFO" "Octavia has been initialized in ${octavia_project_dir}"
 }
 
-# Call the functions
-prompt_for_credentials
-install_octavia_cli
-prompt_for_directory
-initialize_octavia
+# Main function to call the functions
+main() {
+    # Check if the user asked for help
+    if check_for_help "$@"; then
+        usage
+    fi
+
+    prompt_for_credentials
+    install_octavia_cli
+    prompt_for_directory
+    initialize_octavia
+}
+
+# Run the main function
+main

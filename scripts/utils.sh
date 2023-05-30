@@ -58,3 +58,14 @@ logger() {
 empty_line() {
     printf "\n"
 }
+
+check_for_help() {
+    for arg in "$@"
+    do
+        if [ "$arg" = "--help" ] || [ "$arg" = "-h" ]
+        then
+            return 0
+        fi
+    done
+    return 1
+}

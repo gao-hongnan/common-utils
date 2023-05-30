@@ -27,7 +27,6 @@ usage() {
     exit 1;
 }
 
-
 # Parse command line arguments
 while getopts "u:p:" flag; do
     case "${flag}" in
