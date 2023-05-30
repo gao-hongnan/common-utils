@@ -1,8 +1,13 @@
 #!/bin/bash
-# SOME MISC COMMANDS. NOT TO BE CALLED AS A SCRIPT DIRECTLY.
 
 # This script provides functions to use Octavia CLI for managing sources, destinations and connections.
 # Functions must be called with necessary arguments.
+
+# Fetch the utils.sh script from a URL and source it
+UTILS_SCRIPT=$(curl -s https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/utils.sh)
+source /dev/stdin <<<"$UTILS_SCRIPT"
+logger "INFO" "Fetched the utils.sh script from a URL and sourced it"
+
 
 # Function to list all sources
 list_sources() {

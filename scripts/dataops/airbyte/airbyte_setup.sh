@@ -1,7 +1,15 @@
 #!/bin/bash
-# curl -o scripts/airbyte_setup.sh \
+# curl -o airbyte_setup.sh \
 #     https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/dataops/airbyte/airbyte_setup.sh
 
+
+set -e # Exit immediately if a command exits with a non-zero status
+set -o pipefail # Fail a pipe if any sub-command fails
+
+# Fetch the utils.sh script from a URL and source it
+UTILS_SCRIPT=$(curl -s https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/utils.sh)
+source /dev/stdin <<<"$UTILS_SCRIPT"
+logger "INFO" "Fetched the utils.sh script from a URL and sourced it"
 
 # Default values
 USERNAME="airbyte"
@@ -27,6 +35,33 @@ usage() {
     exit 1;
 }
 
+# Usage
+usage() {
+    logger "INFO" "Usage: $0 [-u username] [-p password]"
+    logger "INFO" "This script automates the deployment of Airbyte Open Source."
+    empty_line
+
+    logger "INFO" "Options:"
+    logger "INFO" "  -u    Specify the username for basic authentication in the Airbyte application. Default is 'airbyte'."
+    logger "INFO" "  -p    Specify the password for basic authentication in the Airbyte application. Default is 'password'."
+    logger "INFO" "  -h    Display this help and exit."
+    empty_line
+
+    logger "INFO" "The script will perform the following steps:"
+    logger "INFO" "  1. Clone the Airbyte GitHub repository."
+    logger "INFO" "  2. Update the .env file in the cloned repository with the provided (or default) username and password."
+    logger "INFO" "  3. Run the Airbyte platform."
+    logger "INFO" ""
+    logger "INFO" "Please make sure Docker is installed and running before executing this script."
+    logger "INFO" ""
+    exit 1
+}
+
+# Check if the user asked for help
+if check_for_help "$@"; then
+    usage
+fi
+
 # Parse command line arguments
 while getopts "u:p:" flag; do
     case "${flag}" in
@@ -48,27 +83,36 @@ shift $((OPTIND-1))
 
 # Function to clone Airbyte repository
 clone_airbyte() {
-    # Clone Airbyte repository if it doesn't already exist
+    logger "INFO" "Cloning Airbyte repository..."
     if [ ! -d "airbyte" ]; then
         git clone https://github.com/airbytehq/airbyte.git
     fi
     cd airbyte
+    logger "INFO" "Airbyte repository cloned."
 }
 
 # Function to run Airbyte
 run_airbyte() {
+    logger "INFO" "Running Airbyte platform..."
     ./run-ab-platform.sh
+    logger "INFO" "Airbyte platform is running."
 }
 
 # Function to update .env file with provided username and password
-# this is only after the first run of the platform because .env is created after the first run.
 update_env() {
+    logger "INFO" "Updating .env file with provided username and password..."
     sed -i -e "s/BASIC_AUTH_USERNAME=airbyte/BASIC_AUTH_USERNAME=${USERNAME}/" .env
     sed -i -e "s/BASIC_AUTH_PASSWORD=password/BASIC_AUTH_PASSWORD=${PASSWORD}/" .env
+    logger "INFO" ".env file updated."
 }
 
-# Main script execution
-clone_airbyte
-run_airbyte
-update_env
+# Main function to call the functions
+main() {
+    clone_airbyte
+    run_airbyte
+    update_env
+}
+
+# Run the main function
+main
 
