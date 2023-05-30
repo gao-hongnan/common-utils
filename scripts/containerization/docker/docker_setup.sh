@@ -31,6 +31,11 @@ install_docker() {
   # Add the current user to the docker group
   logger "INFO" "Adding current user to docker group..."
   sudo usermod -aG docker ${USER}
+
+  # Change the ownership of the .docker directory
+  logger "INFO" "Changing the ownership of the .docker directory..."
+  sudo chown "$USER":"$USER" "/home/$USER/.docker" -R
+  sudo chmod g+rwx "$HOME/.docker" -R
 }
 
 install_docker_compose() {
