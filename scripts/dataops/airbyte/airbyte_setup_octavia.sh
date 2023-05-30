@@ -55,13 +55,29 @@ prompt_for_directory() {
     octavia_project_dir="$project_dir"
 }
 
+# Source the .bashrc or .bash_profile file
+if [ -f ~/.bashrc ]; then
+    . ~/.bashrc
+fi
+
+if [ -f ~/.bash_profile ]; then
+    . ~/.bash_profile
+fi
+
+if [ -f ~/.zshrc ]; then
+    . ~/.zshrc
+fi
+
 # Initialize Octavia
 initialize_octavia() {
     mkdir -p "$octavia_project_dir" && cd "$octavia_project_dir" || exit
     logger "INFO" "Initializing Octavia in ${octavia_project_dir}..."
+
+    # Initialize Octavia
     octavia init
     logger "INFO" "Octavia has been initialized in ${octavia_project_dir}"
 }
+
 
 # Main function to call the functions
 main() {
