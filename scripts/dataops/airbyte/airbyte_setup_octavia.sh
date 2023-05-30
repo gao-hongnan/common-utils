@@ -24,6 +24,11 @@ usage() {
     exit 1
 }
 
+# Check if the user asked for help
+if check_for_help "$@"; then
+    usage
+fi
+
 # Prompt user for Airbyte credentials
 prompt_for_credentials() {
     logger "INFO" "Please enter your Airbyte username:"
@@ -60,11 +65,6 @@ initialize_octavia() {
 
 # Main function to call the functions
 main() {
-    # Check if the user asked for help
-    if check_for_help "$@"; then
-        usage
-    fi
-
     prompt_for_credentials
     install_octavia_cli
     prompt_for_directory
