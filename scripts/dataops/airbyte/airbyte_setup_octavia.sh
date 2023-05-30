@@ -60,22 +60,11 @@ initialize_octavia() {
     mkdir -p "$octavia_project_dir" && cd "$octavia_project_dir" || exit
     logger "INFO" "Initializing Octavia in ${octavia_project_dir}..."
 
-    # Source the .bashrc or .bash_profile file
-    if [ -f ~/.bashrc ]; then
-        source ~/.bashrc
-    fi
-
-    if [ -f ~/.bash_profile ]; then
-        source ~/.bash_profile
-    fi
-
-    if [ -f ~/.zshrc ]; then
-        source ~/.zshrc
-    fi
-    # Initialize Octavia
-    octavia init
+    OCTAVIA_ENV_FILE=/home/gaohn/.octavia
+    docker run -i --rm -v "$(pwd)":/home/octavia-project --network host --env-file "${OCTAVIA_ENV_FILE}" --user "$(id -u)":"$(id -g)" airbyte/octavia-cli:0.44.4 init
     logger "INFO" "Octavia has been initialized in ${octavia_project_dir}"
 }
+
 
 
 # Main function to call the functions
