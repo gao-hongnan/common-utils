@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# This script provides functions to use Octavia CLI for managing sources, destinations and connections.
+# This script provides functions to use Octavia CLI for managing sources,
+# destinations and connections.
 # Functions must be called with necessary arguments.
 
 # Fetch the utils.sh script from a URL and source it
@@ -8,23 +9,22 @@ UTILS_SCRIPT=$(curl -s https://raw.githubusercontent.com/gao-hongnan/common-util
 source /dev/stdin <<<"$UTILS_SCRIPT"
 logger "INFO" "Fetched the utils.sh script from a URL and sourced it"
 
-
 # Function to list all sources
 list_sources() {
-    echo "Listing all sources..."
+    logger "INFO" "Listing all sources..."
     octavia list connectors sources
 }
 
 # Function to list all destinations
 list_destinations() {
-    echo "Listing all destinations..."
+    logger "INFO" "Listing all destinations..."
     octavia list connectors destinations
 }
 
 # Function to get the definition id of a source
 get_source_definition_id() {
     local source_name="$1"
-    echo "Getting definition id for source: $source_name"
+    logger "INFO" "Getting definition id for source: $source_name"
     octavia list connectors sources | grep "$source_name" | awk '{print $4}'
 }
 
@@ -32,22 +32,22 @@ get_source_definition_id() {
 generate_source() {
     local definition_id="$1"
     local source_name="$2"
-    echo "Generating source configuration for: $source_name with definition_id: $definition_id"
-    echo "The source_name argument can be any custom name you want to give to the source."
+    logger "INFO" "Generating source configuration for: $source_name with definition_id: $definition_id"
+    logger "INFO" "The source_name argument can be any custom name you want to give to the source."
     octavia generate source "$definition_id" "$source_name"
 }
 
 # Function to apply source configuration
 apply_source() {
     local source_config_path="$1"
-    echo "Applying source configuration from: $source_config_path"
+    logger "INFO" "Applying source configuration from: $source_config_path"
     octavia apply --file "$source_config_path"
 }
 
 # Function to get the definition id of a destination
 get_destination_definition_id() {
     local destination_name="$1"
-    echo "Getting definition id for destination: $destination_name"
+    logger "INFO" "Getting definition id for destination: $destination_name"
     octavia list connectors destinations | grep "$destination_name" | awk '{print $4}'
 }
 
@@ -55,15 +55,15 @@ get_destination_definition_id() {
 generate_destination() {
     local definition_id="$1"
     local destination_name="$2"
-    echo "Generating destination configuration for: $destination_name with definition_id: $definition_id"
-    echo "The destination_name argument can be any custom name you want to give to the destination."
+    logger "INFO" "Generating destination configuration for: $destination_name with definition_id: $definition_id"
+    logger "INFO" "The destination_name argument can be any custom name you want to give to the destination."
     octavia generate destination "$definition_id" "$destination_name"
 }
 
 # Function to apply destination configuration
 apply_destination() {
     local destination_config_path="$1"
-    echo "Applying destination configuration from: $destination_config_path"
+    logger "INFO" "Applying destination configuration from: $destination_config_path"
     octavia apply --file "$destination_config_path"
 }
 
@@ -72,14 +72,14 @@ generate_connection() {
     local source_config_path="$1"
     local destination_config_path="$2"
     local connection_name="$3"
-    echo "Generating connection: $connection_name"
+    logger "INFO" "Generating connection: $connection_name"
     octavia generate connection --source "$source_config_path" --destination "$destination_config_path" "$connection_name"
 }
 
 # Function to apply connection configuration
 apply_connection() {
     local connection_config_path="$1"
-    echo "Applying connection configuration from: $connection_config_path"
+    logger "INFO" "Applying connection configuration from: $connection_config_path"
     octavia apply --file "$connection_config_path"
 }
 
