@@ -1,5 +1,5 @@
 #!/bin/bash
-# curl -o scripts/dbt_setup.sh \
+# curl -o dbt_setup.sh \
 #     https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/dataops/dbt/dbt_setup.sh
 
 
