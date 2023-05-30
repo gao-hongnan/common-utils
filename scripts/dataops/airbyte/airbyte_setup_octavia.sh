@@ -69,8 +69,13 @@ initialize_octavia() {
 
     # Define OCTAVIA_ENV_FILE dynamically
     OCTAVIA_ENV_FILE="$HOME/.octavia"
+    docker run -i --rm \
+        -v "$(pwd)":/home/octavia-project \
+        --network host \
+        --env-file "${OCTAVIA_ENV_FILE}" \
+        --user "$(id -u)":"$(id -g)" \
+        "airbyte/octavia-cli:${OCTAVIA_VERSION}" init
 
-    docker run -i --rm -v "$(pwd)":/home/octavia-project --network host --env-file "${OCTAVIA_ENV_FILE}" --user "$(id -u)":"$(id -g)" "airbyte/octavia-cli:${OCTAVIA_VERSION}" init
     logger "INFO" "Octavia has been initialized in ${octavia_project_dir}"
 }
 
