@@ -57,5 +57,11 @@ main() {
     remove_networks "$name"
 }
 
+# Check if a name was provided as an argument
+if [[ -z $1 ]]; then
+    logger "WARN" "No name argument provided. Exiting."
+    exit 1
+fi
+
 # Run the main function with the first command line argument as the name
 main "$1"

@@ -13,7 +13,7 @@ gcloud compute ssh \
     imdb
 
 touch .env
-rs
+# echo into env
 
 # Build the Docker image
 echo "Building Docker image..."
