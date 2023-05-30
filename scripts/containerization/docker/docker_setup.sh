@@ -1,6 +1,6 @@
 #!/bin/bash
 # curl -o docker_setup.sh \
-#     https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/containerization/docker_setup.sh
+#     https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/containerization/docker/docker_setup.sh
 # Setup docker on a Linux machine (usually a VM instance on GCP).
 
 # Fetch the utils.sh script from a URL and source it

@@ -12,6 +12,9 @@ gcloud compute ssh \
     --zone=us-west2-a \
     imdb
 
+touch .env
+rs
+
 # Build the Docker image
 echo "Building Docker image..."
-docker-compose up
+sudo docker-compose up -d
