@@ -1,6 +1,6 @@
 [project]
 name = "gaohn-common-utils"
-version = "0.0.19"
+version = "0.0.20"
 authors = [
   { name="Gao Hongnan", email="hongnangao@gmail.com" },
 ]

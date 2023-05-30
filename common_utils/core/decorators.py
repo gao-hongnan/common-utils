@@ -72,6 +72,10 @@ def timer(func: F) -> F:
     return wrapper
 
 
+# TODO: For memory usage, consider checking out memory_profiler.
+# Coding it my own way is not good as it does not take into account
+# a lot of minute details, and it does not work for multithreading and
+# multiprocessing.
 def record_memory_usage(func: F) -> F:
     """Memory usage decorator."""
 
