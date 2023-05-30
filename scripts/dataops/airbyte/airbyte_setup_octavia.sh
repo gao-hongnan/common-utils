@@ -60,12 +60,19 @@ initialize_octavia() {
     mkdir -p "$octavia_project_dir" && cd "$octavia_project_dir" || exit
     logger "INFO" "Initializing Octavia in ${octavia_project_dir}..."
 
-    OCTAVIA_ENV_FILE=/home/gaohn/.octavia
-    docker run -i --rm -v "$(pwd)":/home/octavia-project --network host --env-file "${OCTAVIA_ENV_FILE}" --user "$(id -u)":"$(id -g)" airbyte/octavia-cli:0.44.4 init
+    # Automatically get the Octavia version
+    OCTAVIA_VERSION=$(docker images | grep 'airbyte/octavia-cli' | awk '{print $2}' | head -1)
+    if [ -z "$OCTAVIA_VERSION" ]; then
+        logger "ERROR" "No Octavia version found."
+        exit 1
+    fi
+
+    # Define OCTAVIA_ENV_FILE dynamically
+    OCTAVIA_ENV_FILE="$HOME/.octavia"
+
+    docker run -i --rm -v "$(pwd)":/home/octavia-project --network host --env-file "${OCTAVIA_ENV_FILE}" --user "$(id -u)":"$(id -g)" "airbyte/octavia-cli:${OCTAVIA_VERSION}" init
     logger "INFO" "Octavia has been initialized in ${octavia_project_dir}"
 }
-
-
 
 # Main function to call the functions
 main() {
