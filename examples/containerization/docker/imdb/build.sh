@@ -19,7 +19,7 @@ echo "Running Docker container..."
 
 docker run \
     --rm \
-    -p 8000:8000 \
+    -p 8010:8000 \
     -e GOOGLE_SERVICE_ACCOUNT_BASE64="$(cat gcp-storage-service-account-base64.txt)" \
     --name gaohn-e2e-imdb \
     gaohn-e2e-imdb:v1
