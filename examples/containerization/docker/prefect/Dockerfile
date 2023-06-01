@@ -4,8 +4,6 @@ RUN pip install prefect
 
 EXPOSE 4200
 
-RUN echo ${PREFECT__CLOUD__AUTH_TOKEN}
-RUN echo ${PREFECT__CLOUD__WORKSPACE}
 # set prefect cloud API key
 RUN prefect cloud login --key ${PREFECT__CLOUD__AUTH_TOKEN} --workspace ${PREFECT__CLOUD__WORKSPACE}
 
