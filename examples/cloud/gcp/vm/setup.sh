@@ -10,3 +10,7 @@ bash build.sh # create .env
 # setup airbyte
 # https://docs.airbyte.com/deploying-airbyte/on-gcp-compute-engine/
 gcloud compute firewall-rules create allow-airbyte --allow tcp:8000 --source-ranges 0.0.0.0/0
+bash common-utils/scripts/dataops/airbyte/airbyte_setup.sh -u <USERNAME> -p <PASSWORD>
+# package octavia here so you can version TODO
+
+# setup prefect

@@ -1,0 +1,16 @@
+version: '3'
+services:
+  prefect-agent:
+    build:
+      context: .
+    environment:
+      - PREFECT__CLOUD__AUTH_TOKEN=${PREFECT__CLOUD__AUTH_TOKEN}
+      - PREFECT__CLOUD__AGENT__WORKER_QUEUE=${PREFECT__CLOUD__AGENT__WORKER_QUEUE}
+    command:
+      [
+        "prefect",
+        "agent",
+        "start",
+        "--work-queue",
+        "${PREFECT__CLOUD__AGENT__WORKER_QUEUE}"
+      ]
