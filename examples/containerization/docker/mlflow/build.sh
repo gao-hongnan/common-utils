@@ -17,4 +17,4 @@ touch .env
 
 # Build the Docker image
 echo "Building Docker image..."
-sudo docker-compose up -d
+docker-compose up -d
