@@ -7,8 +7,17 @@ x-logging:
   driver: json-file
 services:
   prefect-agent:
+    image: prefect-imdb:v1
     build:
       context: .
+      dockerfile: Dockerfile
+    logging: *default-logging
+    restart: unless-stopped
     environment:
       - PREFECT__CLOUD__AGENT__WORKER_QUEUE=${PREFECT__CLOUD__AGENT__WORKER_QUEUE}
       - PREFECT__CLOUD__AUTH_TOKEN=${PREFECT__CLOUD__AUTH_TOKEN}
+    networks:
+      - prefect-gaohn
+networks:
+  prefect-gaohn:
+    driver: bridge # default
