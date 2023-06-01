@@ -4,5 +4,7 @@ RUN pip install prefect
 
 EXPOSE 4200
 
-CMD prefect agent start \
-    --work-queue ${PREFECT__CLOUD__AGENT__WORKER_QUEUE}
+COPY ./start_agent.sh /start_agent.sh
+RUN chmod +x /start_agent.sh
+
+CMD ["/start_agent.sh"]
