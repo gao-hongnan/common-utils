@@ -6,3 +6,5 @@ torch
 torchvision
 torchaudio
 pandas
+google-cloud-bigquery==3.10.0
+google-cloud-storage==2.8.0
