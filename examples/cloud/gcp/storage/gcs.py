@@ -1,25 +1,21 @@
-import os
-
-from dotenv import load_dotenv
-import pandas as pd
-import time
-import math
-import hashlib
-
-import requests
-from typing import List, Dict, Any, Optional, Union, Tuple
-import datetime
-from common_utils.cloud.gcp.storage.gcs import GCS
-from common_utils.cloud.gcp.storage.bigquery import BigQuery
-from google.cloud.exceptions import NotFound
-from rich import print
-from rich.pretty import pprint
-import pytz
-from google.cloud import bigquery
 import logging
-
-
+import math
+import os
+import time
+from typing import Optional
+from pydantic import BaseModel, Field
+from typing import Optional
+from datetime import datetime
+import pandas as pd
+import requests
+from dotenv import load_dotenv
+from google.cloud import bigquery
+from rich import print
 from rich.logging import RichHandler
+from rich.pretty import pprint
+
+from common_utils.cloud.gcp.storage.bigquery import BigQuery
+from common_utils.cloud.gcp.storage.gcs import GCS
 
 # Setup logging
 logging.basicConfig(
@@ -69,9 +65,6 @@ def get_binance_data(
     # Convert interval to milliseconds
     interval_in_milliseconds = interval_to_milliseconds(interval)
 
-    # If no end_time is given, default to the current time
-    # if end_time is None:
-    #     end_time = int(datetime.datetime.now().timestamp() * 1000)
     time_range = end_time - start_time  # total time range
     pprint(f"time_range: {time_range}")
     request_max = limit * interval_in_milliseconds
@@ -178,10 +171,16 @@ def generate_bq_schema_from_pandas(df: pd.DataFrame):
     return schema
 
 
-def update_metadata(df: pd.DataFrame) -> pd.DataFrame:
-    df["time_updated"] = datetime.datetime.now()
-    df["source"] = "binance"
-    df["source_type"] = "spot"
+class Metadata(BaseModel):
+    updated_at: datetime = datetime.now()
+    source: str = "binance"
+    source_type: str = "spot"
+
+
+def update_metadata(df, metadata: Metadata):
+    """Updates the DataFrame with metadata information."""
+    for key, value in metadata.dict().items():
+        df[key] = value
     return df
 
 
@@ -224,7 +223,7 @@ def upload_latest_data(
             start_time is not None
         ), "start_time must be provided to create dataset and table"
 
-        time_now = int(datetime.datetime.now().timestamp() * 1000)
+        time_now = int(datetime.now().timestamp() * 1000)
 
         df = get_binance_data(
             symbol=symbol,
@@ -233,13 +232,15 @@ def upload_latest_data(
             interval=interval,
             limit=1000,
         )
-        df = update_metadata(df)
+        metadata = Metadata()
+        df = update_metadata(df, metadata)
         pprint(df)
 
-        time_updated = df["time_updated"].iloc[0]
-        blob = gcs.create_blob(f"{dataset}/{table_name}/{time_updated}.csv")
+        updated_at = df["updated_at"].iloc[0]
+        blob = gcs.create_blob(f"{dataset}/{table_name}/{updated_at}.csv")
 
         blob.upload_from_string(df.to_csv(index=False), content_type="text/csv")
+        logger.info(f"File {blob.name} uploaded to {bucket_name}.")
 
         schema = generate_bq_schema_from_pandas(df)
         pprint(schema)
@@ -263,7 +264,7 @@ def upload_latest_data(
 
         # now max_open_time is your new start_time
         start_time = max_open_time + interval_to_milliseconds(interval)
-        time_now = int(datetime.datetime.now().timestamp() * 1000)
+        time_now = int(datetime.now().timestamp() * 1000)
 
         # only pull data from start_time onwards, which is the latest date in the table
         df = get_binance_data(
@@ -273,9 +274,12 @@ def upload_latest_data(
             interval="1m",
             limit=1000,
         )
-        df = update_metadata(df)
-        blob = gcs.create_blob(f"{dataset}/{table_name}/{time_updated}.csv")
+        metadata = Metadata()
+        df = update_metadata(df, metadata)
+        updated_at = df["updated_at"].iloc[0]
+        blob = gcs.create_blob(f"{dataset}/{table_name}/{updated_at}.csv")
         blob.upload_from_string(df.to_csv(index=False), content_type="text/csv")
+        logger.info(f"File {blob.name} uploaded to {bucket_name}.")
 
         # Append the new data to the existing table
         job_config = bq.load_job_config(write_disposition="WRITE_APPEND")
@@ -283,8 +287,8 @@ def upload_latest_data(
 
 
 if __name__ == "__main__":
-    # eg: int(datetime.datetime(2023, 6, 1, 8, 0, 0).timestamp() * 1000)
-    start_time = int(datetime.datetime(2023, 6, 1, 20, 0, 0).timestamp() * 1000)
+    # eg: int(datetime(2023, 6, 1, 8, 0, 0).timestamp() * 1000)
+    start_time = int(datetime(2023, 6, 1, 20, 0, 0).timestamp() * 1000)
 
     upload_latest_data(
         "BTCUSDT",  # "ETHUSDT
