@@ -52,7 +52,10 @@ class BigQuery(GCPConnector):
             logger.info(f"Dataset {self.dataset_id} already exists")
             return True
         except NotFound:
-            logger.info(f"Dataset {self.dataset_id} does not exist")
+            logger.warning(
+                f"""Dataset {self.dataset_id} does not exist.
+                Please create it using `create_dataset`."""
+            )
             return False
 
     def create_dataset(self) -> None:
@@ -69,7 +72,10 @@ class BigQuery(GCPConnector):
             logger.info(f"Table {self.table_id} already exists")
             return True
         except NotFound:
-            logger.info(f"Table {self.table_id} does not exist")
+            logger.warning(
+                f"""Table {self.table_id} does not exist.
+                Please create it using `create_table`."""
+            )
             return False
 
     def create_table(self, schema: List[bigquery.SchemaField]) -> None:

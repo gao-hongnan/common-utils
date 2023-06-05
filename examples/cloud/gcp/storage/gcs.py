@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 import pandas as pd
 import time
 import math
+import hashlib
+
 import requests
 from typing import List, Dict, Any, Optional, Union, Tuple
 import datetime
@@ -198,6 +200,9 @@ def upload_latest_data(
         google_application_credentials=google_application_credentials,
         bucket_name=bucket_name,
     )
+    bucket_exists = gcs.check_if_bucket_exists()
+    if not bucket_exists:
+        gcs.create_bucket()
 
     bq = BigQuery(
         project_id=project_id,
@@ -230,6 +235,12 @@ def upload_latest_data(
         )
         df = update_metadata(df)
         pprint(df)
+
+        time_updated = df["time_updated"].iloc[0]
+        blob = gcs.create_blob(f"{dataset}/{table_name}/{time_updated}.csv")
+
+        blob.upload_from_string(df.to_csv(index=False), content_type="text/csv")
+
         schema = generate_bq_schema_from_pandas(df)
         pprint(schema)
 
@@ -263,49 +274,25 @@ def upload_latest_data(
             limit=1000,
         )
         df = update_metadata(df)
+        blob = gcs.create_blob(f"{dataset}/{table_name}/{time_updated}.csv")
+        blob.upload_from_string(df.to_csv(index=False), content_type="text/csv")
+
         # Append the new data to the existing table
         job_config = bq.load_job_config(write_disposition="WRITE_APPEND")
         bq.load_table_from_dataframe(df=df, job_config=job_config)
 
-    # # Save the data to a local CSV file
-    # final_data.to_csv(f"{table_name}.csv", index=False)
 
-    # # Create a GCPConnector instance
-    # gcp = GCPConnector(project_id, service_account_key_json, bucket_name)
+if __name__ == "__main__":
+    # eg: int(datetime.datetime(2023, 6, 1, 8, 0, 0).timestamp() * 1000)
+    start_time = int(datetime.datetime(2023, 6, 1, 20, 0, 0).timestamp() * 1000)
 
-    # # Upload the file to GCS
-    # blob_name = f"staging/{table_name}.csv"
-    # gcp.upload_blob(f"{table_name}.csv", blob_name)
-
-    # # Create a BigQuery instance
-    # bq = BigQuery(project_id, service_account_key_json)
-
-    # # Define the schema of your BigQuery table
-    # # TODO: Adjust this according to your actual schema
-    # schema = [
-    #     bigquery.SchemaField("open_time", "TIMESTAMP"),
-    #     bigquery.SchemaField("open", "FLOAT64"),
-    #     bigquery.SchemaField("high", "FLOAT64"),
-    #     # Add the rest of your columns here...
-    # ]
-
-    # # Load the data from GCS to BigQuery
-    # gcs_uri = f"gs://{bucket_name}/{blob_name}"
-    # bq.load_gcs_to_bq(gcs_uri, "staging", table_name, schema)
-
-    # print(f"{str(len(final_data))} added to table {table_name}")
-
-
-# eg: int(datetime.datetime(2023, 6, 1, 8, 0, 0).timestamp() * 1000)
-start_time = int(datetime.datetime(2023, 6, 1, 20, 0, 0).timestamp() * 1000)
-
-upload_latest_data(
-    "BTCUSDT",  # "ETHUSDT
-    "1m",
-    PROJECT_ID,
-    GOOGLE_APPLICATION_CREDENTIALS,
-    BUCKET_NAME,
-    dataset="mlops_pipeline_v1_staging",
-    table_name="binance_btcusdt_spot",
-    start_time=start_time,
-)
+    upload_latest_data(
+        "BTCUSDT",  # "ETHUSDT
+        "1m",
+        PROJECT_ID,
+        GOOGLE_APPLICATION_CREDENTIALS,
+        BUCKET_NAME,
+        dataset="mlops_pipeline_v1_staging",
+        table_name="binance_btcusdt_spot",
+        start_time=start_time,
+    )
