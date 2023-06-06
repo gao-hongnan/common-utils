@@ -17,7 +17,7 @@ function upgrade_pip {
 function install_dependencies {
   local dev="$1"
   if [ "$dev" = "dev" ]; then
-    python3 -m pip install -e .[dev]
+    python3 -m pip install -e ".[dev]"
   else
     python3 -m pip install -e .
   fi

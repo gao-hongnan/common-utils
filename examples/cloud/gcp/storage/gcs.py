@@ -2,15 +2,15 @@ import logging
 import math
 import os
 import time
-from typing import Optional
-from pydantic import BaseModel, Field
-from typing import Optional
 from datetime import datetime
+from typing import List, Optional
+
 import pandas as pd
 import requests
 from dotenv import load_dotenv
 from google.cloud import bigquery
-from rich import print
+from pydantic import BaseModel  # pylint: disable=no-name-in-module
+import rich
 from rich.logging import RichHandler
 from rich.pretty import pprint
 
@@ -29,16 +29,12 @@ load_dotenv(dotenv_path="examples/cloud/gcp/storage/.env")
 PROJECT_ID = os.getenv("PROJECT_ID")
 GOOGLE_APPLICATION_CREDENTIALS = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 BUCKET_NAME = os.getenv("BUCKET_NAME")
-print(PROJECT_ID, GOOGLE_APPLICATION_CREDENTIALS, BUCKET_NAME)
+rich.print(PROJECT_ID, GOOGLE_APPLICATION_CREDENTIALS, BUCKET_NAME)
 
 # gcs = GCS(PROJECT_ID, GOOGLE_APPLICATION_CREDENTIALS, bucket_name=BUCKET_NAME)
 # files = gcs.list_gcs_files()
 
-# print(files)
-
-
-btc_dict = {"binance_btcusdt_spot": "BTCUSDT"}  # tablename and symbol
-eth_dict = {"binance_ethusdt_spot": "ETHUSDT"}  # tablename and symbol
+# rich.print(files)
 
 
 def interval_to_milliseconds(interval: str) -> int:
@@ -99,7 +95,7 @@ def get_binance_data(
     ]
 
     if time_range <= request_max:  # time range selected within 1000 rows limit
-        resp = requests.get(url=url, params=params)
+        resp = requests.get(url=url, params=params, timeout=30)
         data = resp.json()
         df = pd.DataFrame(data, columns=response_columns)
 
@@ -112,9 +108,9 @@ def get_binance_data(
         num_iterations = math.ceil(time_range / request_max)  # number of loops required
         pprint(f"num_iterations: {num_iterations}")
 
-        for i in range(num_iterations):
+        for _ in range(num_iterations):
             # make request with updated params
-            resp = requests.get(url=url, params=params)
+            resp = requests.get(url=url, params=params, timeout=30)
             data = resp.json()
             _df = pd.DataFrame(data, columns=response_columns)
 
@@ -136,7 +132,7 @@ def get_binance_data(
     return df
 
 
-def generate_bq_schema_from_pandas(df: pd.DataFrame):
+def generate_bq_schema_from_pandas(df: pd.DataFrame) -> List[bigquery.SchemaField]:
     """
     Convert pandas dtypes to BigQuery dtypes.
 
