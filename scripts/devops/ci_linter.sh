@@ -40,4 +40,11 @@ if check_for_help "$@"; then
     usage
 fi
 
+# Check if no arguments were provided
+if [ $# -eq 0 ]; then
+    logger "ERROR" "No packages provided."
+    usage
+    exit 1
+fi
+
 ci_pylint_check $@
