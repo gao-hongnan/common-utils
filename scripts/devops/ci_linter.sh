@@ -11,6 +11,10 @@ logger "INFO" "Fetched the utils.sh script from a URL and sourced it"
 MIN_LINT_SCORE=10
 RCFILE="pyproject.toml"
 
+usage() {
+  logger "INFO" "Usage: $0 <package1> <package2> ..."
+}
+
 ci_pylint_check() {
   VERSION=$(pylint --version)
   logger "INFO" "PYLINT VERSION: $VERSION"
@@ -21,12 +25,19 @@ ci_pylint_check() {
     logger "INFO" "Found pyproject.toml. Pylint will use settings defined in it."
   fi
 
-  if ! pylint --rcfile=$RCFILE --fail-under=$MIN_LINT_SCORE --score=yes --output-format=colorized .; then
-    logger "ERROR" "PYLINT ERROR: at least one file has a score less than $MINLINTSCORE."
-    exit 123
-  fi
+  for pkg in "$@"; do
+    if ! pylint --rcfile=$RCFILE --fail-under=$MIN_LINT_SCORE --score=yes --output-format=colorized $pkg; then
+      logger "ERROR" "PYLINT ERROR: at least one file in $pkg has a score less than $MIN_LINT_SCORE."
+      exit 123
+    fi
+  done
 
   logger "INFO" "CHECKCODE: CONGRATULATIONS, ALL TESTS SUCCESSFUL!!"
 }
 
-ci_pylint_check
+# Check if the user asked for help
+if check_for_help "$@"; then
+    usage
+fi
+
+ci_pylint_check $@
