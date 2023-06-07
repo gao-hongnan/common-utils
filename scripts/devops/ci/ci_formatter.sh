@@ -18,7 +18,7 @@ ci_black_check() {
     logger "INFO" "Found pyproject.toml. Black will use settings defined in it."
   fi
 
-  if ! black --check --diff --color .; then
+  if ! black --check --diff --color --verbose .; then
     logger "ERROR" "BLACK ERROR: at least one file is poorly formatted."
     logger "INFO" "Consider running the following command to fix the formatting errors:"
     logger "CODE" "$ black ."
@@ -38,7 +38,7 @@ ci_isort_check() {
     logger "INFO" "Found pyproject.toml. isort will use settings defined in it."
   fi
 
-  if ! isort --check --diff .; then
+  if ! isort --check --diff --verbose .; then
     logger "ERROR" "ISORT ERROR: at least one file has incorrect import order."
     logger "INFO" "Consider running the following command to fix the import order:"
     logger "CODE" "$ isort ."
