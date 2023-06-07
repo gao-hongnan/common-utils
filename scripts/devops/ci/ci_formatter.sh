@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # curl -o formatter.sh \
-#    https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/devops/ci_formatter.sh
+#    https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/devops/ci/ci_formatter.sh
 
 # Fetch the utils.sh script from a URL and source it
 UTILS_SCRIPT=$(curl -s https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/utils.sh)
@@ -52,3 +52,6 @@ main() {
   ci_black_check
   ci_isort_check
 }
+
+main
+

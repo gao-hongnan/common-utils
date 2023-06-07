@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # curl -o linter.sh \
-#    https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/devops/ci_linter.sh
+#    https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/devops/ci/ci_linter.sh
 
 # Fetch the utils.sh script from a URL and source it
 UTILS_SCRIPT=$(curl -s https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/utils.sh)
