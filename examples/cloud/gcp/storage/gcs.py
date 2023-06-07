@@ -7,10 +7,10 @@ from typing import List, Optional
 
 import pandas as pd
 import requests
+import rich
 from dotenv import load_dotenv
 from google.cloud import bigquery
 from pydantic import BaseModel  # pylint: disable=no-name-in-module
-import rich
 from rich.logging import RichHandler
 from rich.pretty import pprint
 

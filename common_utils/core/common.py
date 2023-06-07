@@ -9,10 +9,10 @@ import random
 from typing import Any, Dict, Optional
 
 import numpy as np
+import rich
 import torch
 import yaml
 from yaml import FullLoader
-import rich
 
 from common_utils.core.base import DictPersistence
 
