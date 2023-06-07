@@ -28,4 +28,27 @@ ci_black_check() {
   logger "INFO" "CHECKCODE: CONGRATULATIONS, ALL TESTS SUCCESSFUL!!"
 }
 
-ci_black_check
+ci_isort_check() {
+  VERSION=$(isort --version)
+  logger "INFO" "ISORT VERSION: $VERSION"
+
+  if [ ! -f "pyproject.toml" ]; then
+    logger "WARN" "No pyproject.toml found. isort will use default settings."
+  else
+    logger "INFO" "Found pyproject.toml. isort will use settings defined in it."
+  fi
+
+  if ! isort --check --diff .; then
+    logger "ERROR" "ISORT ERROR: at least one file has incorrect import order."
+    logger "INFO" "Consider running the following command to fix the import order:"
+    logger "CODE" "$ isort ."
+    exit 123
+  fi
+
+  logger "INFO" "CHECKCODE: CONGRATULATIONS, ALL TESTS SUCCESSFUL!!"
+}
+
+main() {
+  ci_black_check
+  ci_isort_check
+}

@@ -27,7 +27,7 @@ ci_pylint_check() {
 
   for pkg in "$@"; do
     if ! pylint --rcfile=$RCFILE --fail-under=$MIN_LINT_SCORE --score=yes --output-format=colorized $pkg; then
-      logger "ERROR" "PYLINT ERROR: at least one file in $pkg has a score less than $MIN_LINT_SCORE."
+      logger "ERROR" "PYLINT ERROR: $pkg has a score less than $MIN_LINT_SCORE."
       exit 123
     fi
   done
