@@ -38,6 +38,8 @@ class Logger:
             log_output_dir = self._create_log_output_dir()
             log_file_path = log_output_dir / self.log_file if self.log_file else None
             self.log_output_dir = log_output_dir
+        else:
+            log_file_path = None
 
         if self.module_name is None:
             logger = logging.getLogger(__name__)
