@@ -34,8 +34,10 @@ class Logger:
         return log_output_dir
 
     def _init_logger(self) -> logging.Logger:
-        log_output_dir = self._create_log_output_dir()
-        log_file_path = log_output_dir / self.log_file if self.log_file else None
+        if self.log_dir is not None:
+            log_output_dir = self._create_log_output_dir()
+            log_file_path = log_output_dir / self.log_file if self.log_file else None
+            self.log_output_dir = log_output_dir
 
         if self.module_name is None:
             logger = logging.getLogger(__name__)
@@ -61,5 +63,4 @@ class Logger:
 
         logger.propagate = self.propagate
 
-        self.log_output_dir = log_output_dir
         return logger
