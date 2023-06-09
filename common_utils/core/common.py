@@ -6,12 +6,14 @@ This module contains common utility functions for various purposes.
 import json
 import os
 import random
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
+from pathlib import Path
 
 import numpy as np
 import rich
 import torch
 import yaml
+from dotenv import load_dotenv
 from yaml import FullLoader
 
 from common_utils.core.base import DictPersistence
@@ -114,3 +116,46 @@ def seed_worker(_worker_id: int, seed_torch: bool = True) -> None:
     )
     np.random.seed(worker_seed)
     random.seed(worker_seed)
+
+
+def load_env_vars(root_dir: Union[str, Path]) -> Dict[str, str]:
+    """
+    Load environment variables from .env.default and .env files.
+
+    Parameters
+    ----------
+    root_dir: Union[str, Path]
+        Root directory of the .env files.
+
+    Returns
+    -------
+    Dict[str, str]
+        Dictionary with the environment variables.
+    """
+
+    if isinstance(root_dir, str):
+        root_dir = Path(root_dir)
+
+    load_dotenv(dotenv_path=root_dir / ".env.default")
+    load_dotenv(dotenv_path=root_dir / ".env", override=True)
+
+    return dict(os.environ)
+
+
+def get_root_dir(env_var: str = "ROOT_DIR", root_dir: str = ".") -> Path:
+    """
+    Get the root directory of the project.
+
+    Parameters
+    ----------
+    env_var: str
+        Name of the environment variable to use. Defaults to "ROOT_DIR".
+    root_dir: str
+        Default value to use if the environment variable is not set. Defaults to ".".
+
+    Returns
+    -------
+    Path
+        Path to the root directory of the project.
+    """
+    return Path(os.getenv(env_var, root_dir))
