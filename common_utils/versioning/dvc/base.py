@@ -1,9 +1,22 @@
 import hashlib
 import json
+import logging
 import os
 from datetime import datetime
 
 import pandas as pd
+from rich.logging import RichHandler
+
+# Setup logging
+logging.basicConfig(
+    level="INFO",
+    format="%(asctime)s [%(levelname)s]: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    handlers=[RichHandler()],
+)
+
+logger = logging.getLogger("rich")
+
 
 DATA_DIR = "data_versions"
 CODE_DIR = "code_versions"
