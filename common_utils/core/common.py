@@ -22,7 +22,10 @@ from common_utils.core.base import DictPersistence
 
 # Setup logging
 logging.basicConfig(
-    level="INFO", format="%(message)s", datefmt="[%X]", handlers=[RichHandler()]
+    level="INFO",
+    format="%(asctime)s [%(levelname)s]: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    handlers=[RichHandler()],
 )
 
 logger = logging.getLogger("rich")
