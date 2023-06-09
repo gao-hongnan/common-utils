@@ -172,4 +172,9 @@ def get_root_dir(env_var: str = "ROOT_DIR", root_dir: str = ".") -> Path:
         logger.warning("Environment variable %s is not set.", env_var)
         logger.warning("Using default value %s", root_dir)
         return Path(root_dir)
+    logger.info(
+        "Using environment variable %s and discarding default value %s",
+        env_var,
+        root_dir,
+    )
     return Path(root_dir_env)
