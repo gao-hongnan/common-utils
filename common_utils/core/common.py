@@ -4,19 +4,28 @@ common_utils/core/common.py
 This module contains common utility functions for various purposes.
 """
 import json
+import logging
 import os
 import random
-from typing import Any, Dict, Optional, Union
 from pathlib import Path
+from typing import Any, Dict, Optional, Union
 
 import numpy as np
 import rich
 import torch
 import yaml
 from dotenv import load_dotenv
+from rich.logging import RichHandler
 from yaml import FullLoader
 
 from common_utils.core.base import DictPersistence
+
+# Setup logging
+logging.basicConfig(
+    level="INFO", format="%(message)s", datefmt="[%X]", handlers=[RichHandler()]
+)
+
+logger = logging.getLogger("rich")
 
 
 class JsonAdapter(DictPersistence):
@@ -158,4 +167,9 @@ def get_root_dir(env_var: str = "ROOT_DIR", root_dir: str = ".") -> Path:
     Path
         Path to the root directory of the project.
     """
-    return Path(os.getenv(env_var, root_dir))
+    root_dir_env = os.getenv(env_var)
+    if root_dir_env is None:
+        logger.warning("Environment variable %s is not set.", env_var)
+        logger.warning("Using default value %s.", root_dir)
+        return Path(root_dir)
+    return Path(root_dir_env)
