@@ -24,7 +24,6 @@ logger = logging.getLogger("rich")
 class BigQuery(GCPConnector):
     # usually you call project_id.dataset_id.table_name
     dataset: str  # The ID of the dataset to use.
-    table_name: str  # The name of the table to use.
     _dataset_id: str = field(init=False)  # The ID of the dataset to use.
     _table_id: str = field(init=False)  # The full ID of the table to use.
     bigquery_client: bigquery.Client = field(init=False)
@@ -39,9 +38,9 @@ class BigQuery(GCPConnector):
         )
 
     @property
-    def table_id(self) -> str:
+    def table_id(self, table_name: str) -> str:
         """Return the full ID of the table to use."""
-        return f"{self.project_id}.{self.dataset}.{self.table_name}"
+        return f"{self.project_id}.{self.dataset}.{table_name}"
 
     @property
     def dataset_id(self) -> str:
@@ -67,25 +66,24 @@ class BigQuery(GCPConnector):
         self.bigquery_client.create_dataset(dataset)
         logger.info(f"Created dataset {self.dataset_id}")
 
-    def check_if_table_exists(self) -> Literal[True, False]:
+    def check_if_table_exists(self, table_name: str) -> Literal[True, False]:
         """Check if a table exists."""
         try:
-            print(self.table_id)
-            self.bigquery_client.get_table(self.table_id)
-            logger.info(f"Table {self.table_id} already exists")
+            self.bigquery_client.get_table(self.table_id(table_name))
+            logger.info(f"Table {self.table_id(table_name)} already exists")
             return True
         except NotFound:
             logger.warning(
-                f"""Table {self.table_id} does not exist.
+                f"""Table {self.table_id(table_name)} does not exist.
                 Please create it using `create_table`."""
             )
             return False
 
-    def create_table(self, schema: List[bigquery.SchemaField]) -> None:
+    def create_table(self, table_name: str, schema: List[bigquery.SchemaField]) -> None:
         """Creates a new BigQuery table if it doesn't exist."""
-        table = bigquery.Table(self.table_id, schema=schema)
+        table = bigquery.Table(self.table_id(table_name), schema=schema)
         self.bigquery_client.create_table(table)
-        logger.info(f"Created table {self.table_id}")
+        logger.info(f"Created table {self.table_id(table_name)}")
 
     def query(
         self, query: str, as_dataframe: bool = True
