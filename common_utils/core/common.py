@@ -170,6 +170,6 @@ def get_root_dir(env_var: str = "ROOT_DIR", root_dir: str = ".") -> Path:
     root_dir_env = os.getenv(env_var)
     if root_dir_env is None:
         logger.warning("Environment variable %s is not set.", env_var)
-        logger.warning("Using default value %s.", root_dir)
+        logger.warning("Using default value %s", root_dir)
         return Path(root_dir)
     return Path(root_dir_env)
