@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import random
+import uuid
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
@@ -81,6 +82,17 @@ class YamlAdapter(DictPersistence):
         with open(filepath, "r", encoding="utf-8") as f:
             data = yaml.load(f, Loader=FullLoader, **kwargs)
         return data
+
+
+def generate_uuid() -> str:
+    """Generate a UUID.
+
+    Returns
+    -------
+    str
+        UUID1 as a string.
+    """
+    return str(uuid.uuid1())
 
 
 def seed_all(seed: Optional[int] = 1992, seed_torch: bool = True) -> None:
