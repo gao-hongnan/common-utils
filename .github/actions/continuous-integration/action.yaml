@@ -31,6 +31,7 @@ runs:
           --verbose \
           common_utils \
           examples
+      shell: bash
     - name: Run Formatter Isort Check
       run: |
         bash ./scripts/devops/ci/ci_formatter_isort.sh \
@@ -40,3 +41,4 @@ runs:
           --verbose \
           common_utils \
           examples
+      shell: bash
