@@ -1,8 +1,9 @@
 #!/bin/sh
 
+# curl -o ci_formatter_black.sh \
+#    https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/devops/ci/ci_formatter_black.sh
+
 # https://black.readthedocs.io/en/stable/index.html
-# curl -o formatter.sh \
-#    https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/devops/ci/ci_formatter.sh
 
 # Fetch the utils.sh script from a URL and source it
 UTILS_SCRIPT=$(curl -s https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/utils.sh)
@@ -31,18 +32,23 @@ ci_black_check() {
 
     # Process user-provided flags
     local user_flags=""
+    local packages=""
     while (($#)); do
         case "$1" in
         --help)
             usage
             return
             ;;
-        *)
-            # Any other flag is treated as a user-provided flag
+        --*)
+            # Flags start with -- are treated as user-provided flags
             user_flags+="$1 "
-            shift
+            ;;
+        *)
+            # Any other argument is treated as a package
+            packages+="$1 "
             ;;
         esac
+        shift
     done
 
     VERSION=$(black --version)
@@ -52,12 +58,11 @@ ci_black_check() {
 
     # Check if pyproject.toml exists
     check_for_pyproject_toml "black"
-    pyproject_exists=$?
 
     logger "TIP" "Note that all command-line options can also be configured" \
         "using a pyproject.toml file."
 
-    if ! black $default_flags $user_flags .; then
+    if ! black $default_flags $user_flags $packages; then
         logger "ERROR" "BLACK ERROR: at least one file is poorly formatted."
         logger "INFO" "Consider running the following command to fix the formatting errors:"
         logger "CODE" "$ black ."

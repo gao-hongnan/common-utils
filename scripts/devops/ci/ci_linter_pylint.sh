@@ -1,7 +1,8 @@
 #!/bin/sh
 
-# curl -o linter.sh \
-#    https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/devops/ci/ci_linter.sh
+# curl -o ci_linter_pylint.sh \
+#    https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/devops/ci/ci_linter_pylint.sh
+
 # https://pylint.readthedocs.io/en/latest/user_guide/usage/run.html
 
 # Fetch the utils.sh script from a URL and source it
@@ -9,7 +10,7 @@ UTILS_SCRIPT=$(curl -s https://raw.githubusercontent.com/gao-hongnan/common-util
 source /dev/stdin <<<"$UTILS_SCRIPT"
 logger "INFO" "Fetched the utils.sh script from a URL and sourced it"
 
-pylint_usage() {
+usage() {
     logger "INFO" "Runs pylint with the specified options."
     logger "INFO" "Usage: ci_pylint_check [--<option>=<value>] <package1> <package2> ..."
     empty_line
@@ -36,11 +37,11 @@ ci_pylint_check() {
 
     # Process user-provided flags and packages
     local user_flags=""
-    local packages=()
+    local packages=""
     while (($#)); do
         case "$1" in
         --help)
-            pylint_usage
+            usage
             return
             ;;
         --*)
@@ -49,7 +50,7 @@ ci_pylint_check() {
             ;;
         *)
             # Any other argument is treated as a package
-            packages+=("$1")
+            packages+="$1 "
             ;;
         esac
         shift
@@ -57,15 +58,16 @@ ci_pylint_check() {
 
     VERSION=$(pylint --version)
     logger "INFO" "PYLINT VERSION: $VERSION"
+    logger "LINK" "https://pylint.readthedocs.io/en/latest/index.html"
+    empty_line
 
+    # Check if pyproject.toml exists
     check_for_pyproject_toml "pylint"
 
-    for pkg in "${packages[@]}"; do
-        if ! pylint $default_flags $user_flags $pkg; then
-            logger "ERROR" "PYLINT ERROR: $pkg has a score less than 10."
-            exit 123
-        fi
-    done
+    if ! pylint $default_flags $user_flags $packages; then
+        logger "ERROR" "PYLINT ERROR: Score less than 10."
+        exit 123
+    fi
 
     logger "INFO" "✅ Pylint check passed."
 }

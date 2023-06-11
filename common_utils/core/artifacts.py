@@ -14,6 +14,7 @@ logging.basicConfig(
 
 logger = logging.getLogger("rich")
 
+
 def get_git_commit_hash(working_dir: Optional[str] = None) -> str:
     """
     Get the current Git commit hash.

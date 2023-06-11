@@ -1,8 +1,9 @@
 #!/bin/sh
 
-# https://pycqa.github.io/isort/
-# curl -o formatter.sh \
+# curl -o ci_formatter_isort.sh \
 #    https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/devops/ci/ci_formatter_isort.sh
+
+# https://pycqa.github.io/isort/
 
 # Fetch the utils.sh script from a URL and source it
 UTILS_SCRIPT=$(curl -s https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/utils.sh)
@@ -31,18 +32,23 @@ ci_isort_check() {
 
     # Process user-provided flags
     local user_flags=""
+    local packages=""
     while (($#)); do
         case "$1" in
         --help)
             usage
             return
             ;;
-        *)
-            # Any other flag is treated as a user-provided flag
+        --*)
+            # Flags start with -- are treated as user-provided flags
             user_flags+="$1 "
-            shift
+            ;;
+        *)
+            # Any other argument is treated as a package
+            packages+="$1 "
             ;;
         esac
+        shift
     done
 
     VERSION=$(isort --version)
@@ -56,7 +62,7 @@ ci_isort_check() {
     logger "LINK" "https://pycqa.github.io/isort/docs/configuration/options"
 
     # Run isort with default and user flags
-    if ! isort $default_flags $user_flags .; then
+    if ! isort $default_flags $user_flags $packages; then
         logger "ERROR" "ISORT ERROR: at least one file has incorrect import order."
         logger "INFO" "Consider running the following command to fix the import order:"
         logger "CODE" "$ isort ."

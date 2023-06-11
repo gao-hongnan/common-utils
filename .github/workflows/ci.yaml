@@ -32,13 +32,12 @@ jobs:
         run: |
           python3 -m pip install --upgrade pip setuptools wheel
           python3 -m pip install -r requirements_dev.txt
-      - name: Run Black and Isort formatter check
-        run: |
-          curl https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/devops/ci/ci_formatter.sh \
-          | bash
-      - name: Run Pylint check
-        run: |
-          curl -o \
-          ci_linter.sh \
-          https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/devops/ci/ci_linter.sh && \
-          bash ci_linter.sh pipeline-feature/mlops_pipeline_feature_v1/utils.py
+      - name: Run Continuous Integration Action
+        uses: ./.github/actions/continuous-integration
+      - name: Upload Check Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: check-results
+          path: |
+            ./bandit_results.json
+            ./pylint_results.json
