@@ -27,17 +27,7 @@ ci_black_check() {
     logger "LINK" "https://black.readthedocs.io/en/stable/index.html"
     empty_line
 
-    if [ ! -f "pyproject.toml" ]; then
-        logger "WARN" "No pyproject.toml found in root directory."
-        logger "TIP" "Note that all command-line options listed above can also be configured using a pyproject.toml file."
-        empty_line
-        logger "INFO" "Run the following command to check if black is able to find it:"
-        logger "CODE" "$ black --verbose --check ."
-    else
-        logger "INFO" "Found pyproject.toml. Black will use settings defined in it."
-        logger "TIP" "Note that all command-line options listed above can also be configured using a pyproject.toml file."
-        empty_line
-    fi
+    check_for_pyproject_toml "black"
 
     if ! black --check .; then
         logger "ERROR" "BLACK ERROR: at least one file is poorly formatted."

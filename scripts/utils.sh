@@ -80,3 +80,12 @@ check_for_pyproject_toml() {
         empty_line
     fi
 }
+
+check_if_installed() {
+    local tool=$1
+
+    if ! command -v $tool &>/dev/null; then
+        logger "ERROR" "$tool is not installed. Please install it and retry."
+        exit 1
+    fi
+}

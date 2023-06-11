@@ -69,6 +69,8 @@ exclude = '''
 [tool.isort]
 profile = "black"
 line_length = 88
+diff = true
+verbose = false
 skip = [
     ".eggs",
     ".git",
