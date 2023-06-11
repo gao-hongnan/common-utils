@@ -72,11 +72,9 @@ check_for_pyproject_toml() {
 
     if [ ! -f "pyproject.toml" ]; then
         logger "WARN" "No pyproject.toml found in root directory."
-        logger "TIP" "Note that all command-line options listed above can also be configured using a pyproject.toml file."
         empty_line
     else
         logger "INFO" "Found pyproject.toml. $tool will use settings defined in it."
-        logger "TIP" "Note that all command-line options listed above can also be configured using a pyproject.toml file."
         empty_line
     fi
 }

@@ -10,10 +10,7 @@ logger "INFO" "Fetched the utils.sh script from a URL and sourced it"
 empty_line
 
 ci_black_check() {
-    if ! command -v black &>/dev/null; then
-        logger "ERROR" "Black is not installed. Please install it and retry."
-        exit 1
-    fi
+    check_if_installed "black"
 
     # Check if the first argument is --help
     if check_for_help "$@"; then
@@ -28,6 +25,8 @@ ci_black_check() {
     empty_line
 
     check_for_pyproject_toml "black"
+    logger "TIP" "Note that all command-line options can also be configured" \
+        "using a pyproject.toml file."
 
     if ! black --check .; then
         logger "ERROR" "BLACK ERROR: at least one file is poorly formatted."
@@ -41,28 +40,39 @@ ci_black_check() {
 }
 
 ci_isort_check() {
-    VERSION=$(isort --version)
-    logger "INFO" "ISORT VERSION: $VERSION"
+    check_if_installed "isort"
 
-    if [ ! -f "pyproject.toml" ]; then
-        logger "WARN" "No pyproject.toml found. isort will use default settings."
-    else
-        logger "INFO" "Found pyproject.toml. isort will use settings defined in it."
+    # Check if the first argument is --help
+    if check_for_help "$@"; then
+        logger "INFO" "Help on the way..."
+        black --help
+        return
     fi
 
-    if ! isort --check --diff --verbose .; then
+    VERSION=$(isort --version)
+    logger "INFO" "ISORT VERSION: $VERSION"
+    logger "LINK" "https://pycqa.github.io/isort/"
+    empty_line
+
+    check_for_pyproject_toml "isort"
+    logger "WARN" "Note that not all command-line options can also be configured" \
+        "using a pyproject.toml file."
+    logger "LINK" "https://pycqa.github.io/isort/docs/configuration/options"
+
+    if ! isort --check .; then
         logger "ERROR" "ISORT ERROR: at least one file has incorrect import order."
         logger "INFO" "Consider running the following command to fix the import order:"
         logger "CODE" "$ isort ."
         exit 123
     fi
 
-    logger "INFO" "CHECKCODE: CONGRATULATIONS, ALL TESTS SUCCESSFUL!!"
+    empty_line
+    logger "INFO" "✅ Isort check passed."
 }
 
 main() {
-    ci_black_check "$@"
-    #ci_isort_check
+    ci_black_check "$@" # $@ is the list of arguments passed to this script
+    #ci_isort_check "$@"
 }
 
 main "$@"
