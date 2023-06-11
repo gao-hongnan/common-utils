@@ -56,7 +56,7 @@ ci_isort_check() {
 
     check_for_pyproject_toml "isort"
     logger "WARN" "Note that not all command-line options can also be configured" \
-        "using a pyproject.toml file."
+        "using a pyproject.toml file. See the link below for more details."
     logger "LINK" "https://pycqa.github.io/isort/docs/configuration/options"
 
     if ! isort --check .; then
