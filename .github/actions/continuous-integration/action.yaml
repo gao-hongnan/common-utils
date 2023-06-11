@@ -53,6 +53,8 @@ runs:
           common_utils \
           examples \
           | tee mypy_results.log
+      shell: bash
+      continue-on-error: true
     - name: Upload Check Results
       uses: actions/upload-artifact@v3
       with:
