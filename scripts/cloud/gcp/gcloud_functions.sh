@@ -11,7 +11,7 @@
 # Fetch the utils.sh script from a URL and source it
 UTILS_SCRIPT=$(curl -s https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/utils.sh)
 source /dev/stdin <<<"$UTILS_SCRIPT"
-logger "INFO" "Fetched the utils.sh script from a URL and sourced it"
+logger "INFO" "Successfully fetched and sourced the 'utils.sh' script from the 'common-utils' repository on GitHub."
 
 useful_commands() {
     gcloud services list --enabled
