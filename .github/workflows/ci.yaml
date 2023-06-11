@@ -24,7 +24,7 @@ jobs:
           cache: pip
       - name: Get pip cache directory path
         id: pip-cache
-        run: echo "dir=$(pip cache dir)"" >> $GITHUB_OUTPUT # set-output is deprecated.
+        run: echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT # set-output is deprecated.
       - name: Cache
         uses: actions/cache@v3
         with:
