@@ -46,6 +46,13 @@ runs:
           examples
       shell: bash
       continue-on-error: true
+    - name: Run MyPy Type Check
+      run: |
+        bash ./scripts/devops/ci/ci_typing_mypy.sh \
+          --config-file=pyproject.toml \
+          common_utils \
+          examples \
+          | tee mypy_results.log
     - name: Upload Check Results
       uses: actions/upload-artifact@v3
       with:
@@ -53,3 +60,4 @@ runs:
         path: |
           ./bandit_results.json
           ./pylint_results.json
+          ./mypy_results.log

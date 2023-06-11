@@ -21,7 +21,14 @@ usage() {
     logger "CODE" "$ isort --help"
     empty_line
     logger "INFO" "Example:"
-    logger "CODE" "$ ci_isort_check --diff --color --verbose --line-length=30"
+    logger "CODE_MULTI" \
+        "$ ci_isort_check \\
+            --diff \\
+            --color \\
+            --verbose \\
+            --line-length=30 \\
+            package1 \\
+            package2"
 }
 
 ci_isort_check() {
@@ -57,7 +64,7 @@ ci_isort_check() {
     empty_line
 
     check_for_pyproject_toml "isort"
-    logger "WARN" "Note that not all command-line options can also be configured" \
+    logger "WARN" "Note that not all command-line options can be configured" \
         "using a pyproject.toml file. See the link below for more details."
     logger "LINK" "https://pycqa.github.io/isort/docs/configuration/options"
 

@@ -25,7 +25,9 @@ usage() {
             --severity-level=low \\
             --format=json \\
             --output=bandit_results.json \\
-            --verbose"
+            --verbose \\
+            package1 \\
+            package2"
 }
 
 ci_bandit_check() {
@@ -61,7 +63,7 @@ ci_bandit_check() {
 
     check_for_pyproject_toml "bandit"
     pyproject_exists=$?
-    logger "WARN" "Note that not all command-line options can also be configured" \
+    logger "WARN" "Note that not all command-line options can be configured" \
         "using a pyproject.toml file. See the link below for more details."
     logger "LINK" "https://bandit.readthedocs.io/en/latest/config.html"
 

@@ -21,7 +21,14 @@ usage() {
     logger "CODE" "$ black --help"
     empty_line
     logger "INFO" "Example:"
-    logger "CODE" "$ ci_black_check --diff --color --verbose --line-length=79"
+    logger "CODE_MULTI" \
+        "$ ci_black_check \\
+            --diff \\
+            --color \\
+            --verbose \\
+            --line-length=79 \\
+            package1 \\
+            package2"
 }
 
 ci_black_check() {

@@ -12,20 +12,20 @@ logger "INFO" "Successfully fetched and sourced the 'utils.sh' script from the '
 empty_line
 
 usage() {
-    logger "INFO" "Runs black with the specified options."
-    logger "INFO" "Usage: ci_black_check [--<option>=<value>] ..."
+    logger "INFO" "Runs mypy with the specified options."
+    logger "INFO" "Usage: ci_mypy_check [--<option>=<value>] ..."
     empty_line
-    logger "INFO" "All options available in black CLI can be used."
+    logger "INFO" "All options available in mypy CLI can be used."
     logger "INFO" "For more details, see link below:"
-    logger "LINK" "https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html#command-line-options"
-    logger "CODE" "$ black --help"
+    logger "LINK" "https://mypy.readthedocs.io/en/stable/command_line.html"
+    logger "CODE" "$ mypy --help"
     empty_line
     logger "INFO" "Example:"
-    logger "CODE" "$ ci_black_check --diff --color --verbose --line-length=79"
+    logger "CODE" "$ ci_mypy_check --pretty --color-output package1 package2 | tee mypy.log"
 }
 
-ci_black_check() {
-    check_if_installed "black"
+ci_mypy_check() {
+    check_if_installed "mypy"
 
     # Define default flags
     local default_flags="--check"
@@ -51,26 +51,24 @@ ci_black_check() {
         shift
     done
 
-    VERSION=$(black --version)
-    logger "INFO" "BLACK VERSION: $VERSION"
-    logger "LINK" "https://black.readthedocs.io/en/stable/index.html"
+    VERSION=$(mypy --version)
+    logger "INFO" "MYPY VERSION: $VERSION"
+    logger "LINK" "https://mypy.readthedocs.io/en/stable/index.html"
     empty_line
 
     # Check if pyproject.toml exists
-    check_for_pyproject_toml "black"
+    check_for_pyproject_toml "mypy"
+    logger "WARN" "Note that not all command-line options can be configured" \
+        "using a pyproject.toml file. See the link below for more details."
+    logger "LINK" "https://mypy.readthedocs.io/en/stable/config_file.html"
 
-    logger "TIP" "Note that all command-line options can also be configured" \
-        "using a pyproject.toml file."
-
-    if ! black $default_flags $user_flags $packages; then
-        logger "ERROR" "BLACK ERROR: at least one file is poorly formatted."
-        logger "INFO" "Consider running the following command to fix the formatting errors:"
-        logger "CODE" "$ black ."
+    if ! mypy $default_flags $user_flags $packages; then
+        logger "ERROR" "❌ mypy check failed."
         exit 123
     fi
 
     empty_line
-    logger "INFO" "✅ Black check passed."
+    logger "INFO" "✅ mypy check passed."
 }
 
-ci_black_check "$@"
+ci_mypy_check "$@"
