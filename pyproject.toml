@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gaohn-common-utils"
-version = "0.0.35"
+version = "0.0.36"
 authors = [
   { name="Gao Hongnan", email="hongnangao@gmail.com" },
 ]
@@ -69,7 +69,6 @@ exclude = '''
 [tool.isort]
 profile = "black"
 line_length = 88
-diff = true
 verbose = false
 skip = [
     ".eggs",
@@ -119,4 +118,5 @@ skip_glob = [
         "duplicate-code",
         "logging-fstring-interpolation",
         "no-member",
+        "missing-module-docstring",
     ]

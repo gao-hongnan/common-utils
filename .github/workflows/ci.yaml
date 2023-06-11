@@ -1,0 +1,44 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  continuous-integration:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Environment setup
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+          cache: pip
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements_dev.txt') }}
+          restore-keys: ${{ runner.os }}-pip-
+      - name: Install dev dependencies
+        run: |
+          python3 -m pip install --upgrade pip setuptools wheel
+          python3 -m pip install -r requirements_dev.txt
+      - name: Run Black and Isort formatter check
+        run: |
+          curl https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/devops/ci/ci_formatter.sh \
+          | bash
+      - name: Run Pylint check
+        run: |
+          curl -o \
+          ci_linter.sh \
+          https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/devops/ci/ci_linter.sh && \
+          bash ci_linter.sh pipeline-feature/mlops_pipeline_feature_v1/utils.py
