@@ -46,3 +46,10 @@ runs:
           examples
       shell: bash
       continue-on-error: true
+    - name: Upload Check Results
+      uses: actions/upload-artifact@v3
+      with:
+        name: check-results
+        path: |
+          ./bandit_results.json
+          ./pylint_results.json
