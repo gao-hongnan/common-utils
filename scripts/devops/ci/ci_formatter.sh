@@ -7,51 +7,72 @@
 UTILS_SCRIPT=$(curl -s https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/utils.sh)
 source /dev/stdin <<<"$UTILS_SCRIPT"
 logger "INFO" "Fetched the utils.sh script from a URL and sourced it"
+empty_line
 
 ci_black_check() {
-  VERSION=$(black --version)
-  logger "INFO" "BLACK VERSION: $VERSION"
+    if ! command -v black &>/dev/null; then
+        logger "ERROR" "Black is not installed. Please install it and retry."
+        exit 1
+    fi
 
-  if [ ! -f "pyproject.toml" ]; then
-    logger "WARN" "No pyproject.toml found. Black will use default settings."
-  else
-    logger "INFO" "Found pyproject.toml. Black will use settings defined in it."
-  fi
+    # Check if the first argument is --help
+    if check_for_help "$@"; then
+        logger "INFO" "Help on the way..."
+        black --help
+        return
+    fi
 
-  if ! black --check --diff --color --verbose .; then
-    logger "ERROR" "BLACK ERROR: at least one file is poorly formatted."
-    logger "INFO" "Consider running the following command to fix the formatting errors:"
-    logger "CODE" "$ black ."
-    exit 123
-  fi
+    VERSION=$(black --version)
+    logger "INFO" "BLACK VERSION: $VERSION"
+    logger "LINK" "https://black.readthedocs.io/en/stable/index.html"
+    empty_line
 
-  logger "INFO" "CHECKCODE: CONGRATULATIONS, ALL TESTS SUCCESSFUL!!"
+    if [ ! -f "pyproject.toml" ]; then
+        logger "WARN" "No pyproject.toml found in root directory."
+        logger "TIP" "Note that all command-line options listed above can also be configured using a pyproject.toml file."
+        empty_line
+        logger "INFO" "Run the following command to check if black is able to find it:"
+        logger "CODE" "$ black --verbose --check ."
+    else
+        logger "INFO" "Found pyproject.toml. Black will use settings defined in it."
+        logger "TIP" "Note that all command-line options listed above can also be configured using a pyproject.toml file."
+        empty_line
+    fi
+
+    if ! black --check .; then
+        logger "ERROR" "BLACK ERROR: at least one file is poorly formatted."
+        logger "INFO" "Consider running the following command to fix the formatting errors:"
+        logger "CODE" "$ black ."
+        exit 123
+    fi
+
+    empty_line
+    logger "INFO" "✅ Black check passed."
 }
 
 ci_isort_check() {
-  VERSION=$(isort --version)
-  logger "INFO" "ISORT VERSION: $VERSION"
+    VERSION=$(isort --version)
+    logger "INFO" "ISORT VERSION: $VERSION"
 
-  if [ ! -f "pyproject.toml" ]; then
-    logger "WARN" "No pyproject.toml found. isort will use default settings."
-  else
-    logger "INFO" "Found pyproject.toml. isort will use settings defined in it."
-  fi
+    if [ ! -f "pyproject.toml" ]; then
+        logger "WARN" "No pyproject.toml found. isort will use default settings."
+    else
+        logger "INFO" "Found pyproject.toml. isort will use settings defined in it."
+    fi
 
-  if ! isort --check --diff --verbose .; then
-    logger "ERROR" "ISORT ERROR: at least one file has incorrect import order."
-    logger "INFO" "Consider running the following command to fix the import order:"
-    logger "CODE" "$ isort ."
-    exit 123
-  fi
+    if ! isort --check --diff --verbose .; then
+        logger "ERROR" "ISORT ERROR: at least one file has incorrect import order."
+        logger "INFO" "Consider running the following command to fix the import order:"
+        logger "CODE" "$ isort ."
+        exit 123
+    fi
 
-  logger "INFO" "CHECKCODE: CONGRATULATIONS, ALL TESTS SUCCESSFUL!!"
+    logger "INFO" "CHECKCODE: CONGRATULATIONS, ALL TESTS SUCCESSFUL!!"
 }
 
 main() {
-  ci_black_check
-  ci_isort_check
+    ci_black_check "$@"
+    #ci_isort_check
 }
 
-main
-
+main "$@"

@@ -13,18 +13,6 @@ UTILS_SCRIPT=$(curl -s https://raw.githubusercontent.com/gao-hongnan/common-util
 source /dev/stdin <<<"$UTILS_SCRIPT"
 logger "INFO" "Fetched the utils.sh script from a URL and sourced it"
 
-# Function to check for --help flag
-check_for_help() {
-    for arg in "$@"
-    do
-        if [ "$arg" = "--help" ] || [ "$arg" = "-h" ]
-        then
-            return 0
-        fi
-    done
-    return 1
-}
-
 useful_commands() {
     gcloud services list --enabled
 }
