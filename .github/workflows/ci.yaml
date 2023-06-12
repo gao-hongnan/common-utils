@@ -45,3 +45,4 @@ jobs:
           python3 -m pip install -r requirements_dev.txt
       - name: Run Continuous Integration Action
         uses: ./.github/actions/continuous-integration
+        continue-on-error: false

@@ -2,7 +2,6 @@ name: "Continuous Integration (CI)"
 description: "DevOps: Run CI checks on pull requests and pushes to main branch."
 runs:
   using: "composite"
-  continue-on-error: true
   steps:
     - name: Run Bandit Security Check
       run: |
@@ -12,6 +11,7 @@ runs:
           --output=bandit_results.json \
           common_utils
       shell: bash
+      continue-on-error: true
     - name: Run Linter Check
       run: |
         bash ./scripts/devops/ci/ci_linter_pylint.sh \
@@ -21,6 +21,7 @@ runs:
           --output-format=json:pylint_results.json,colorized \
           common_utils
       shell: bash
+      continue-on-error: true
     - name: Run Formatter Black Check
       run: |
         bash ./scripts/devops/ci/ci_formatter_black.sh \
@@ -30,6 +31,7 @@ runs:
           --verbose \
           common_utils
       shell: bash
+      continue-on-error: true
     - name: Run Formatter Isort Check
       run: |
         bash ./scripts/devops/ci/ci_formatter_isort.sh \
@@ -39,6 +41,7 @@ runs:
           --verbose \
           common_utils
       shell: bash
+      continue-on-error: true
     - name: Run MyPy Type Check
       run: |
         bash ./scripts/devops/ci/ci_typing_mypy.sh \
@@ -46,6 +49,7 @@ runs:
           common_utils \
           | tee mypy_results.log
       shell: bash
+      continue-on-error: true
     - name: Upload Check Results
       uses: actions/upload-artifact@v3
       with:
@@ -54,3 +58,10 @@ runs:
           ./bandit_results.json
           ./pylint_results.json
           ./mypy_results.log
+    - name: Check for any failure
+      run: |
+        if [[ "${{ failure() }}" == "true" ]]; then
+          echo "One or more steps failed, failing job"
+          exit 1
+        fi
+      shell: bash
