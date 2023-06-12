@@ -58,10 +58,3 @@ runs:
           ./bandit_results.json
           ./pylint_results.json
           ./mypy_results.log
-    - name: Check for any failure
-      run: |
-        if [[ "${{ failure() }}" == "true" ]]; then
-          echo "One or more steps failed, failing job"
-          exit 1
-        fi
-      shell: bash
