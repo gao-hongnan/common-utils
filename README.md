@@ -14,6 +14,10 @@ source venv/bin/activate && \
 rm make_venv.sh
 ```
 
+## Continue on error vs If Always
+
+See [here](https://stackoverflow.com/questions/58858429/how-to-run-a-github-actions-step-even-if-the-previous-step-fails-while-still-f/58859404#58859404).
+
 ## Run Bandit Security Check
 
 ```bash
