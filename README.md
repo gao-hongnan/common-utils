@@ -69,3 +69,15 @@ bash ./scripts/devops/ci/ci_typing_mypy.sh \
   common_utils \
   | tee mypy_results.log
 ```
+
+## Run Unit Test
+
+## Run Integration Test
+
+## Run System Test
+
+## Run Acceptance Test
+
+https://madewithml.com/courses/mlops/testing/
+
+## Run Data Test (Great Expectations)
