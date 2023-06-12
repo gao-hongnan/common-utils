@@ -52,6 +52,7 @@ runs:
       if: always()
     - name: Upload Check Results
       uses: actions/upload-artifact@v3
+      if: always()
       with:
         name: check-results
         path: |
