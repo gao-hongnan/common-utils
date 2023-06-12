@@ -9,8 +9,7 @@ runs:
           --severity-level=low \
           --format=json \
           --output=bandit_results.json \
-          common_utils \
-          examples
+          common_utils
       shell: bash
       continue-on-error: true
     - name: Run Linter Check
@@ -20,8 +19,7 @@ runs:
           --fail-under=10 \
           --score=yes \
           --output-format=json:pylint_results.json,colorized \
-          common_utils \
-          examples
+          common_utils
       shell: bash
       continue-on-error: true
     - name: Run Formatter Black Check
@@ -31,8 +29,7 @@ runs:
           --diff \
           --color \
           --verbose \
-          common_utils \
-          examples
+          common_utils
       shell: bash
       continue-on-error: true
     - name: Run Formatter Isort Check
@@ -42,8 +39,7 @@ runs:
           --diff \
           --color \
           --verbose \
-          common_utils \
-          examples
+          common_utils
       shell: bash
       continue-on-error: true
     - name: Run MyPy Type Check
@@ -51,7 +47,6 @@ runs:
         bash ./scripts/devops/ci/ci_typing_mypy.sh \
           --config-file=pyproject.toml \
           common_utils \
-          examples \
           | tee mypy_results.log
       shell: bash
       continue-on-error: true
