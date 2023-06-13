@@ -3,7 +3,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 from rich.logging import RichHandler
 
@@ -19,10 +19,10 @@ class Logger:
     propagate: bool = False
     log_dir: Optional[str] = "outputs"
 
-    log_output_dir: Optional[str] = field(default=None, init=False)
+    log_output_dir: Optional[Union[str, Path]] = field(default=None, init=False)
     logger: logging.Logger = field(init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.logger = self._init_logger()
 
     def _create_log_output_dir(self) -> Path:
@@ -41,15 +41,11 @@ class Logger:
         else:
             log_file_path = None
 
-        if self.module_name is None:
-            logger = logging.getLogger(__name__)
-        else:
-            # get module name, useful for multi-module logging
-            logger = logging.getLogger(self.module_name)
-
+        # get module name, useful for multi-module logging
+        logger = logging.getLogger(self.module_name or __name__)
         logger.setLevel(self.level)
 
-        stream_handler = RichHandler(rich_tracebacks=True)
+        stream_handler = RichHandler(rich_tracebacks=True, level=self.level)
         logger.addHandler(stream_handler)
 
         if log_file_path:
