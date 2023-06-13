@@ -12,3 +12,16 @@ class DictPersistence(ABC):
     @abstractmethod
     def load_to_dict(self, filepath: str, **kwargs: Dict[str, Any]) -> Dict[str, Any]:
         """Load a dictionary from a filepath."""
+
+class Connection(ABC):
+    @abstractmethod
+    def connect(self) -> None:
+        """Connect to a database."""
+
+    @abstractmethod
+    def disconnect(self) -> None:
+        """Disconnect from a database."""
+
+    @abstractmethod
+    def query(self, query: str) -> Any:
+        """Query a database."""
