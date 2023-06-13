@@ -98,7 +98,7 @@ class GCS(GCPConnector):
     def upload_blob(
         self,
         source_file_name: str,
-        blob: storage.Blob,
+        destination_blob_name: str,
         **kwargs: Dict[str, Any],
     ) -> None:
         """
@@ -132,6 +132,8 @@ class GCS(GCPConnector):
         # If the destination object already exists in your bucket, set instead a
         # generation-match precondition using its generation number.
         generation_match_precondition = 0
+
+        blob = self.create_blob(destination_blob_name)
 
         blob.upload_from_filename(
             source_file_name,
