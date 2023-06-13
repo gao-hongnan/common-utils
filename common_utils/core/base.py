@@ -17,7 +17,10 @@ class DictPersistence(ABC):
 
 
 class Connection(ABC):
-    """Abstract class for database connection."""
+    """Abstract class for database connection.
+
+    See common_utils/cloud/gcp/database/bigquery.py for example.
+    """
 
     @abstractmethod
     def connect(self) -> None:
@@ -33,20 +36,30 @@ class Connection(ABC):
 
 
 class Storage(ABC):
-    """Abstract class for storage."""
+    """Abstract class for storage.
+
+    See common_utils/cloud/gcp/storage/gcs.py for example.
+
+    Subsequent cloud storages should abide by this interface. This means
+    turning S3, Azure, etc. into a class that inherits from this class.
+    """
 
     @abstractmethod
-    def save_file(self) -> None:
+    def upload_blob(self) -> None:
         """Save a file to a specific location."""
 
     @abstractmethod
-    def save_files(self) -> None:
+    def upload_blobs(self) -> None:
         """Save multiple files to a specific location."""
 
     @abstractmethod
-    def load_file(self) -> None:
+    def upload_directory(self) -> None:
+        """Save a directory to a specific location."""
+
+    @abstractmethod
+    def load_blob(self) -> None:
         """Load a file from a specific location."""
 
     @abstractmethod
-    def load_files(self) -> None:
+    def load_blobs(self) -> None:
         """Load multiple files from a specific location."""

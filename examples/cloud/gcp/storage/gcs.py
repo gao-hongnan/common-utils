@@ -14,7 +14,7 @@ from pydantic import BaseModel  # pylint: disable=no-name-in-module
 from rich.logging import RichHandler
 from rich.pretty import pprint
 
-from common_utils.cloud.gcp.storage.bigquery import BigQuery
+from common_utils.cloud.gcp.database.bigquery import BigQuery
 from common_utils.cloud.gcp.storage.gcs import GCS
 
 # Setup logging
