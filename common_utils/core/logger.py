@@ -33,32 +33,41 @@ class Logger:
 
         return log_output_dir
 
-    def _init_logger(self) -> logging.Logger:
+    def _get_log_file_path(self) -> Optional[Path]:
         if self.log_dir is not None:
-            log_output_dir = self._create_log_output_dir()
-            log_file_path = log_output_dir / self.log_file if self.log_file else None
-            self.log_output_dir = log_output_dir
-        else:
-            log_file_path = None
+            self.log_output_dir = self._create_log_output_dir()
+            return self.log_output_dir / self.log_file
+        return None
 
+    def _create_stream_handler(self) -> RichHandler:
+        stream_handler = RichHandler(rich_tracebacks=True, level=self.level)
+        stream_handler.setFormatter(
+            logging.Formatter(
+                "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+                "%Y-%m-%d %H:%M:%S",
+            )
+        )
+        return stream_handler
+
+    def _create_file_handler(self, log_file_path: Path) -> logging.FileHandler:
+        file_handler = logging.FileHandler(filename=str(log_file_path))
+        file_handler.setFormatter(
+            logging.Formatter(
+                "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+                "%Y-%m-%d %H:%M:%S",
+            )
+        )
+        return file_handler
+
+    def _init_logger(self) -> logging.Logger:
         # get module name, useful for multi-module logging
         logger = logging.getLogger(self.module_name or __name__)
         logger.setLevel(self.level)
 
-        stream_handler = RichHandler(rich_tracebacks=True, level=self.level)
-        logger.addHandler(stream_handler)
+        logger.addHandler(self._create_stream_handler())
 
+        log_file_path = self._get_log_file_path()
         if log_file_path:
-            file_handler = logging.FileHandler(filename=str(log_file_path))
-            file_handler.setFormatter(
-                logging.Formatter(
-                    "%(asctime)s [%(levelname)s]: %(message)s",
-                    "%Y-%m-%d %H:%M:%S",
-                )
-            )
-
-            logger.addHandler(file_handler)
-
+            logger.addHandler(self._create_file_handler(log_file_path))
         logger.propagate = self.propagate
-
         return logger

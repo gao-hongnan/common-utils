@@ -20,6 +20,9 @@ class Connection(ABC):
     """Abstract class for database connection.
 
     See common_utils/cloud/gcp/database/bigquery.py for example.
+
+    NOTE:
+        1. In particular, it should have a property or attribute table_name.
     """
 
     @abstractmethod
@@ -40,8 +43,9 @@ class Storage(ABC):
 
     See common_utils/cloud/gcp/storage/gcs.py for example.
 
-    Subsequent cloud storages should abide by this interface. This means
-    turning S3, Azure, etc. into a class that inherits from this class.
+    NOTE:
+        1. Subsequent cloud storages should abide by this interface. This means
+            turning S3, Azure, etc. into a class that inherits from this class.
     """
 
     @abstractmethod
