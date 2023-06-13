@@ -1,126 +1,106 @@
 import hashlib
 import json
-import logging
-import os
-from datetime import datetime
+import shutil
+from pathlib import Path
+from typing import Dict
 
-import pandas as pd
-from rich.logging import RichHandler
-
-# Setup logging
-logging.basicConfig(
-    level="INFO",
-    format="%(asctime)s [%(levelname)s]: %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-    handlers=[RichHandler()],
-)
-
-logger = logging.getLogger("rich")
+from common_utils.core.base import Storage
 
 
-DATA_DIR = "data_versions"
-CODE_DIR = "code_versions"
-METADATA_FILE = "metadata.json"
+class SimpleDVC:
+    """
+    gaohn/  # This is your bucket name
+    |- imdb/  # This is your project directory
+        |- gaohn-dvc/  # This is your remote dvc directory
+    """
 
+    def __init__(
+        self,
+        storage: Storage,
+        data_dir: str = "./data",
+        cache_dir: str = ".cache",
+    ) -> None:
+        self.storage = storage
 
-def hash_file(filepath):
-    """Generate MD5 hash of a file."""
-    hash_md5 = hashlib.md5()
-    with open(filepath, "rb") as f:
-        for chunk in iter(lambda: f.read(4096), b""):
-            hash_md5.update(chunk)
-    return hash_md5.hexdigest()
+        self.data_dir = Path(data_dir)
+        self.cache_dir = Path(cache_dir)
 
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
 
-def save_data_version1(data, filename, bucket_name, storage):
-    """Save version of data and upload to GCS."""
-    if not os.path.exists(DATA_DIR):
-        os.makedirs(DATA_DIR)
+        self.metadata_file: Path
 
-    # Save data to a local file
-    local_version_filename = os.path.join(DATA_DIR, f"{filename}.csv")
-    data.to_csv(local_version_filename, index=False)
+    @property
+    def remote_dvc_dir(self) -> str:
+        """Always fixed to gaohn-dvc."""
+        return "gaohn-dvc"
 
-    # Compute a hash of the file's content
-    file_content_hash = hash_file(local_version_filename)
+    def _create_gitignore(self, pattern: str) -> None:
+        gitignore_file = self.data_dir / ".gitignore"
+        if not gitignore_file.exists():
+            with open(gitignore_file, "w", encoding="utf-8") as file:
+                file.write(pattern)
+        else:
+            with open(gitignore_file, "a+", encoding="utf-8") as file:
+                file.seek(0)
+                if pattern not in file.read():
+                    file.write("\n" + pattern)
 
-    # Create a version ID using both the current time and the file content hash
-    version_id = hashlib.md5(
-        (str(datetime.now()) + file_content_hash).encode()
-    ).hexdigest()
+    def _get_cache_file_path(self, filename: str) -> Path:
+        return self.cache_dir / filename
 
-    # Rename the local file to include the version ID
-    os.rename(
-        local_version_filename,
-        local_version_filename.replace(".csv", f"_{version_id}.csv"),
-    )
+    def _load_metadata(self, filename: str) -> Dict[str, str]:
+        metadata_file = self.data_dir / f"{filename}.json"
+        with metadata_file.open("r") as file:
+            return json.load(file)
 
-    # Update local_version_filename to include the version ID
-    local_version_filename = local_version_filename.replace(
-        ".csv", f"_{version_id}.csv"
-    )
+    def _calculate_md5(self, filepath: str) -> str:
+        hash_md5 = hashlib.md5()
+        with open(filepath, "rb") as file:
+            for chunk in iter(lambda: file.read(4096), b""):
+                hash_md5.update(chunk)
+        return hash_md5.hexdigest()
 
-    # Upload to GCS
-    storage_client = storage.Client()
-    bucket = storage_client.get_bucket(bucket_name)
-    blob = bucket.blob(f"{DATA_DIR}/{filename}_{version_id}.csv")
-    blob.upload_from_filename(local_version_filename)
+    def add(self, filepath: str) -> Dict[str, str]:
+        filepath = Path(filepath)
+        filename = filepath.name
+        extension = filepath.suffix
 
-    return local_version_filename, version_id
+        md5 = self._calculate_md5(str(filepath))
+        cache_filepath = self.cache_dir / md5
 
+        shutil.copy(filepath, cache_filepath)
 
-def save_data_version(data, filename, bucket_name):
-    """Save version of data and upload to GCS."""
-    if not os.path.exists(DATA_DIR):
-        os.makedirs(DATA_DIR)
+        metadata = {
+            "filename": filename,
+            "filepath": str(cache_filepath),
+            "extension": extension,
+            "md5": md5,
+        }
+        self.metadata_file = self.data_dir / f"{filename}.json"
 
-    version_id = hashlib.md5(str(datetime.now()).encode()).hexdigest()
+        with self.metadata_file.open("w") as file:
+            json.dump(metadata, file, indent=4)
 
-    local_version_filename = os.path.join(DATA_DIR, f"{filename}_{version_id}.csv")
-    data.to_csv(local_version_filename, index=False)
+        self._create_gitignore(filename)
 
-    # Upload to GCS
-    storage_client = storage.Client()
-    bucket = storage_client.get_bucket(bucket_name)
-    blob = bucket.blob(f"{DATA_DIR}/{filename}_{version_id}.csv")
-    blob.upload_from_filename(local_version_filename)
+        return metadata
 
-    return local_version_filename, version_id
+    def push(self, filepath: str, destination_blob_name: str) -> None:
+        filepath = Path(filepath)
+        filename = filepath.name
+        metadata = self._load_metadata(filename)
+        cache_filepath = metadata["filepath"]
+        self.storage.upload_blob(
+            source_file_name=cache_filepath, destination_blob_name=destination_blob_name
+        )
 
+    def pull(self, filename: str) -> str:
+        metadata = self._load_metadata(filename)
+        source_blob_name = f"imdb/{self.remote_dvc_dir}/{metadata['md5']}"
+        self.storage.download_blob(source_blob_name, self.data_dir / filename)
 
-def update_metadata(data_metadata, code_metadata):
-    """Update metadata file."""
-    if os.path.exists(METADATA_FILE):
-        with open(METADATA_FILE, "r") as f:
-            existing_metadata = json.load(f)
-    else:
-        existing_metadata = []
-
-    new_metadata = {
-        "timestamp": str(datetime.now()),
-        "data": data_metadata,
-        "code": code_metadata,
-    }
-    existing_metadata.append(new_metadata)
-
-    with open(METADATA_FILE, "w") as f:
-        json.dump(existing_metadata, f, indent=4)
-
-    return new_metadata
-
-
-# Example usage:
-data = pd.DataFrame(
-    {
-        "col1": [1, 2, 3],
-        "col2": ["a", "b", "c"],
-    }
-)
-
-data_filename, data_version_id = save_data_version(data, "my_data")
-
-metadata = update_metadata(
-    {"filename": data_filename, "version_id": data_version_id},
-)
-
-print(metadata)
+    def checkout(self, filename: str):
+        with self.metadata_file.open("r") as file:
+            metadata = json.load(file)
+        if metadata["filename"] == filename:
+            shutil.copy(metadata["filepath"], str(self.data_dir / filename))
