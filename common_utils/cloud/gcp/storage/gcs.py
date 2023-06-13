@@ -154,3 +154,31 @@ class GCS(GCPConnector):
                     destination_dir + "/" + str(file_path.relative_to(source_dir))
                 )
                 self.upload_blob(str(file_path), destination_blob_name, **kwargs)
+
+    def download_blob(
+        self,
+        source_blob_name: str,
+        destination_file_name: str,
+        **kwargs: Dict[str, Any],
+    ) -> None:
+        """
+        Downloads a blob from the bucket.
+        https://cloud.google.com/storage/docs/downloading-objects
+
+        # The ID of your GCS bucket
+        # bucket_name = "your-bucket-name"
+
+        # The ID of your GCS object
+        # source_blob_name = "storage-object-name"
+
+        # The path to which the file should be downloaded
+        # destination_file_name = "local/path/to/file"
+        """
+
+        # Construct a client side representation of a blob.
+        # Note `Bucket.blob` differs from `Bucket.get_blob` as it doesn't retrieve
+        # any content from Google Cloud Storage. As we don't need additional data,
+        # using `Bucket.blob` is preferred here.
+        blob = self.create_blob(source_blob_name)
+
+        blob.download_to_filename(destination_file_name, **kwargs)

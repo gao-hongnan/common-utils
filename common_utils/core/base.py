@@ -61,9 +61,9 @@ class Storage(ABC):
         """Save a directory to a specific location."""
 
     @abstractmethod
-    def load_blob(self) -> None:
+    def download_blob(self) -> None:
         """Load a file from a specific location."""
 
     @abstractmethod
-    def load_blobs(self) -> None:
+    def download_blobs(self) -> None:
         """Load multiple files from a specific location."""
