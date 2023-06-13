@@ -9,9 +9,20 @@ from common_utils.core.base import Storage
 
 class SimpleDVC:
     """
-    gaohn/  # This is your bucket name
-    |- imdb/  # This is your project directory
-        |- gaohn-dvc/  # This is your remote dvc directory
+    LOCAL TREE
+    pipeline-training/data
+    ├── interim
+    ├── processed
+    └── raw
+        ├── filtered_movies_incremental.csv             # filename
+        └── filtered_movies_incremental.csv.json        # metadata for filename
+
+    REMOTE DVC TREE
+    gaohn/                                              # bucket
+    └── imdb                                            # remote project name
+        └── gaohn-dvc                                   # remote dvc name
+            ├── 1234567890                              # md5 hash for raw/filtered_movies_incremental.csv
+            └── filtered_movies_incremental.csv.json
     """
 
     def __init__(
@@ -90,17 +101,20 @@ class SimpleDVC:
         filename = filepath.name
         metadata = self._load_metadata(filename)
         cache_filepath = metadata["filepath"]
+
+        # this effectively uploads the cached file to the remote storage
         self.storage.upload_blob(
             source_file_name=cache_filepath, destination_blob_name=destination_blob_name
         )
 
-    def pull(self, filename: str) -> str:
+    def pull(self, filename: str, remote_project_name: str) -> None:
         metadata = self._load_metadata(filename)
-        source_blob_name = f"imdb/{self.remote_dvc_dir}/{metadata['md5']}"
+        source_blob_name = (
+            f"{remote_project_name}/{self.remote_dvc_dir}/{metadata['md5']}"
+        )
         self.storage.download_blob(source_blob_name, self.data_dir / filename)
 
-    def checkout(self, filename: str):
-        with self.metadata_file.open("r") as file:
-            metadata = json.load(file)
+    def checkout(self, filename: str) -> None:
+        metadata = self._load_metadata(filename)
         if metadata["filename"] == filename:
             shutil.copy(metadata["filepath"], str(self.data_dir / filename))
