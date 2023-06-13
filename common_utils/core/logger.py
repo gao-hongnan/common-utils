@@ -1,11 +1,20 @@
 """Logger class for logging to console and file."""
 import logging
+import os
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Union
 
 from rich.logging import RichHandler
+
+
+class CustomFormatter(logging.Formatter):
+    """This class overrides logging.Formatter's pathname to be relative path."""
+
+    def format(self, record):
+        record.pathname = os.path.relpath(record.pathname)
+        return super().format(record)
 
 
 @dataclass
@@ -42,8 +51,8 @@ class Logger:
     def _create_stream_handler(self) -> RichHandler:
         stream_handler = RichHandler(rich_tracebacks=True, level=self.level)
         stream_handler.setFormatter(
-            logging.Formatter(
-                "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+            CustomFormatter(
+                "%(asctime)s [%(levelname)s] %(pathname)s %(funcName)s L%(lineno)d: %(message)s",
                 "%Y-%m-%d %H:%M:%S",
             )
         )
@@ -52,8 +61,8 @@ class Logger:
     def _create_file_handler(self, log_file_path: Path) -> logging.FileHandler:
         file_handler = logging.FileHandler(filename=str(log_file_path))
         file_handler.setFormatter(
-            logging.Formatter(
-                "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+            CustomFormatter(
+                "%(asctime)s [%(levelname)s] %(pathname)s %(funcName)s L%(lineno)d: %(message)s",
                 "%Y-%m-%d %H:%M:%S",
             )
         )
