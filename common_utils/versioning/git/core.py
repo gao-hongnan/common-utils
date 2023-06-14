@@ -16,6 +16,22 @@ logger = Logger(
 
 
 def check_git_status(working_dir: Optional[str] = None) -> Literal[True, False]:
+    """
+    Check the Git status of the working directory. If there are untracked or
+    uncommitted changes, return False.
+
+    Parameters
+    ----------
+    working_dir : str, optional
+        The path of the working directory where the Git command should be executed,
+        by default None. If None, it uses the current working directory.
+
+    Returns
+    -------
+    Literal[True, False]
+        True if there are no untracked or uncommitted changes in the working directory,
+        False otherwise.
+    """
     status_output = (
         subprocess.check_output(["git", "status", "--porcelain"], cwd=working_dir)
         .decode("utf-8")
@@ -25,6 +41,15 @@ def check_git_status(working_dir: Optional[str] = None) -> Literal[True, False]:
 
 
 def log_message_if_working_dir_is_none(working_dir: Optional[str] = None) -> None:
+    """
+    Log an informative message if no working directory is provided.
+
+    Parameters
+    ----------
+    working_dir : str, optional
+        The path of the working directory, by default None.
+            If None, an info message is logged.
+    """
     if working_dir is None:
         logger.info("Working directory not provided. Defaulting to current directory.")
     logger.info(f"Working directory: {working_dir}")
@@ -44,6 +69,9 @@ def get_git_commit_hash(
     working_dir : str, optional
         The path of the working directory where the Git command should be executed,
         by default None. If None, it uses the current working directory ".".
+    check_git_status : Literal[True, False], optional
+        Whether to check if there are untracked or uncommitted changes in the
+        working directory, by default False.
 
     Returns
     -------
