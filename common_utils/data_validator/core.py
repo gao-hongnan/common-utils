@@ -1,10 +1,15 @@
 """This module aims to mimic the functionality of Great Expectations, but with a
-very minimalistic approach just to illustrate the concept."""
+very minimalistic approach just to illustrate the concept.
+
+TODO: https://cloud.google.com/architecture/mlops-continuous-delivery-and-automation-pipelines-in-machine-learning#data_and_model_validation
+    - Add more validation methods.
+"""
 from __future__ import annotations
+
 from typing import Any, Dict
 
 import pandas as pd
-import pytest
+from rich.pretty import pprint
 
 from common_utils.core.logger import Logger
 
@@ -32,14 +37,20 @@ class DataFrameValidator:
 
     def check_missing(self) -> DataFrameValidator:
         """Check if there are missing values in the dataframe."""
-        missing_data = self.df.isnull().sum()
-        if missing_data.any():
+        logger.info("Checking missing values...")
+        total = self.df.isnull().sum().sort_values(ascending=False)
+        percent = (self.df.isnull().sum() / self.df.isnull().count()).sort_values(
+            ascending=False
+        )
+        missing_data = pd.concat([total, percent], axis=1, keys=["Total", "Percent"])
+        if missing_data["Total"].any():
             logger.warning("The following columns have missing data:")
-            logger.warning(missing_data[missing_data > 0])
+            pprint(missing_data[missing_data["Total"] > 0])
         return self
 
     def check_data_types(self) -> DataFrameValidator:
         """Check if the data types of the dataframe's columns match the expected schema."""
+        logger.info("Checking data types...")
         for column, dtype in self.schema.items():
             if self.df[column].dtype != dtype:
                 logger.warning(
@@ -49,6 +60,7 @@ class DataFrameValidator:
 
     def check_schema(self) -> DataFrameValidator:
         """Check if the schema of the dataframe matches the expected schema."""
+        logger.info("Checking schema...")
         for column in self.schema.keys():
             if column not in self.df.columns:
                 logger.warning(
