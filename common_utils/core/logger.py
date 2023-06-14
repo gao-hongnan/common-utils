@@ -19,27 +19,74 @@ class CustomFormatter(logging.Formatter):
 
 @dataclass
 class Logger:
-    """Class for logger. Consider using singleton design to
-    maintain only one instance of logger (i.e. shared logger).
+    """
+    Class for logger. Consider using singleton design to maintain only one
+    instance of logger (i.e., shared logger).
 
-    Logger(
-        log_file="pipeline_training.log",
-        module_name=__name__,
-        level=logging.INFO,
-        propagate=False,
-        log_root_dir="/home/user/logs",
-    )
-    --> produces the below tree structure, note the log_root_dir is the root
-        while the session_log_dir is the directory for the current session.
-    /home/
-    │
-    └───user/
+    This logger implementation adheres to several principles of good
+    software design:
+
+    1. Single Responsibility Principle (SRP): The logger's responsibility
+       is clear - managing and configuring the logging process. It creates
+       logging handlers, formatters, and manages logging files and paths.
+
+    2. Open-Closed Principle (OCP): The logger is open for extension (e.g.,
+       one can easily extend it to add different types of handlers) but
+       closed for modification (adding new functionality doesn't require
+       modification of the existing code).
+
+    3. Liskov Substitution Principle (LSP): This principle is not explicitly
+       implemented in this class since it doesn't have any subclasses.
+
+    4. Interface Segregation Principle (ISP): The Logger class does not
+       depend on any interfaces it doesn't use. The class itself can be
+       seen as a high-level interface for logging operations.
+
+    5. Dependency Inversion Principle (DIP): The logger depends on
+       abstractions (e.g., the logging module's Handler and Formatter
+       classes), not concrete classes.
+
+    1. Factory Pattern: In terms of design patterns, this Logger class follows the 'Factory'
+       pattern by creating and returning logging handlers and formatters.
+       For more justification, just realize that factory pattern is a creational pattern
+       which provides an interface for creating objects in a superclass, but
+       allows subclasses to alter the type of objects that will be created.
+
+       For more info, see my design pattern notes.
+
+    Areas for improvement:
+
+    1. Consider implementing a Singleton pattern to ensure only one
+       instance of Logger is used throughout the application.
+
+    2. Consider adding thread safety to ensure that logs from different
+       threads don't interfere with each other.
+
+    3. The logger could be further extended to support other types of
+       logging, such as sending logs to an HTTP endpoint.
+
+
+    Example:
+        Logger(
+            log_file="pipeline_training.log",
+            module_name=__name__,
+            level=logging.INFO,
+            propagate=False,
+            log_root_dir="/home/user/logs",
+        )
+
+        --> produces the below tree structure, note the log_root_dir is the root
+            while the session_log_dir is the directory for the current session.
+
+        /home/
         │
-        └───logs/                        # This is the log_root_dir
+        └───user/
             │
-            └───2023-06-14T10:20:30/     # This is the session_log_dir
+            └───logs/                        # This is the log_root_dir
                 │
-                └───pipeline_training.log
+                └───2023-06-14T10:20:30/     # This is the session_log_dir
+                    │
+                    └───pipeline_training.log
 
 
     Parameters
