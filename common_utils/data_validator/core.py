@@ -62,21 +62,3 @@ class DataFrameValidator:
     def validate(self) -> None:
         """Perform all validations on the dataframe."""
         self.check_schema().check_data_types().check_missing()
-
-
-def test_DataFrameValidator():
-    # Define a small dataframe for testing
-    df = pd.DataFrame({"A": [1, 2, 3], "B": ["a", "b", "c"], "C": [1.1, 2.2, 3.3]})
-
-    # Define the expected schema
-    schema = {"A": "int64", "B": "object", "C": "float64"}
-
-    # Instantiate the DataFrameValidator
-    df_validator = DataFrameValidator(df, schema)
-
-    # Perform the validations
-    df_validator.validate()
-
-
-# Run the test
-pytest.main(["-v", __file__])
