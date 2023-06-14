@@ -6,10 +6,11 @@ TODO: https://cloud.google.com/architecture/mlops-continuous-delivery-and-automa
 """
 from __future__ import annotations
 
+import textwrap
 from typing import Any, Dict
 
 import pandas as pd
-from rich.pretty import pprint
+from tabulate import tabulate
 
 from common_utils.core.logger import Logger
 
@@ -38,14 +39,30 @@ class DataFrameValidator:
     def check_missing(self) -> DataFrameValidator:
         """Check if there are missing values in the dataframe."""
         logger.info("Checking missing values...")
-        total = self.df.isnull().sum().sort_values(ascending=False)
-        percent = (self.df.isnull().sum() / self.df.isnull().count()).sort_values(
-            ascending=False
+        # note missing is the number of missing values per column
+        missing: pd.Series = self.df.isnull().sum().sort_values(ascending=False)
+
+        percent: pd.Series = (
+            self.df.isnull().sum() / self.df.isnull().count()
+        ).sort_values(ascending=False)
+
+        missing_data = pd.concat(
+            [missing, percent], axis=1, keys=["Missing", "Percent"]
         )
-        missing_data = pd.concat([total, percent], axis=1, keys=["Total", "Percent"])
-        if missing_data["Total"].any():
-            logger.warning("The following columns have missing data:")
-            pprint(missing_data[missing_data["Total"] > 0])
+        missing_data.index.name = "Feature"
+
+        if missing_data["Missing"].any():
+            logger.warning(  # pylint: disable=logging-not-lazy
+                "The following columns have missing data:\n"
+                + textwrap.indent(
+                    tabulate(
+                        missing_data[missing_data["Missing"] > 0],
+                        headers="keys",
+                        tablefmt="psql",
+                    ),
+                    "    ",
+                )
+            )
         return self
 
     def check_data_types(self) -> DataFrameValidator:
