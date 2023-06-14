@@ -36,7 +36,7 @@ class DataFrameValidator:
         self.df = df
         self.schema = schema
 
-    def check_missing(self) -> DataFrameValidator:
+    def validate_missing(self) -> DataFrameValidator:
         """Check if there are missing values in the dataframe."""
         logger.info("Checking missing values...")
         # note missing is the number of missing values per column
@@ -65,7 +65,7 @@ class DataFrameValidator:
             )
         return self
 
-    def check_data_types(self) -> DataFrameValidator:
+    def validate_data_types(self) -> DataFrameValidator:
         """Check if the data types of the dataframe's columns match the expected schema."""
         logger.info("Checking data types...")
         for column, dtype in self.schema.items():
@@ -75,7 +75,7 @@ class DataFrameValidator:
                 )
         return self
 
-    def check_schema(self) -> DataFrameValidator:
+    def validate_schema(self) -> DataFrameValidator:
         """Check if the schema of the dataframe matches the expected schema."""
         logger.info("Checking schema...")
         for column in self.schema.keys():
@@ -88,6 +88,6 @@ class DataFrameValidator:
                 logger.warning(f"Found unexpected column {column} in the dataframe.")
         return self
 
-    def validate(self) -> None:
+    def validate_all(self) -> None:
         """Perform all validations on the dataframe."""
-        self.check_schema().check_data_types().check_missing()
+        self.validate_schema().validate_data_types().validate_missing()
