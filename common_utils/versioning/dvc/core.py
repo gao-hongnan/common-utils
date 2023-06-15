@@ -36,7 +36,7 @@ class SimpleDVC:
         cache_dir: str = ".cache",
     ) -> None:
         self.storage = storage
-        self.remote_bucket_project_name = remote_bucket_project_name
+        self._remote_bucket_project_name = remote_bucket_project_name
 
         self.data_dir = Path(data_dir)
         self.cache_dir = Path(cache_dir)
@@ -57,7 +57,7 @@ class SimpleDVC:
 
     @property
     def remote_bucket_project_name(self) -> str:
-        return self.remote_bucket_project_name
+        return self._remote_bucket_project_name
 
     def _get_destination_blob_name(self, md5: str) -> str:
         return f"{self.remote_bucket_project_name}/{self.remote_dvc_dir_name}/{md5}"
