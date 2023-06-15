@@ -122,6 +122,7 @@ class SimpleDVC:
         metadata = {
             "filename": filename,
             "filepath": str(cache_filepath),
+            "data_dir": str(self.data_dir),
             "extension": extension,
             "remote_bucket_name": self.remote_bucket_name,
             "remote_bucket_project_name": self.remote_bucket_project_name,
