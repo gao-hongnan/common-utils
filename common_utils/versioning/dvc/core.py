@@ -21,9 +21,9 @@ class SimpleDVC:
         └── filtered_movies_incremental.csv.json        # metadata for filename
 
     REMOTE DVC TREE
-    gaohn/                                              # bucket
-    └── imdb                                            # remote project name
-        └── gaohn-dvc                                   # remote dvc name
+    gaohn/                                              # remote_bucket_name
+    └── imdb                                            # remote_bucket_project_name
+        └── gaohn-dvc                                   # remote_dvc_dir_name
             ├── 1234567890                              # md5 hash for raw/filtered_movies_incremental.csv
             └── filtered_movies_incremental.csv.json
     """
@@ -31,10 +31,12 @@ class SimpleDVC:
     def __init__(
         self,
         storage: Storage,
+        remote_bucket_project_name: str,
         data_dir: str = "./data",
         cache_dir: str = ".cache",
     ) -> None:
         self.storage = storage
+        self.remote_bucket_project_name = remote_bucket_project_name
 
         self.data_dir = Path(data_dir)
         self.cache_dir = Path(cache_dir)
@@ -44,13 +46,21 @@ class SimpleDVC:
         self.metadata_file: Path
 
     @property
-    def remote_dvc_dir(self) -> str:
+    def remote_dvc_dir_name(self) -> str:
         """Always fixed to gaohn-dvc. Immutable just like how dvc always uses .dvc."""
         return "gaohn-dvc"
 
     @property
-    def remote_project_name(self) -> str:
+    def remote_bucket_name(self) -> str:
+        """It is important to know that the Storage object has `bucket_name` as an attribute."""
         return self.storage.bucket_name
+
+    @property
+    def remote_bucket_project_name(self) -> str:
+        return self.remote_bucket_project_name
+
+    def _get_destination_blob_name(self, md5: str) -> str:
+        return f"{self.remote_bucket_project_name}/{self.remote_dvc_dir_name}/{md5}"
 
     def _create_gitignore(self, pattern: str) -> None:
         gitignore_file = self.data_dir / ".gitignore"
@@ -113,7 +123,7 @@ class SimpleDVC:
             "filename": filename,
             "filepath": str(cache_filepath),
             "extension": extension,
-            "remote_project_name": self.remote_project_name,
+            "remote_bucket_name": self.remote_project_name,
             "md5": md5,
         }
         self.metadata_file = self.data_dir / f"{filename}.json"
@@ -125,21 +135,25 @@ class SimpleDVC:
 
         return metadata
 
-    def push(self, filepath: str, destination_blob_name: str) -> None:
+    def push(self, filepath: str) -> None:
         filepath = Path(filepath)
         filename = filepath.name
         metadata = self._load_metadata(filename)
         cache_filepath = metadata["filepath"]
 
-        # this effectively uploads the cached file to the remote storage
+        md5 = metadata["md5"]
+
+        destination_blob_name = self._get_destination_blob_name(md5)
+
+        # This effectively uploads the cached file to the remote storage
         self.storage.upload_blob(
             source_file_name=cache_filepath, destination_blob_name=destination_blob_name
         )
 
-    def pull(self, filename: str, remote_project_name: str) -> None:
+    def pull(self, filename: str, remote_bucket_project_name: str) -> None:
         metadata = self._load_metadata(filename)
         source_blob_name = (
-            f"{remote_project_name}/{self.remote_dvc_dir}/{metadata['md5']}"
+            f"{remote_bucket_project_name}/{self.remote_dvc_dir_name}/{metadata['md5']}"
         )
         self.storage.download_blob(source_blob_name, self.data_dir / filename)
 
