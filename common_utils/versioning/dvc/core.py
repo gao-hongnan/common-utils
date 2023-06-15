@@ -109,7 +109,7 @@ class SimpleDVC:
                 hash_md5.update(chunk)
         return hash_md5.hexdigest()
 
-    def add(self, filepath: str) -> Dict[str, str]:
+    def add(self, filepath: str, save_metadata: bool = True) -> Dict[str, str]:
         filepath = Path(filepath)
         filename = filepath.name
         extension = filepath.suffix
@@ -129,10 +129,10 @@ class SimpleDVC:
             "md5": md5,
         }
 
-        self.metadata_file = self.data_dir / f"{filename}.json"
-
-        with self.metadata_file.open("w") as file:
-            json.dump(metadata, file, indent=4)
+        if save_metadata:
+            self.metadata_file = self.data_dir / f"{filename}.json"
+            with self.metadata_file.open("w") as file:
+                json.dump(metadata, file, indent=4)
 
         self._create_gitignore(filename)
 
