@@ -45,8 +45,12 @@ class SimpleDVC:
 
     @property
     def remote_dvc_dir(self) -> str:
-        """Always fixed to gaohn-dvc."""
+        """Always fixed to gaohn-dvc. Immutable just like how dvc always uses .dvc."""
         return "gaohn-dvc"
+
+    @property
+    def remote_project_name(self) -> str:
+        return self.storage.bucket_name
 
     def _create_gitignore(self, pattern: str) -> None:
         gitignore_file = self.data_dir / ".gitignore"
@@ -62,8 +66,29 @@ class SimpleDVC:
     def _get_cache_file_path(self, filename: str) -> Path:
         return self.cache_dir / filename
 
+    def _get_metadata_file_path(self, filename: str) -> Path:
+        """
+        Constructs a Path object for a metadata file in the data directory.
+
+        Args:
+            filename (str): Name of the file.
+
+        Returns:
+            Path: Path object for the metadata file in the data directory.
+        """
+        return self.data_dir / f"{filename}.json"
+
     def _load_metadata(self, filename: str) -> Dict[str, str]:
-        metadata_file = self.data_dir / f"{filename}.json"
+        """
+        Loads the metadata for a file from its metadata JSON file.
+
+        Args:
+            filename (str): Name of the file.
+
+        Returns:
+            Dict[str, str]: Metadata dictionary for the file.
+        """
+        metadata_file = self._get_metadata_file_path(filename)
         with metadata_file.open("r") as file:
             return json.load(file)
 
@@ -88,6 +113,7 @@ class SimpleDVC:
             "filename": filename,
             "filepath": str(cache_filepath),
             "extension": extension,
+            "remote_project_name": self.remote_project_name,
             "md5": md5,
         }
         self.metadata_file = self.data_dir / f"{filename}.json"
