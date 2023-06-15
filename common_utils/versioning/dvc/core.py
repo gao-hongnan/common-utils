@@ -123,9 +123,12 @@ class SimpleDVC:
             "filename": filename,
             "filepath": str(cache_filepath),
             "extension": extension,
-            "remote_bucket_name": self.remote_project_name,
+            "remote_bucket_name": self.remote_bucket_name,
+            "remote_bucket_project_name": self.remote_bucket_project_name,
+            "remote_dvc_dir_name": self.remote_dvc_dir_name,
             "md5": md5,
         }
+
         self.metadata_file = self.data_dir / f"{filename}.json"
 
         with self.metadata_file.open("w") as file:
