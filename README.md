@@ -22,7 +22,8 @@ rm make_venv.sh
 
 ### Continue on error vs If Always
 
-See [here](https://stackoverflow.com/questions/58858429/how-to-run-a-github-actions-step-even-if-the-previous-step-fails-while-still-f/58859404#58859404).
+See
+[here](https://stackoverflow.com/questions/58858429/how-to-run-a-github-actions-step-even-if-the-previous-step-fails-while-still-f/58859404#58859404).
 
 ### Run Bandit Security Check
 
@@ -84,6 +85,39 @@ bash ./scripts/devops/ci/ci_typing_mypy.sh \
 
 ### Run Acceptance Test
 
-https://madewithml.com/courses/mlops/testing/
+See [madewithml](https://madewithml.com/courses/mlops/testing/).
 
 ### Run Data Test (Great Expectations)
+
+### Run Markdown Lint
+
+```bash
+npm install -g markdownlint-cli && \
+touch .markdownlint.json && \
+```
+
+```bash
+npm install --save-dev --save-exact prettier
+```
+
+```bash
+# prettier
+function pr() {
+  if [ -z "$1" ]; then
+    echo "Error: TARGET_DIR is mandatory."
+    return 1
+  fi
+
+  TARGET_DIR="$1"
+  prettier "$TARGET_DIR" --write \
+    --prose-wrap always \
+    --print-width 80 \
+    --tab-width 4 \
+    --use-tabs true
+}
+```
+
+```bash
+pr <TARGET_MARKDOWN_FILE>
+markdownlint --fix <TARGET_MARKDOWN_FILE>
+```
