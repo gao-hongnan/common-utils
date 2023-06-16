@@ -5,7 +5,7 @@ TODO:
         if so, use working_dir = working_dir or ".".
 """
 import subprocess
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, Union
 
 from common_utils.core.logger import Logger
 
@@ -57,7 +57,7 @@ def log_message_if_working_dir_is_none(working_dir: Optional[str] = None) -> Non
 
 def get_git_commit_hash(
     working_dir: Optional[str] = None, check_git_status: Literal[True, False] = False
-) -> str:
+) -> Union[str, Literal["N/A"]]:
     """
     Get the current Git commit hash.
 
