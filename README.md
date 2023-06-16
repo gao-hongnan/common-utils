@@ -1,6 +1,6 @@
 # Common Utils
 
-[![Continuous Integration](https://github.com/gao-hongnan/common-utils/actions/workflows/ci.yaml/badge.svg?branch=continuous-integration)](https://github.com/gao-hongnan/common-utils/actions/workflows/ci.yaml)
+[![Continuous Integration](https://github.com/gao-hongnan/common-utils/actions/workflows/continuous_integration.yaml/badge.svg)](https://github.com/gao-hongnan/common-utils/actions/workflows/continuous_integration.yaml)
 
 ## TODOs
 
