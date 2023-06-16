@@ -1,5 +1,10 @@
 name: "Continuous Integration (CI)"
 description: "DevOps: Run CI checks on pull requests and pushes to main branch."
+inputs:
+  packages_to_check:
+    description: "List of packages to check."
+    required: true
+    default: "common_utils examples"
 runs:
   using: "composite"
   steps:
@@ -9,7 +14,7 @@ runs:
           --severity-level=low \
           --format=json \
           --output=bandit_results.json \
-          common_utils
+          ${{ inputs.packages_to_check }}
       shell: bash
       if: always()
     - name: Run Linter Check
@@ -19,7 +24,7 @@ runs:
           --fail-under=10 \
           --score=yes \
           --output-format=json:pylint_results.json,colorized \
-          common_utils
+          ${{ inputs.packages_to_check }}
       shell: bash
       if: always()
     - name: Run Formatter Black Check
@@ -29,7 +34,7 @@ runs:
           --diff \
           --color \
           --verbose \
-          common_utils
+          ${{ inputs.packages_to_check }}
       shell: bash
       if: always()
     - name: Run Formatter Isort Check
@@ -39,14 +44,14 @@ runs:
           --diff \
           --color \
           --verbose \
-          common_utils
+          ${{ inputs.packages_to_check }}
       shell: bash
       if: always()
     - name: Run MyPy Type Check
       run: |
         bash ./scripts/devops/ci/ci_typing_mypy.sh \
           --config-file=pyproject.toml \
-          common_utils \
+          ${{ inputs.packages_to_check }} \
           | tee mypy_results.log
       shell: bash
       if: always()
