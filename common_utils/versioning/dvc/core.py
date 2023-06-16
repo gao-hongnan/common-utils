@@ -2,7 +2,7 @@ import hashlib
 import json
 import shutil
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional
 
 from common_utils.core.base import Storage
 
@@ -12,13 +12,33 @@ class SimpleDVC:
     """
     # TODO: try to see if we can make it work for local storage as well.
 
-    LOCAL TREE
+    Local Scenario 1:
     pipeline-training/data
     ├── interim
     ├── processed
     └── raw
         ├── filtered_movies_incremental.csv             # filename
         └── filtered_movies_incremental.csv.json        # metadata for filename
+
+    This scenario handles the workflow whereby user will dump the below stores folder
+    into remote storage during runtime. For example, if user chooses not to store
+    the actual data and just the .csv.json metadata file, then the below will be dumped
+    into say, a GCS bucket or MLFlow artifact store.
+    Of course, ideally, the metadata store in the same location as the actual data
+    so git can track it.
+    Local Scenario 2:
+    /pipeline-training/stores/<UNIQUE_RUN_ID>
+    |── logs
+    |── registry
+    |── artifacts
+    └── blobs
+        ├── raw
+        |   ├── filtered_movies_incremental.csv.json         # metadata for filename
+
+
+    So in this case:
+    - data_dir = /pipeline-training/data
+    - metadata_dir = /pipeline-training/stores/<UNIQUE_RUN_ID>/blobs/raw
 
     REMOTE DVC TREE
     gaohn/                                              # remote_bucket_name
@@ -34,14 +54,20 @@ class SimpleDVC:
         remote_bucket_project_name: str,
         data_dir: str = "./data",
         cache_dir: str = ".cache",
+        metadata_dir: Optional[
+            str
+        ] = None,  # new parameter for the location of metadata
     ) -> None:
         self.storage = storage
         self._remote_bucket_project_name = remote_bucket_project_name
 
         self.data_dir = Path(data_dir)
-        self.cache_dir = Path(cache_dir)
 
+        self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
+
+        # if metadata_dir is None, then metadata_dir = data_dir
+        self.metadata_dir = Path(metadata_dir) if metadata_dir else self.data_dir
 
         self.metadata_file: Path
 
@@ -86,7 +112,7 @@ class SimpleDVC:
         Returns:
             Path: Path object for the metadata file in the data directory.
         """
-        return self.data_dir / f"{filename}.json"
+        return self.metadata_dir / f"{filename}.json"
 
     def _load_metadata(self, filename: str) -> Dict[str, str]:
         """
@@ -109,7 +135,7 @@ class SimpleDVC:
                 hash_md5.update(chunk)
         return hash_md5.hexdigest()
 
-    def add(self, filepath: str, save_metadata: bool = True) -> Dict[str, str]:
+    def add(self, filepath: str) -> Dict[str, str]:
         filepath = Path(filepath)
         filename = filepath.name
         extension = filepath.suffix
@@ -123,6 +149,7 @@ class SimpleDVC:
             "filename": filename,
             "filepath": str(cache_filepath),
             "data_dir": str(self.data_dir),
+            "metadata_dir": str(self.metadata_dir),
             "extension": extension,
             "remote_bucket_name": self.remote_bucket_name,
             "remote_bucket_project_name": self.remote_bucket_project_name,
@@ -130,10 +157,9 @@ class SimpleDVC:
             "md5": md5,
         }
 
-        if save_metadata:
-            self.metadata_file = self.data_dir / f"{filename}.json"
-            with self.metadata_file.open("w") as file:
-                json.dump(metadata, file, indent=4)
+        self.metadata_file = self._get_metadata_file_path(filename)
+        with self.metadata_file.open("w") as file:
+            json.dump(metadata, file, indent=4)
 
         self._create_gitignore(filename)
 
