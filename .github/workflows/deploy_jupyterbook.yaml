@@ -1,0 +1,46 @@
+name: Deploy JupyterBook
+
+on:
+  push:
+    branches:
+      - documentation
+
+env:
+  CONTENT_DIR: content # the directory where the book's content is stored
+
+jobs:
+  build-and-deploy-book:
+    name: Build and Deploy Book to GitHub Pages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Environment setup
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+          cache: pip
+      - name: Get pip cache directory path
+        id: pip-cache
+        run: echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT # set-output is deprecated.
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements_dev.txt') }}
+          restore-keys: ${{ runner.os }}-pip-
+
+      - name: Install dev dependencies
+        run: |
+          python3 -m pip install --upgrade pip setuptools wheel
+          python3 -m pip install -r requirements_dev.txt
+          pip install rich==12.6.0
+
+      - name: Build the book
+        run: jupyter-book build ${{ env.CONTENT_DIR }}
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3.8.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ${{ env.CONTENT_DIR }}/_build/html  # Use environment variable
