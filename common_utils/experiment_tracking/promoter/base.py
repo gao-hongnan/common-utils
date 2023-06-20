@@ -33,7 +33,7 @@ class ModelVersion:
     stage: Optional[str] = None
 
 
-class AbstractPromotionManager(ABC):
+class PromotionManager(ABC):
     """
     A base class (interface) for a model promotion manager.
 

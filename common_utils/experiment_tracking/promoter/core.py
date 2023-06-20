@@ -13,21 +13,12 @@ from mlflow.tracking import MlflowClient
 
 from common_utils.core.logger import Logger
 from common_utils.experiment_tracking.promoter.base import (
-    AbstractPromotionManager,
+    PromotionManager,
     ModelVersion,
 )
 
-ModelClient = MlflowClient  # Union[MlflowClient, WandbClient, ...]
 
-# NOTE:
-# 1. MLFlow has a class called ModelVersion and thus it has methods like
-#    data.metrics.get(metric_name) is specifc to client and .version
-#    is specific to the ModelVersion class. Thus, if you need WandbClient
-#    it means you need them to have the same methods as MLFlowClient.
-# 2. Consider just create a
-
-
-class ModelPromotionManager(AbstractPromotionManager):
+class MLFlowPromotionManager(PromotionManager):
     """A class that manages the promotion of machine learning models to production.
 
     This class adheres to several principles of good software design:
@@ -79,7 +70,7 @@ class ModelPromotionManager(AbstractPromotionManager):
 
     def __init__(
         self,
-        client: ModelClient,
+        client: MlflowClient,
         model_name: str,
         logger: Optional[Logger] = None,
     ) -> None:
