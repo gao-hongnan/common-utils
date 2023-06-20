@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Dict, List, Literal, Optional
 
 
-@dataclass
+@dataclass(frozen=True)
 class ModelVersion:
     """
     A class representing a version of an ML model.
@@ -33,42 +33,42 @@ class ModelVersion:
     stage: Optional[str] = None
 
 
-class ModelClient(ABC):
-    """All subclasses must implement these methods. See MLFlow Client
-    as an example (MlflowClient)."""
-
-    @abstractmethod
-    def get_latest_versions(
-        self, model_name: str, stages: List[str]
-    ) -> List[ModelVersion]:
-        """Get the latest versions of a model."""
-
-    @abstractmethod
-    def get_run(self, run_id: str) -> Dict:
-        """Get a run by its ID."""
-
-    @abstractmethod
-    def search_model_versions(self, name: str):
-        """Search for model versions by name."""
-
-    @abstractmethod
-    def transition_model_version_stage(
-        self, name: str, version: str, stage: str
-    ) -> None:
-        """Transition a model version to a new stage."""
-
-
-class MlflowClient(ModelClient):
+class AbstractPromotionManager(ABC):
     """
-    Concrete class for Mlflow client. Create wrapper methods around
-    MlflowClient methods.
+    A base class (interface) for a model promotion manager.
+
+    This class outlines the basic methods any concrete promotion manager should implement.
     """
 
-    # Implement other necessary methods...
+    @abstractmethod
+    def _check_if_there_exists_production_model(self) -> Literal[True, False]:
+        ...
 
+    @abstractmethod
+    def _get_all_production_models(self) -> List[ModelVersion]:
+        ...
 
-class WandbClient(ModelClient):
-    """
-    Concrete class for Wandb client. Create wrapper methods around
-    WandbClient methods.
-    """
+    @abstractmethod
+    def _get_latest_production_model(self) -> ModelVersion:
+        ...
+
+    @abstractmethod
+    def _find_best_model_for_production(self, metric_name: str) -> ModelVersion:
+        ...
+
+    @abstractmethod
+    def _compare_models(
+        self,
+        model1: ModelVersion,
+        model2: ModelVersion,
+        metric_name: str,
+    ) -> Literal[True, False]:
+        ...
+
+    @abstractmethod
+    def _transition_model_to_production(self, model_version: int) -> None:
+        ...
+
+    @abstractmethod
+    def promote_to_production(self, metric_name: str) -> None:
+        """The main method to promote a model to production."""
