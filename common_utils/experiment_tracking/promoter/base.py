@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 
 @dataclass
@@ -13,7 +13,7 @@ class ModelVersion:
     identity.
 
     NOTE: Be aware of potential namespace conflicts with Mlflow's
-    ModelVersion class.
+    ModelVersion class (ModelVersion).
 
     Single Responsibility Principle is followed, as the class solely
     encapsulates the logic related to a model version.
@@ -30,12 +30,12 @@ class ModelVersion:
 
     version: int
     metrics: Dict[str, float]
-    stage: str
+    stage: Optional[str] = None
 
 
 class ModelClient(ABC):
     """All subclasses must implement these methods. See MLFlow Client
-    as an example."""
+    as an example (MlflowClient)."""
 
     @abstractmethod
     def get_latest_versions(

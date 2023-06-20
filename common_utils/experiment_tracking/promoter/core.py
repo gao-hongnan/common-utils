@@ -7,7 +7,7 @@ Of course in real life, you might want to implement more robust model comparison
 implement a manual approval step before promoting the model to production. Include A/B testing too.
 """
 
-from typing import List, Literal
+from typing import List, Literal, Optional
 
 from common_utils.core.logger import Logger
 from common_utils.experiment_tracking.promoter.base import ModelClient, ModelVersion
@@ -66,13 +66,18 @@ class ModelPromotionManager:
     def __init__(
         self,
         client: ModelClient,
-        logger: Logger,
         model_name: str,
+        logger: Optional[Logger] = None,
     ) -> None:
         self.client = client
-        self.logger = logger
-
         self.model_name = model_name
+
+        if logger is None:
+            self.logger = Logger(
+                module_name=__name__, propagate=False, log_root_dir=None, log_file=None
+            ).logger
+        else:
+            self.logger = logger
 
     def _check_if_there_exists_production_model(self) -> Literal[True, False]:
         return len(self._get_all_production_models()) > 0
@@ -101,6 +106,7 @@ class ModelPromotionManager:
         return ModelVersion(
             version=latest_production_model.version,
             metrics=run.data.metrics,
+            stage=latest_production_model.current_stage,
         )
 
     def _find_best_model_for_production(
@@ -122,7 +128,7 @@ class ModelPromotionManager:
         best_model_version, best_model_metrics = max(
             model_versions_metrics, key=lambda x: x[1]
         )
-        return ModelVersion(best_model_version, best_model_metrics)
+        return ModelVersion(best_model_version, best_model_metrics, "Production")
 
     def _compare_models(
         self,
@@ -189,11 +195,14 @@ class ModelPromotionManager:
             # get the model version number and metrics
             latest_curr_model_version = non_production_latest_model.version
             latest_curr_model_run_id = non_production_latest_model.run_id
+            latest_curr_model_stage = non_production_latest_model.current_stage
             latest_curr_model_run = self.client.get_run(latest_curr_model_run_id)
 
             latest_curr_model_metrics = latest_curr_model_run.data.metrics
             latest_curr_model: ModelVersion = ModelVersion(
-                version=latest_curr_model_version, metrics=latest_curr_model_metrics
+                version=latest_curr_model_version,
+                metrics=latest_curr_model_metrics,
+                stage=latest_curr_model_stage,
             )
 
             if not self._compare_models(
