@@ -44,34 +44,6 @@ def construct_response(func: F) -> F:
     return wrap
 
 
-def timer(func: F) -> F:
-    """Timer decorator."""
-
-    @functools.wraps(func)
-    def wrapper(*args: Any, **kwargs: Dict[str, Any]) -> Any:
-        start_time = time.time()
-        result = func(*args, **kwargs)
-        end_time = time.time()
-        elapsed_time = end_time - start_time
-
-        # Create a table to display the results
-        table = PrettyTable()
-        table.field_names = ["Function Name", "Seconds", "Minutes", "Hours"]
-        table.add_row(
-            [
-                func.__name__,
-                f"{elapsed_time:.4f}",
-                f"{elapsed_time / 60:.4f}",
-                f"{elapsed_time / 60 / 60:.4f}",
-            ]
-        )
-
-        pprint(table)
-        return result
-
-    return wrapper
-
-
 # TODO: For memory usage, consider checking out memory_profiler.
 # Coding it my own way is not good as it does not take into account
 # a lot of minute details, and it does not work for multithreading and
@@ -148,12 +120,6 @@ def monitor_memory_usage(func):
     return wrapper
 
 
-@timer
-def add_two_arrays(array_1: np.ndarray, array_2: np.ndarray) -> np.ndarray:
-    """Add two arrays together."""
-    return array_1 + array_2
-
-
 @record_memory_usage
 @monitor_memory_usage
 def increase_memory_usage():
@@ -164,8 +130,4 @@ def increase_memory_usage():
 
 
 if __name__ == "__main__":
-    array_1 = np.random.randint(0, 100, size=(10000, 10000))
-    array_2 = np.random.randint(0, 100, size=(10000, 10000))
-    add_two_arrays(array_1, array_2)
-
     increase_memory_usage()
