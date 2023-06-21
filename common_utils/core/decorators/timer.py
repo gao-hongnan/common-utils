@@ -19,6 +19,27 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 # pylint: disable=invalid-name
 def data_factory(data_type: str, n: int) -> DataTypes:
+    """
+    Generate a data structure of size n based on data_type.
+
+    Parameters
+    ----------
+    data_type : str
+        The type of data structure to generate. It can be 'array' for a list,
+        'dict' for a dictionary, or None if no data structure is needed.
+    n : int
+        The size of the data structure to generate.
+
+    Returns
+    -------
+    DataTypes
+        The generated data structure of type list, dictionary or None.
+
+    Raises
+    ------
+    ValueError
+        If the data_type is not 'array', 'dict' or None.
+    """
     if data_type == "array":
         return list(range(n))
     if data_type == "dict":
@@ -31,6 +52,30 @@ def data_factory(data_type: str, n: int) -> DataTypes:
 def time_complexity(
     data_type: str, repeat: int = 1, plot: bool = False
 ) -> Callable[[Callable[..., Any]], Callable[..., Tuple]]:
+    """
+    Decorator to compute and plot the time complexity of a function.
+
+    Parameters
+    ----------
+    data_type : str
+        The type of data structure that the function to be decorated uses.
+        It can be 'array' for a list, 'dict' for a dictionary, or None if no
+        data structure is needed.
+    repeat : int, optional
+        The number of times to repeat the timing test for each size of the
+        data structure. The default is 1.
+    plot : bool, optional
+        If True, a plot of the time complexity will be displayed. The default
+        is False.
+
+    Returns
+    -------
+    Callable
+        The decorated function that when called with a list of sizes, it
+        returns a tuple containing the sizes and the average, median, best,
+        and worst times over the repeats.
+    """
+
     def decorator(func: Callable[..., Any]) -> Callable[..., Tuple]:
         def wrapper(n_sizes: List[int], *args: Any, **kwargs: Dict[str, Any]) -> Tuple:
             avg_times = []
@@ -153,16 +198,19 @@ def add_two_arrays(array_1: np.ndarray, array_2: np.ndarray) -> np.ndarray:
     return array_1 + array_2
 
 
-# list_access(range(1000000, 10000001, 1000000))
-# list_append(range(1000000, 10000001, 1000000))
-# list_insert(range(1000000, 10000001, 1000000))
-# list_search(range(1000000, 10000001, 1000000))
+if __name__ == "__main__":
+    # TODO
+    pass
+    # list_access(range(1000000, 10000001, 1000000))
+    # list_append(range(1000000, 10000001, 1000000))
+    # list_insert(range(1000000, 10000001, 1000000))
+    # list_search(range(1000000, 10000001, 1000000))
 
-dict_set(range(1000000, 10000001, 1000000))
-dict_search(range(1000000, 10000001, 1000000))
-for_loop(range(1000000, 10000001, 1000000))
+    # dict_set(range(1000000, 10000001, 1000000))
+    # dict_search(range(1000000, 10000001, 1000000))
+    # for_loop(range(1000000, 10000001, 1000000))
 
 
-# array_1 = np.random.randint(0, 100, size=(10000, 10000))
-# array_2 = np.random.randint(0, 100, size=(10000, 10000))
-# add_two_arrays(array_1, array_2)
+    # array_1 = np.random.randint(0, 100, size=(10000, 10000))
+    # array_2 = np.random.randint(0, 100, size=(10000, 10000))
+    # add_two_arrays(array_1, array_2)
