@@ -4,7 +4,6 @@ common_utils/core/common.py
 This module contains common utility functions for various purposes.
 """
 import json
-import logging
 import os
 import random
 import uuid
@@ -16,20 +15,27 @@ import rich
 import torch
 import yaml
 from dotenv import load_dotenv
-from rich.logging import RichHandler
 from yaml import FullLoader
 
 from common_utils.core.base import DictPersistence
 
-# Setup logging
-logging.basicConfig(
-    level="INFO",
-    format="%(asctime)s [%(levelname)s]: %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-    handlers=[RichHandler()],
-)
+from common_utils.core.logger import Logger
 
-logger = logging.getLogger("rich")
+# Setup logging
+# logging.basicConfig(
+#     level="INFO",
+#     format="%(asctime)s [%(levelname)s]: %(message)s",
+#     datefmt="%Y-%m-%d %H:%M:%S",
+#     handlers=[RichHandler()],
+# )
+
+# logger = logging.getLogger("rich")
+
+
+# Setup logging
+logger = Logger(
+    module_name=__name__, propagate=False, log_root_dir=None, log_file=None
+).logger
 
 
 class JsonAdapter(DictPersistence):
