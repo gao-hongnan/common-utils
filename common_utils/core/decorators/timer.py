@@ -22,10 +22,10 @@ F = TypeVar("F", bound=Callable[..., Any])
 class timer:
     def __init__(
         self,
-        display_table=True,
-        unit="seconds",
-        decimal_places=4,
-        store_times=False,
+        display_table: bool = True,
+        unit: str = "seconds",
+        decimal_places: int = 4,
+        store_times: bool = False,
         log: bool = False,
     ) -> None:
         self.display_table = display_table
