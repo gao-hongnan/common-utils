@@ -13,8 +13,8 @@ from mlflow.tracking import MlflowClient
 
 from common_utils.core.logger import Logger
 from common_utils.experiment_tracking.promoter.base import (
-    PromotionManager,
     ModelVersion,
+    PromotionManager,
 )
 
 

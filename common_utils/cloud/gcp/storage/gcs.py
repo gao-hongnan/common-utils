@@ -1,23 +1,28 @@
-import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Literal
 
 from google.cloud import storage
 from google.cloud.exceptions import NotFound
-from rich.logging import RichHandler
 
 from common_utils.cloud.base import GCPConnector
+from common_utils.core.logger import Logger
 
 # Setup logging
-logging.basicConfig(
-    level="INFO",
-    format="%(asctime)s [%(levelname)s]: %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-    handlers=[RichHandler()],
-)
+# logging.basicConfig(
+#     level="INFO",
+#     format="%(asctime)s [%(levelname)s]: %(message)s",
+#     datefmt="%Y-%m-%d %H:%M:%S",
+#     handlers=[RichHandler()],
+# )
 
-logger = logging.getLogger("rich")
+# logger = logging.getLogger("rich")
+
+
+# Setup logging
+logger = Logger(
+    module_name=__name__, propagate=False, log_root_dir=None, log_file=None
+).logger
 
 
 @dataclass

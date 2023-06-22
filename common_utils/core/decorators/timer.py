@@ -2,11 +2,12 @@
 import functools
 import time
 from statistics import mean, median, stdev
-from typing import Any, Callable, TypeVar, Dict
+from typing import Any, Callable, Dict, TypeVar
 
 import numpy as np
 from prettytable import PrettyTable
 from rich.pretty import pprint
+
 from common_utils.core.logger import Logger
 
 # Setup logging
