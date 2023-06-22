@@ -151,13 +151,22 @@ class Logger:
         return None
 
     def _create_stream_handler(self) -> RichHandler:
-        stream_handler = RichHandler(rich_tracebacks=True, level=self.level)
-        stream_handler.setFormatter(
-            CustomFormatter(
-                "%(asctime)s [%(levelname)s] %(pathname)s %(funcName)s L%(lineno)d: %(message)s",
-                "%Y-%m-%d %H:%M:%S",
-            )
+        stream_handler = RichHandler(
+            rich_tracebacks=True,
+            level=self.level,
+            show_level=True,
+            show_path=True,
+            show_time=True,
+            markup=True,
+            log_time_format="[%Y-%m-%d %H:%M:%S]",
         )
+        # FIXME: If you set custom formatter, it will duplicate level and time.
+        # stream_handler.setFormatter(
+        #     CustomFormatter(
+        #         "%(asctime)s [%(levelname)s] %(pathname)s %(funcName)s L%(lineno)d: %(message)s",
+        #         "%Y-%m-%d %H:%M:%S",
+        #     )
+        # )
         return stream_handler
 
     def _create_file_handler(self, log_file_path: Path) -> logging.FileHandler:
