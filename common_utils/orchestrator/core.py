@@ -8,6 +8,7 @@ import time
 import datetime
 
 
+# TODO: how to do parallelism?
 class Task:
     """This is a Node in the graph."""
 
