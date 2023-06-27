@@ -6,7 +6,22 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Union
 
+from rich.console import Console
 from rich.logging import RichHandler
+from rich.theme import Theme
+
+console = Console(
+    theme=Theme(
+        {
+            "logging.level.debug": "magenta",
+            "logging.level.info": "green",
+            "logging.level.warning": "yellow",
+            "logging.level.error": "red",
+            "logging.level.critical": "bold red",
+            # "logging.level.remark": "bold blue",
+        }
+    )
+)
 
 
 class CustomFormatter(logging.Formatter):
@@ -159,6 +174,7 @@ class Logger:
             show_time=True,
             markup=True,
             log_time_format="[%Y-%m-%d %H:%M:%S]",
+            console=console,
         )
         # FIXME: If you set custom formatter, it will duplicate level and time.
         # stream_handler.setFormatter(

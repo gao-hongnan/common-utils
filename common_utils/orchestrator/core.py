@@ -1,11 +1,10 @@
+import datetime
+import time
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass, field
 
 import matplotlib.pyplot as plt
 import networkx as nx
-from dataclasses import dataclass, field
-import time
-
-import datetime
 
 
 # TODO: how to do parallelism?

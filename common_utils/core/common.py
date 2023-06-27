@@ -18,7 +18,6 @@ from dotenv import load_dotenv
 from yaml import FullLoader
 
 from common_utils.core.base import DictPersistence
-
 from common_utils.core.logger import Logger
 
 # Setup logging
