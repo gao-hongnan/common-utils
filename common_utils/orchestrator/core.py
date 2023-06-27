@@ -1,8 +1,9 @@
+from __future__ import annotations
 import datetime
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-
+from typing import Callable, Any, Dict
 import matplotlib.pyplot as plt
 import networkx as nx
 
@@ -11,15 +12,16 @@ import networkx as nx
 class Task:
     """This is a Node in the graph."""
 
-    def __init__(self, f, pipeline):
-        self.f = f
+    def __init__(self, func: Callable, pipeline: Pipeline) -> None:
+        self.func = func
         self.pipeline = pipeline
-        self.name = f.__name__
 
-    def __call__(self, *args, **kwargs):
-        return self.f(*args, **kwargs)
+        self.name: str = func.__name__
 
-    def __rshift__(self, other):
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        return self.func(*args, **kwargs)
+
+    def __rshift__(self, other: Task) -> Task:
         self.pipeline.add_dependency(self, other)
         return other
 
@@ -56,7 +58,7 @@ class Pipeline:
                     self.task_data[successor] = (result,)
             return self.task_data
 
-    def visualize(self):
+    def visualize(self) -> None:
         pos = nx.spring_layout(self.graph)
         for node in self.graph.nodes:
             plt.text(
