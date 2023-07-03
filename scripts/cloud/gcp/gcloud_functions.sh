@@ -79,7 +79,7 @@ list_all_docker_images() {
 
 list_all_gar_repositories() {
     gcloud artifacts repositories list
-    gcloud artifacts docker images list <LOCATION>-docker.pkg.dev/<PROJECT_ID>/<REPO_NAME>
+    echo "gcloud artifacts docker images list <LOCATION>-docker.pkg.dev/<PROJECT_ID>/<REPO_NAME>"
 }
 
 gar_docker_setup() {
