@@ -198,12 +198,14 @@ class Logger:
     def _init_logger(self) -> logging.Logger:
         # get module name, useful for multi-module logging
         logger = logging.getLogger(self.module_name or __name__)
-        logger.setLevel(self.level)
 
+        logger.setLevel(self.level)
         logger.addHandler(self._create_stream_handler())
 
         log_file_path = self._get_log_file_path()
+
         if log_file_path:
             logger.addHandler(self._create_file_handler(log_file_path))
+
         logger.propagate = self.propagate
         return logger
