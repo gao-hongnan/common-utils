@@ -1,5 +1,5 @@
-import unittest
 import time
+import unittest
 
 from common_utils.core.decorators.timer import timer
 

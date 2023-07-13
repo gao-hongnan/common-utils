@@ -1,9 +1,9 @@
 import logging
 import shutil
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
-from unittest.mock import patch
 
 from common_utils.core.logger import Logger
 
