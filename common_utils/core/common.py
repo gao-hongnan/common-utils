@@ -100,7 +100,7 @@ def generate_uuid() -> str:
     return str(uuid.uuid1())
 
 
-def seed_all(seed: Optional[int] = 1992, seed_torch: bool = True) -> None:
+def seed_all(seed: Optional[int] = 1992, seed_torch: bool = True) -> int:
     """
     Seed all random number generators.
 
@@ -111,8 +111,6 @@ def seed_all(seed: Optional[int] = 1992, seed_torch: bool = True) -> None:
     seed_torch : bool, optional
         Whether to seed PyTorch or not, by default True.
     """
-    rich.print(f"Using Seed Number {seed}")
-
     # fmt: off
     os.environ["PYTHONHASHSEED"] = str(seed)        # set PYTHONHASHSEED env var at fixed value
     np.random.seed(seed)                            # numpy pseudo-random generator
@@ -126,6 +124,7 @@ def seed_all(seed: Optional[int] = 1992, seed_torch: bool = True) -> None:
         torch.backends.cudnn.benchmark = False
         torch.backends.cudnn.enabled = False
     # fmt: on
+    return seed
 
 
 def seed_worker(_worker_id: int, seed_torch: bool = True) -> None:
