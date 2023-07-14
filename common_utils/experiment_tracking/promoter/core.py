@@ -211,7 +211,9 @@ class MLFlowPromotionManager(PromotionManager):
             )
 
             if not self._compare_models(
-                model1=latest_curr_model, model2=latest_production_model
+                model1=latest_curr_model,
+                model2=latest_production_model,
+                metric_name=metric_name,
             ):
                 self.logger.info(
                     f"Model {self.model_name} version {latest_curr_model_version} does not outperform the current production model."
