@@ -1,11 +1,8 @@
 name: Daily Email
 
 on:
-  push:
-    branches:
-      - main
   schedule:
-    - cron: "30 10 * * *" # Run this workflow every day at 10:30 AM UTC
+    - cron: "0 11 * * *" # Run this workflow every day at 11:00 AM UTC
 
 jobs:
   send-email:
@@ -19,7 +16,7 @@ jobs:
           server_port: 465
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
-          subject: Daily Email
-          body: This is your daily email.
+          subject: Have you done what you wanted to do today?
+          body: Check GitHub!
           to: ${{ secrets.MAIL_USERNAME }}
           from: ${{ secrets.MAIL_USERNAME }}
