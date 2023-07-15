@@ -1,8 +1,11 @@
 name: Daily Email
 
 on:
+  push:
+    branches:
+      - main
   schedule:
-    - cron: "30 10 * * *" # Run this workflow every day at 10:30 UTC
+    - cron: "30 10 * * *" # Run this workflow every day at 10:30 AM UTC
 
 jobs:
   send-email:
