@@ -1,0 +1,22 @@
+name: Daily Email
+
+on:
+  schedule:
+    - cron: "30 10 * * *" # Run this workflow every day at 10:30 UTC
+
+jobs:
+  send-email:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: Daily Email
+          body: This is your daily email.
+          to: ${{ secrets.MAIL_USERNAME }}
+          from: ${{ secrets.MAIL_USERNAME }}
