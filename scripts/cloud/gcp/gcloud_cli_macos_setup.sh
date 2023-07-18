@@ -15,20 +15,23 @@ RESET='\033[0m'
 SDK_URL="https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-428.0.0-darwin-arm.tar.gz"
 TAR_FILE="google-cloud-sdk.tar.gz"
 
+logger "WARN" "This script is for installing Google Cloud SDK on a macOS M1 machine."
+logger "WARN" "This script will install 428.0.0."
+
 install_google_cloud_sdk() {
-    echo -e "${YELLOW}Installing Google Cloud SDK...${RESET}"
+    logger "INFO" "Downloading Google Cloud SDK..."
     curl -o $TAR_FILE $SDK_URL
 
-    echo -e "${YELLOW}Extracting Google Cloud SDK...${RESET}"
+    logger "INFO" "Extracting Google Cloud SDK..."
     tar -xvf $TAR_FILE
 
-    echo -e "${YELLOW}Installing Google Cloud SDK...${RESET}"
+    logger "INFO" "Installing Google Cloud SDK..."
     ./google-cloud-sdk/install.sh --install-python TRUE --path-update TRUE --quiet
 
-    echo -e "${YELLOW}Cleaning up...${RESET}"
+    logger "INFO" "Cleaning up..."
     rm $TAR_FILE
 
-    echo -e "${GREEN}Google Cloud SDK installed successfully!${RESET}"
+    logger "INFO" "Google Cloud SDK installed successfully!"
 }
 
 install_google_cloud_sdk
