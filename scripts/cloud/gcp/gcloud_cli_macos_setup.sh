@@ -6,10 +6,10 @@
 # gcloud-crc32c 1.0.0
 # gsutil 5.23
 
-# Define colors as global variables
-YELLOW='\033[1;33m'
-GREEN='\033[0;32m'
-RESET='\033[0m'
+# Fetch the utils.sh script from a URL and source it
+UTILS_SCRIPT=$(curl -s https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/utils.sh)
+source /dev/stdin <<<"$UTILS_SCRIPT"
+logger "INFO" "Successfully fetched and sourced the 'utils.sh' script from the 'common-utils' repository on GitHub."
 
 # Global variables for Google Cloud SDK
 SDK_URL="https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-428.0.0-darwin-arm.tar.gz"
