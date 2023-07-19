@@ -65,6 +65,17 @@ runs:
           | tee mypy_results.log
       shell: bash
       if: always()
+    - name: Run All Tests
+      run: |
+        curl -o ci_tests_pytest.sh https://raw.githubusercontent.com/gao-hongnan/common-utils/main/scripts/devops/ci/ci_tests_pytest.sh
+        chmod +x ci_tests_pytest.sh
+        bash ci_tests_pytest.sh \
+          --color=yes \
+          --cov-fail-under=10 \
+          --cov-report=term-missing \
+          | tee pytest_results.log
+      shell: bash
+      if: always()
     - name: Upload Check Results
       uses: actions/upload-artifact@v3
       if: always()
@@ -74,3 +85,4 @@ runs:
           ./bandit_results.json
           ./pylint_results.json
           ./mypy_results.log
+          ./pytest_results.log

@@ -42,4 +42,4 @@ def test_DataFrameValidator(
     """
     df, schema = df_schema_pair
     df_validator = DataFrameValidator(df, schema)
-    df_validator.validate()
+    df_validator.validate_all()

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gaohn-common-utils"
-version = "0.0.93"
+version = "0.0.94"
 authors = [
   { name="Gao Hongnan", email="hongnangao@gmail.com" },
 ]
@@ -158,3 +158,14 @@ ignore_missing_imports = true
 disallow_untyped_defs = true
 disable_error_code = ['override', 'attr-defined']
 disallow_any_generics = false
+
+# pyproject.toml
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra" # -ra -q
+testpaths = [
+    "tests",
+    # "tests/unit",
+    # "tests/integration",
+    # "tests/system",
+]

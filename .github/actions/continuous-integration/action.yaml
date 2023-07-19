@@ -55,6 +55,16 @@ runs:
           | tee mypy_results.log
       shell: bash
       if: always()
+    - name: Run All Tests
+      run: |
+        bash ./scripts/devops/ci/ci_tests_pytest.sh \
+          --color=yes \
+          --cov=${{ inputs.packages_to_check }} \
+          --cov-fail-under=10 \
+          --cov-report=term-missing \
+          | tee pytest_results.log
+      shell: bash
+      if: always()
     - name: Upload Check Results
       uses: actions/upload-artifact@v3
       if: always()
@@ -64,3 +74,4 @@ runs:
           ./bandit_results.json
           ./pylint_results.json
           ./mypy_results.log
+          ./pytest_results.log
