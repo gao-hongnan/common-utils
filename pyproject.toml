@@ -169,3 +169,4 @@ testpaths = [
     # "tests/integration",
     # "tests/system",
 ]
+filterwarnings = "ignore::DeprecationWarning" # ignore deprecation warnings when running tests

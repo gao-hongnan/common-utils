@@ -71,6 +71,7 @@ runs:
         chmod +x ci_tests_pytest.sh
         bash ci_tests_pytest.sh \
           --color=yes \
+          --cov=$${{ inputs.packages_to_check }} \
           --cov-fail-under=10 \
           --cov-report=term-missing \
           | tee pytest_results.log

@@ -54,6 +54,10 @@ ci_pytest_check() {
     logger "LINK" "https://docs.pytest.org/en/latest/index.html"
     empty_line
 
+    # Check if pyproject.toml exists
+    check_for_pyproject_toml "pytest"
+    logger "LINK" "https://docs.pytest.org/en/latest/reference/customize.html#adding-default-options"
+
     # If test_type is "all", run pytest on the entire tests directory
     if [ "$test_type" = "all" ]; then
         test_path="tests"
