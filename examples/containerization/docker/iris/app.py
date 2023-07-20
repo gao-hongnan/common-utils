@@ -1,10 +1,32 @@
+import os
+import random
 import urllib.request
 from pathlib import Path
+from types import SimpleNamespace
+from typing import Any, Dict, Tuple
 
+import numpy as np
 import pandas as pd
 import streamlit as st
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder
+
+
+def seed_all(seed: int = 42) -> None:
+    os.environ["PYTHONHASHSEED"] = str(
+        seed
+    )  # set PYTHONHASHSEED env var at fixed value
+    np.random.seed(seed)  # numpy pseudo-random generator
+    random.seed(seed)  # python's built-in pseudo-random generator
+
+
+class Config(SimpleNamespace):
+    """Configuration for the app."""
+
+    def __init__(  # pylint: disable=useless-super-delegation, useless-parent-delegation
+        self, **kwargs: Dict[str, Any]
+    ) -> None:
+        super().__init__(**kwargs)
 
 
 def download_iris_data(url: str, filename: str, data_path: str = "./data") -> None:
@@ -15,7 +37,9 @@ def download_iris_data(url: str, filename: str, data_path: str = "./data") -> No
     urllib.request.urlretrieve(url, Path(data_path) / filename)
 
 
-def load_and_preprocess_data(filename: str, data_path: str = "./data") -> tuple:
+def load_and_preprocess_data(
+    filename: str, data_path: str = "./data"
+) -> Tuple[pd.DataFrame, pd.Series, LabelEncoder]:
     """
     This function loads and preprocesses the data.
     It returns the features X, labels y and the label encoder.
@@ -43,11 +67,13 @@ def load_and_preprocess_data(filename: str, data_path: str = "./data") -> tuple:
     return X, y, le
 
 
-def train_model(X: pd.DataFrame, y: pd.Series) -> RandomForestClassifier:
+def train_model(
+    X: pd.DataFrame, y: pd.Series, model_config: Dict[str, Any]
+) -> RandomForestClassifier:
     """
     This function trains a random forest classifier and returns the trained model.
     """
-    model = RandomForestClassifier(random_state=42)
+    model = RandomForestClassifier(**model_config)
     model.fit(X, y)
     return model
 
@@ -75,28 +101,46 @@ def get_user_input() -> pd.DataFrame:
     return input_data
 
 
-# URL of the iris dataset
-url = "https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data"
-filename = "iris.csv"
-data_path = "./data"
+def run_app() -> None:
+    """Run the Streamlit app."""
+    # Create the Streamlit app
+    st.title("Iris Species Prediction")
+    st.write("Enter the flower's measurements to predict the species.")
 
-download_iris_data(url, filename, data_path=data_path)
+    # Get the user input
+    input_data = get_user_input()
 
-# Load and preprocess the data
-X, y, le = load_and_preprocess_data(filename, data_path=data_path)
+    # Make a prediction and show the result
+    if st.button("Predict"):
+        result = model.predict(input_data)
+        species = le.inverse_transform(result)[0]
+        st.success(f"The species of the flower is most likely {species}.")
+        st.balloons()
 
-# Train the model
-model = train_model(X, y)
 
-# Create the Streamlit app
-st.title("Iris Species Prediction")
-st.write("Enter the flower's measurements to predict the species.")
+if __name__ == "__main__":
+    config = Config(
+        url="https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data",
+        data_path="./data",
+        filename="iris.csv",
+        random_state=42,
+        seed=42,
+        model_config={"n_estimators": 100, "random_state": 42},
+    )
 
-# Get the user input
-input_data = get_user_input()
+    seed_all(config.seed)
 
-# Make a prediction and show the result
-if st.button("Predict"):
-    result = model.predict(input_data)
-    species = le.inverse_transform(result)[0]
-    st.success(f"The species of the flower is most likely {species}.")
+    download_iris_data(
+        url=config.url, filename=config.filename, data_path=config.data_path
+    )
+
+    # Load and preprocess the data
+    X, y, le = load_and_preprocess_data(
+        filename=config.filename, data_path=config.data_path
+    )
+
+    # Train the model
+    model = train_model(X, y, model_config=config.model_config)
+
+    # Run the app
+    run_app()

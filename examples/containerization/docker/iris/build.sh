@@ -18,5 +18,6 @@ echo "Running Docker container..."
 docker run \
     --rm \
     -p 8501:8501 \
+    -v $HOME/Downloads/docker-data:/app/data \
     --name streamlit-app \
     streamlit-app:v1

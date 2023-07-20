@@ -3,7 +3,7 @@
 ## Build and run
 
 ```bash
-$ bash build.sh
+bash build.sh
 ```
 
 ## Streamlit Dashboard
