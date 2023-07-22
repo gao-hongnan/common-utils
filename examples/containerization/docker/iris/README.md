@@ -1,4 +1,4 @@
-# Run Streamlit app in Docker
+# Docker
 
 ## Define Docker Volume
 
@@ -6,7 +6,25 @@
 docker volume create iris-stores
 ```
 
-## Run Streamlit Locally
+## Training Pipeline
+
+```bash
+# Build the Docker image
+echo "Building Docker image..."
+docker build \
+    -t iris-training:v1 \
+    .
+
+# Run the Docker container
+echo "Running Docker container..."
+docker run -v \
+    --rm \
+    -v iris-stores:/pipeline-training/stores \
+    --name iris-training \
+    iris-training:v1
+```
+
+## Serving Pipeline
 
 ```bash
 export STORES_DIR=/Users/gaohn/gaohn/common-utils/examples/containerization/docker/iris/pipeline-training/stores
@@ -72,12 +90,6 @@ So in a way you can think of now your container has this folder:
 So in a way you are mapping `iris-stores` contents exactly to
 `/pipeline-serving/stores` in the container.
 
-## Build and run
-
-```bash
-bash build.sh
-```
-
 ## Streamlit Dashboard
 
 To open the Streamlit dashboard, go to:
@@ -85,3 +97,124 @@ To open the Streamlit dashboard, go to:
 ```bash
 http://localhost:8501
 ```
+
+## Network
+
+```bash
+docker network create iris-network
+```
+
+Let's consider the following scenario where the serving container requires
+information directly from the training container via HTTP.
+
+Let's say your training pipeline not only saves models and data to the shared
+volume but also exposes a REST API with a "/status" endpoint. This endpoint,
+when hit, provides information about the status of the training pipeline (e.g.,
+whether the training is completed, the performance of the model, etc.)
+
+Now, your serving container wants to check this status before serving
+predictions. It tries to reach the "/status" endpoint of the training container
+to get this information.
+
+In such a case, if the containers are on the same Docker network, they can
+communicate with each other directly. The serving container can use the Docker
+service name (in this case, "iris-training") as the hostname to reach the
+training container. For example, it might send a GET request to
+"<http://iris-training:5000/status>".
+
+Now, if you were to run these two containers on different networks, this direct
+communication would fail. Docker's network isolation would prevent the serving
+container from reaching the training container, and the GET request would return
+an error, as it would be unable to resolve the hostname "iris-training".
+
+Please note that in the current setup that you've provided, your containers
+don't seem to need to communicate with each other directly over the network.
+They are communicating indirectly by reading from and writing to a shared
+volume. The networking aspect would only come into play if the containers needed
+to communicate directly, as in the hypothetical scenario I described above.
+
+### Counter Example
+
+Let's continue with the iris dataset example you've been working with. In this
+example, we'll add an HTTP server to the training script that exposes a
+`/status` endpoint, which the serving script will try to access.
+
+Please note that to keep things simple, we're adding a bare-bones HTTP server
+using Python's built-in `http.server` module and a global variable to track
+training status. In a real-world application, you'd probably use a more robust
+server like Flask or FastAPI, and a better method of tracking and updating the
+training status.
+
+First, update your `train.py` script as follows:
+
+```python
+import http.server
+import socketserver
+import threading
+
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+import joblib
+import pandas as pd
+import os
+
+# Track the training status globally.
+training_status = 'Not started'
+
+class Handler(http.server.SimpleHTTPRequestHandler):
+    def do_GET(self):
+        global training_status
+        if self.path == '/status':
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(training_status.encode())
+
+def start_server():
+    with socketserver.TCPServer(('', 8000), Handler) as httpd:
+        httpd.serve_forever()
+
+def train():
+    global training_status
+    training_status = 'Training'
+    iris = load_iris()
+    df = pd.DataFrame(data=iris.data, columns=iris.feature_names)
+    df['target'] = iris.target
+    df.to_csv('/pipeline-training/stores/data/iris.csv', index=False)
+
+    X = df[iris.feature_names]
+    y = df.target
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+    clf = RandomForestClassifier(random_state=42)
+    clf.fit(X_train, y_train)
+
+    joblib.dump(clf, '/pipeline-training/stores/models/iris.pkl')
+    training_status = 'Training complete'
+
+if __name__ == '__main__':
+    server_thread = threading.Thread(target=start_server)
+    server_thread.start()
+
+    train()
+```
+
+This script starts an HTTP server in a separate thread and runs the training
+script as before. When the server gets a GET request to the `/status` endpoint,
+it responds with the current training status.
+
+In your serving script, you can then attempt to connect to this server and get
+the status. For example:
+
+```python
+import requests
+
+status = requests.get('http://iris-training:8000/status').text
+print(f'Training status: {status}')
+```
+
+This will print the status of the training pipeline.
+
+If the containers are on the same Docker network, this will work as expected. If
+they're not, the `requests.get` call will fail because it won't be able to
+resolve the hostname `iris-training`.
