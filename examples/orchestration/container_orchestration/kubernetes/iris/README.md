@@ -1,5 +1,28 @@
 # Kubernetes
 
+- [Kubernetes](#kubernetes)
+  - [What is a port](#what-is-a-port)
+  - [Terminology](#terminology)
+  - [Setup Kubernetes Locally](#setup-kubernetes-locally)
+  - [Local Kubernetes Cluster](#local-kubernetes-cluster)
+    - [What's a Kubernetes Cluster?](#whats-a-kubernetes-cluster)
+    - [What's a Pod?](#whats-a-pod)
+    - [What's a Service?](#whats-a-service)
+      - [More on Services IMPORTANT](#more-on-services-important)
+    - [What's a Deployment?](#whats-a-deployment)
+    - [Summary](#summary)
+    - [Setting Up](#setting-up)
+    - [Cluster is Automatically Configured](#cluster-is-automatically-configured)
+  - [Useful Commands](#useful-commands)
+    - [kubectl cluster-info](#kubectl-cluster-info)
+    - [kubectl get nodes](#kubectl-get-nodes)
+    - [kubectl describe node](#kubectl-describe-node)
+    - [kubectl get pods](#kubectl-get-pods)
+    - [kubectl get services](#kubectl-get-services)
+    - [kubectl get deployments](#kubectl-get-deployments)
+      - [Create a Deployment](#create-a-deployment)
+      - [Verify the Deployment](#verify-the-deployment)
+
 Let's think about Kubernetes as a containerized shipping company.
 
 - **Kubernetes Cluster**: This is akin to the entire shipping company -
@@ -44,18 +67,38 @@ other.
 
 ## What is a port
 
+Let's break this down with an analogy. Imagine an apartment building that is
+home to many people. The apartment building address is akin to an IP address -
+it tells you where to find the building in the city. Now, imagine you're a mail
+delivery person with a letter to deliver to a resident of this apartment
+building. Knowing the apartment building's address isn't enough; you also need
+to know the specific apartment number to deliver the mail correctly. In this
+analogy, the apartment number is akin to a port number.
 
-Let's break this down with an analogy. Imagine an apartment building that is home to many people. The apartment building address is akin to an IP address - it tells you where to find the building in the city. Now, imagine you're a mail delivery person with a letter to deliver to a resident of this apartment building. Knowing the apartment building's address isn't enough; you also need to know the specific apartment number to deliver the mail correctly. In this analogy, the apartment number is akin to a port number.
+In the realm of computer networking, an IP address helps us find the specific
+computer on a network, but once we get to that computer, we need to know which
+application we're trying to reach. That's where ports come in.
 
-In the realm of computer networking, an IP address helps us find the specific computer on a network, but once we get to that computer, we need to know which application we're trying to reach. That's where ports come in.
+Here's a more technical example: Let's say you have a server running a web
+service and a database service. The web service is running on port 80 (the
+standard port for HTTP traffic) and the database is running on port 3306 (the
+standard port for MySQL).
 
-Here's a more technical example: Let's say you have a server running a web service and a database service. The web service is running on port 80 (the standard port for HTTP traffic) and the database is running on port 3306 (the standard port for MySQL).
+When a user's browser sends a request to your server's IP address, it also
+specifies that it wants to connect to port 80 because it wants to communicate
+with the web service. If it tried to connect to port 3306, it would be trying to
+communicate with the database, which wouldn't understand the browser's request.
 
-When a user's browser sends a request to your server's IP address, it also specifies that it wants to connect to port 80 because it wants to communicate with the web service. If it tried to connect to port 3306, it would be trying to communicate with the database, which wouldn't understand the browser's request.
+As such, ports are essential for directing network traffic to the correct
+application on a computer. If every service was just listening on a single port,
+they would all be trying to handle the same traffic, which would result in
+conflicts and errors. By having services listen on different ports, they can all
+coexist on a single computer without interfering with each other.
 
-As such, ports are essential for directing network traffic to the correct application on a computer. If every service was just listening on a single port, they would all be trying to handle the same traffic, which would result in conflicts and errors. By having services listen on different ports, they can all coexist on a single computer without interfering with each other.
-
-In conclusion, a port is a communication endpoint. It is associated with a specific process or service on a computer and allows that process or service to be accessed over a network. Ports help the operating system to route incoming traffic to the appropriate software application.
+In conclusion, a port is a communication endpoint. It is associated with a
+specific process or service on a computer and allows that process or service to
+be accessed over a network. Ports help the operating system to route incoming
+traffic to the appropriate software application.
 
 ## Terminology
 
@@ -67,6 +110,10 @@ In conclusion, a port is a communication endpoint. It is associated with a speci
     services on a node include the container runtime, kubelet, and kube-proxy.
 - **Pod**: The smallest and simplest unit in the Kubernetes object model that
     you create or deploy. A Pod represents processes running on your Cluster.
+
+  - So a node can run many pods.
+  - And a pod can have a collection of containers.
+
 - **Service**: An abstract way to expose an application running on a set of
     Pods as a network service. Kubernetes gives Pods their own IP addresses and
     a single DNS name for a set of Pods, and can load-balance across them via a
