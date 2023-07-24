@@ -1,0 +1,18 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: train-job
+spec:
+  template:
+    spec:
+      volumes:
+      - name: data-volume
+        hostPath:
+          path: /Users/reighns/Downloads/iris
+      containers:
+      - name: train
+        image: ttl.sh/john_doe_iris/iris-train-image:latest
+        volumeMounts:
+        - mountPath: "/data"
+          name: data-volume
+      restartPolicy: Never
