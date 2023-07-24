@@ -22,6 +22,7 @@
     - [kubectl get deployments](#kubectl-get-deployments)
       - [Create a Deployment](#create-a-deployment)
       - [Verify the Deployment](#verify-the-deployment)
+    - [kubeclt get events](#kubeclt-get-events)
 
 Let's think about Kubernetes as a containerized shipping company.
 
@@ -674,6 +675,12 @@ a whole.
 
 ---
 
+### kubeclt get events
+
+```bash
+kubectl get events --sort-by=.metadata.creationTimestamp
+```
+
 In the next step, you'd typically start deploying your applications to the
 cluster (such as the Docker containers you've mentioned previously) and begin
 testing or development.
@@ -814,3 +821,4 @@ command in your previous question. If it is different, please modify the
 containerPort accordingly.
 
 In the next session, we will learn how to **Set Up a Local Kubernetes Cluster**.
+
