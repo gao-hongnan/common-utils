@@ -60,6 +60,13 @@ docker build -f Dockerfile -t ttl.sh/john_doe_iris/iris-train-image:latest . # f
 docker push ttl.sh/john_doe_iris/iris-train-image:latest
 ```
 
+and to run
+
+```bash
+docker run -v ~/Downloads/iris:/data iris-train-image:latest
+docker run -v ~/Downloads/iris:/data ttl.sh/john_doe_iris/iris-train-image:latest # for ttl.sh
+```
+
 **Step 5:** Write a Kubernetes Job for model training. Save this as `train-job.yaml`:
 
 ```yaml

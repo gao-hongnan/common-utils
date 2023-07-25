@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: fastapi-server
+  name: fastapi-server-deployment
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: fastapi-server
+      app: fastapi-server-deployment
   template:
     metadata:
       labels:
-        app: fastapi-server
+        app: fastapi-server-deployment
     spec:
       containers:
-      - name: fastapi-server
+      - name: fastapi-server-deployment
         image: ttl.sh/john_doe_iris/fastapi-server-image:latest
         ports:
         - containerPort: 8000
@@ -22,5 +22,11 @@ spec:
           mountPath: /model
       volumes:
       - name: model-volume
-        persistentVolumeClaim:
-          claimName: model-pvc
+        hostPath:
+          path: /Users/reighns/Downloads/iris/model
+          type: Directory
+
+      # volumes:
+      # - name: model-volume
+      #   persistentVolumeClaim:
+      #     claimName: model-pvc

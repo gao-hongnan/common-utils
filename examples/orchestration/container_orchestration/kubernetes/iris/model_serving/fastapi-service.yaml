@@ -1,12 +1,12 @@
-# fastapi-server-service.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: fastapi-service
+  name: fastapi-server-service
 spec:
   selector:
-    app: fastapi-server
+    app: fastapi-server-deployment
   ports:
     - protocol: TCP
       port: 80
       targetPort: 8000
+  type: NodePort

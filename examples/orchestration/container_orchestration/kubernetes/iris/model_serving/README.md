@@ -67,36 +67,59 @@ and to push:
 docker push ttl.sh/john_doe_iris/fastapi-server-image:latest
 ```
 
+and to run:
+
+```bash
+docker run -p 8000:8000 -v ~/Downloads/iris/model:/model fastapi-server-image:latest
+docker run -p 8000:8000 -v ~/Downloads/iris/model:/model ttl.sh/john_doe_iris/fastapi-server-image:latest # for ttl.sh
+```
+
+## Deployment
 
 Now, we can deploy this model server to Kubernetes. We will use a Deployment and a Service to deploy the model server. The Deployment will ensure that there are always 3 replicas of the model server running, and the Service will expose the model server to the outside world.
 
 ```yaml
-# fastapi-server-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: fastapi-server
+  name: fastapi-server-deployment
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: fastapi-server
+      app: fastapi-server-deployment
   template:
     metadata:
       labels:
-        app: fastapi-server
+        app: fastapi-server-deployment
     spec:
       containers:
-      - name: fastapi-server
-        image: fastapi-server-image:latest
+      - name: fastapi-server-deployment
+        image: ttl.sh/john_doe_iris/fastapi-server-image:latest
         ports:
         - containerPort: 8000
+        volumeMounts:
+        - name: model-volume
+          mountPath: /model
+      volumes:
+      - name: model-volume
+        hostPath:
+          path: /Users/reighns/Downloads/iris/model
+          type: Directory
+
+      # volumes:
+      # - name: model-volume
+      #   persistentVolumeClaim:
+      #     claimName: model-pvc
 ```
 
 ```bash
-kubectl apply -f fastapi-deployment.yaml
+kubectl apply -f fastapi-server-deployment.yaml
 ```
 
+## Service
+
+NOTE now you cannot see anything yet!
 
 ```yaml
 # fastapi-server-service.yaml
@@ -106,7 +129,7 @@ metadata:
   name: fastapi-server-service
 spec:
   selector:
-    app: fastapi-server
+    app: fastapi-server-deployment
   ports:
     - protocol: TCP
       port: 80
