@@ -16,7 +16,6 @@
       - [Create a Deployment](#create-a-deployment)
       - [Verify the Deployment](#verify-the-deployment)
     - [kubeclt get events](#kubeclt-get-events)
-  - [Debugging](#debugging)
 
 Let's think about Kubernetes as a containerized shipping company.
 
@@ -679,53 +678,3 @@ containerPort accordingly.
 
 In the next session, we will learn how to **Set Up a Local Kubernetes Cluster**.
 
-## Debugging
-
-`kubectl` offers several commands to help you understand the state of your cluster and debug any issues. Here's a brief overview of some of these commands:
-
-1. `kubectl logs`: This command is used to print the logs from a container in a pod. If the pod has multiple containers, you need to specify the container to get its logs. This command is useful when you want to understand what's happening within your application at runtime or debug any runtime issues. For instance, any exceptions or errors that your application throws will be present in these logs.
-
-2. `kubectl describe`: This command gives detailed information about a resource (like a pod, deployment, service, etc.). It includes things like the current state of the resource, recent events, and metadata. It can help you understand the current state of your resource and track any recent changes.
-
-3. `kubectl get`: This command lists one or more resources. This can give you a quick overview of the resources currently in your cluster.
-
-4. `kubectl exec`: This command is used to run commands in a container. This can be very useful for debugging, as it allows you to inspect the container's filesystem, check the running processes, etc.
-
-5. `kubectl diff`: This command helps to find differences between the current live state and the configuration specified in files or other resources.
-
-The best command to use depends on what you're trying to achieve or the issue you're trying to debug. You might use `kubectl logs` if you're debugging an application issue, `kubectl describe` if you're trying to understand why a pod isn't starting, or `kubectl exec` if you're trying to explore the state of a running container.
-
-Here's a structured and logical sequence of steps you can follow to debug a failing Kubernetes application:
-
-1. **Identify the problem:** First, you should understand the symptoms of the issue. Is your application not accessible? Is it not responding as expected? Is there an outage?
-
-2. **Isolate the component:** Once you have identified the problem, determine the component that is causing the issue. This could be the service, the deployment, the pod, or even the node where the pod is running.
-
-3. **Check the Kubernetes Objects status:**
-
-   - **Pods**: Use the command `kubectl get pods`. If any pod is not in the "Running" state, it might be the source of the issue.
-
-   - **Nodes**: Check the status of the nodes with `kubectl get nodes`. If a node is in the "NotReady" state, the pods running on it might be affected.
-
-   - **Services**: Check the services with `kubectl get services`. If your application is not accessible, the issue might be with the service.
-
-4. **Check the Events:** Use `kubectl get events` to check for any abnormal events in the namespace.
-
-5. **Inspect the Pod:** Use `kubectl describe pod <pod-name>` for a failing pod. This command provides more detailed information about the pod and any events or errors associated with it.
-
-6. **Inspect the Pod logs:** Use `kubectl logs <pod-name>` to check the logs of the application running in the pod. This can give you more detailed error messages about the application-level issues.
-
-7. **Verify Resource Availability:** Ensure that your cluster has sufficient resources (CPU, memory, storage). If you're running out of any of these, it could cause pods to crash or be evicted.
-
-8. **Check Configuration Files:** If all the above steps do not point to a clear issue, check your Kubernetes configuration files (YAML manifests) for any misconfigurations.
-
-9. **Inspect Application Code:** If all else fails, the problem may lie with the application code itself. Debug the application outside of Kubernetes, if possible, to see if the issue persists.
-
-10. **Use Debugging Tools:** Use Kubernetes debugging and validation tools to get more insights if the problem remains unresolved.
-    1.  `kubeval` etc.
-
-Remember, the sequence might vary slightly depending on the nature of the problem. The general idea is to start from the high-level Kubernetes objects and go deeper until the root cause is found.
-
-```bash
-kubectl exec -it fastapi-server-deployment-5bf55f9f76-262nr -- /bin/bash
-```

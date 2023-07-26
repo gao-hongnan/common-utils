@@ -1,31 +1,35 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: fastapi-server-deployment
+  name: fastapi-server-john-doe-deployment
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: fastapi-server-deployment
+      app: fastapi-server-john-doe-deployment
   template:
     metadata:
       labels:
-        app: fastapi-server-deployment
+        app: fastapi-server-john-doe-deployment
     spec:
       containers:
-      - name: fastapi-server-deployment
-        image: ttl.sh/john_doe_iris/fastapi-server-image:latest
-        ports:
-        - containerPort: 8000
-        volumeMounts:
-        - name: model-volume
-          mountPath: /model
+        - image: ttl.sh/john_doe_iris/fastapi-server-image:latest
+          imagePullPolicy: Always
+          name: fastapi-server-deployment
+          resources:
+            requests:
+              memory: "4Gi"
+              cpu: "4"
+            limits:
+              memory: "4Gi"
+              cpu: "4"
+          ports:
+            - containerPort: 8000
+              name: fastapi-server-deployment
+          volumeMounts:
+            - name: model-volume
+              mountPath: /model
       volumes:
-      - name: model-volume
-        persistentVolumeClaim:
-          claimName: model-pvc
-      # volumes:
-      # - name: model-volume
-      #   hostPath:
-      #     path: /Users/reighns/Downloads/iris/model
-      #     type: Directory
+        - name: model-volume
+          persistentVolumeClaim:
+            claimName: model-pvc
