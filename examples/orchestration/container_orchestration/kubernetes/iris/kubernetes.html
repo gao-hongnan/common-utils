@@ -2,7 +2,7 @@
     <html>
     <head>
         <meta charset="UTF-8">
-        <title>NGINX</title>
+        <title>Kubernetes</title>
         <style>
 /* From extension vscode.github */
 /*---------------------------------------------------------------------------------------------
@@ -44,28 +44,396 @@
         
     </head>
     <body class="vscode-body vscode-light">
-        <h1 id="nginx">NGINX</h1>
-<h2 id="deployment">Deployment</h2>
-<p>This deployment create one pod which has only one container <code>nginx</code> (you can create more than one under spec/containers).
-The <code>containerPort</code> is 80 means the container will listen on port 80 - runs a process is alive and will be
-can serve requests that comes to this port.</p>
-<p>then you can label this pod to be <code>app: nginx</code> under template/metadata.</p>
+        <h1 id="kubernetes">Kubernetes</h1>
+<ul>
+<li><a href="#kubernetes">Kubernetes</a>
+<ul>
+<li><a href="#the-analogies">The Analogies</a></li>
+<li><a href="#kubernetes-cluster">Kubernetes Cluster</a>
+<ul>
+<li><a href="#definition">Definition</a></li>
+<li><a href="#what-is-a-kubelet">What is a Kubelet?</a></li>
+<li><a href="#what-is-the-difference-between-a-master-node-and-a-worker-node">What is the difference between a master node and a worker node?</a></li>
+<li><a href="#how-does-the-master-node-communicate-with-worker-nodes">How does the master node communicate with worker nodes?</a></li>
+<li><a href="#how-does-kubernetes-handle-node-failures-to-ensure-high-availability">How does Kubernetes handle node failures to ensure high availability?</a></li>
+</ul>
+</li>
+<li><a href="#kubernetes-node">Kubernetes Node</a>
+<ul>
+<li><a href="#definition-1">Definition</a></li>
+<li><a href="#node-status">Node Status</a></li>
+<li><a href="#node-lifecycle">Node Lifecycle</a></li>
+<li><a href="#pods">Pods</a></li>
+<li><a href="#definition-2">Definition</a></li>
+<li><a href="#what-is-a-pod">What is a Pod?</a></li>
+<li><a href="#common-interview-questions-on-nodes-pods-and-containers-in-kubernetes">Common Interview Questions on Nodes, Pods, and Containers in Kubernetes</a></li>
+<li><a href="#whats-a-pod">What's a Pod?</a></li>
+<li><a href="#whats-a-service">What's a Service?</a>
+<ul>
+<li><a href="#more-on-services-important">More on Services IMPORTANT</a></li>
+</ul>
+</li>
+<li><a href="#whats-a-deployment">What's a Deployment?</a></li>
+<li><a href="#summary">Summary</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="the-analogies">The Analogies</h2>
+<p>Let's try to use an analogy of a business park with various office buildings,
+offices, and teams.</p>
+<ol>
+<li>
+<p><strong>Cluster</strong>: Think of Kubernetes Cluster as the <strong>management and
+organizational structure</strong> in a large <strong>business park</strong>. This management
+structure ensures that the entire business park runs smoothly. They oversee
+the running of all office buildings, offices, and teams within it, making
+sure resources are allocated efficiently, new teams are housed in suitable
+offices, and any issues are dealt with swiftly.</p>
+<ul>
+<li>Mapletree Business City is a business park in Singapore.</li>
+</ul>
+</li>
+<li>
+<p><strong>Nodes</strong>: These are the <strong>office buildings</strong> in the business park (cluster).
+Each office building (node) has a number of offices (pods) in it. The
+management (Kubernetes cluster) decides which office building (node) is best
+for each office (pod) based on the resources available.</p>
+<ul>
+<li>Google office building in the Mapletree Business City is a node.</li>
+<li>Oracle office building in the Mapletree Business City is another node.</li>
+</ul>
+</li>
+<li>
+<p><strong>Pods</strong>: Pods are like <strong>individual offices</strong> within an office building
+(node). Each office can house one or more employees (containers). Employees
+within the same office work closely together, share resources, and
+communicate easily. Similarly, pods can run one or more closely related
+containers, which share resources and a network namespace.</p>
+<p>Pods are the smallest deployable units of computing in a Kubernetes cluster,
+though this analogy is not apparent.</p>
+<ul>
+<li>For example, the Ads team in the Google office building is a pod.</li>
+<li>For example, the YouTube team in the Google office building is another
+pod.</li>
+<li>For example, the Google Brain team in the Google office building is
+another pod.</li>
+</ul>
+</li>
+<li>
+<p><strong>Containers</strong>: These are the employees/workers within the offices (pods).
+Each worker (container) has a specific job to do. A pod (office) may have
+just one worker (container), or it may have many workers (containers) who
+work together to get the job done.</p>
+<ul>
+<li>For example, two software engineers and one machine learning engineer in
+the Google Brain team in the Google office building.</li>
+</ul>
+</li>
+<li>
+<p><strong>Deployment</strong>: This is the <strong>HR team's plan</strong> for how to staff the offices.
+The plan might say that there should always be at least five employees
+working on Project A. If someone on Project A leaves the company, the HR team
+hires a new employee to fill that spot. Similarly, a Kubernetes Deployment
+checks that there are always the required number of pods running. If a pod
+crashes, the Deployment creates a new one to replace it.</p>
+</li>
+<li>
+<p><strong>Services</strong>: A service in Kubernetes is like a <strong>department</strong> in the
+business park. This department could be spread across multiple offices (pods)
+in different office buildings (nodes), but they all work towards a common
+goal. Similarly, a service in Kubernetes is a set of pods that work together,
+such as a backend for handling HTTP requests.</p>
+</li>
+<li>
+<p><strong>Ingress</strong>: Ingress can be seen as the <strong>main gate</strong> of the business park
+that controls and routes incoming traffic to the right office building (node)
+and office (pod).</p>
+</li>
+<li>
+<p><strong>ConfigMaps and Secrets</strong>: These are like <strong>internal memos and confidential
+documents</strong> respectively. ConfigMaps hold non-confidential data, like
+internal memos which are meant for everyone in the office to read and use. On
+the other hand, Secrets hold confidential data, similar to sensitive
+documents that should be only accessible to specific people.</p>
+</li>
+<li>
+<p><strong>Volumes</strong>: Volumes are like <strong>filing cabinets</strong> in an office. Containers,
+like employees, can store, modify, and retrieve data from them. However,
+unlike containers which can come and go, the filing cabinet (volume) remains,
+keeping the data intact.</p>
+</li>
+</ol>
+<h2 id="kubernetes-cluster">Kubernetes Cluster</h2>
+<h3 id="definition"><a href="https://kubernetes.io/docs/concepts/architecture/nodes/">Definition</a></h3>
+<p>A Kubernetes cluster is made up of a set of nodes, which are the machines
+(physical or virtual) where your workloads (containers) run.</p>
+<p>So a Kubernetes cluster can have many nodes. A node is a worker machine and may
+be either a virtual or a physical machine, depending on the cluster. Each node
+contains the services necessary to run Pods and is managed by the master
+components.</p>
+<p>There are two types of nodes:</p>
+<ol>
+<li>
+<p><strong>Worker nodes</strong>: These are the machines where the actual workloads
+(containers) run. They have Kubelet, which is an agent for managing the node
+and communicating with the Kubernetes master. They also have tools for
+handling container operations, like containerd or Docker.</p>
+</li>
+<li>
+<p><strong>Master node</strong>: This is the controlling machine that manages the worker
+nodes and the pods in the cluster. The master node communicates with the
+worker nodes via the Kubernetes API, which the master exposes. The master
+node schedules deployments and manages the desired state of the cluster.</p>
+</li>
+</ol>
+<p>A cluster with more than one node allows you to run your applications and
+services in a high-availability setup, where one or more nodes can fail, and
+your applications will still be available. It also enables you to scale out your
+application or service by running more pods on more nodes.</p>
+<h3 id="what-is-a-kubelet"><a href="https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/">What is a Kubelet?</a></h3>
+<p>Kubelet is an essential component of Kubernetes that runs on each node (worker
+and master) in the cluster. It's responsible for maintaining the desired state
+for pods. Here's a bit more detail:</p>
+<ol>
+<li>
+<p><strong>Pod Management</strong>: The Kubelet receives a PodSpec (a YAML or JSON object
+that describes a pod) from the API server and ensures that the containers
+described in the PodSpec are running and healthy. The PodSpecs are created as
+a result of the API server processing calls to the Kubernetes API.</p>
+</li>
+<li>
+<p><strong>Node Registration</strong>: When a Kubelet starts on a node, it registers the node
+with the API server providing information such as the node's IP address,
+hostname, and available resources (CPU, memory, etc).</p>
+</li>
+<li>
+<p><strong>Health Checks</strong>: Kubelet also performs health checks to ensure that the
+applications (containers) running in the pods are healthy. If a container
+becomes unresponsive, based on the policy set, Kubelet can restart the
+container to keep the application running.</p>
+</li>
+<li>
+<p><strong>Resource Metrics</strong>: Kubelet collects and reports resource metrics such as
+CPU, memory usage, etc., for the containers running on its node to the API
+server.</p>
+</li>
+<li>
+<p><strong>Interaction with Container Runtime</strong>: Kubelet interacts with the container
+runtime (Docker, containerd, CRI-O etc.) on the node to manage the lifecycle
+of the container like pulling the image, starting or stopping the container.</p>
+</li>
+</ol>
+<p>So, in essence, Kubelet acts as a bridge between the master and the nodes,
+enabling the master to have control over various aspects of node and pod
+management.</p>
+<h3 id="what-is-the-difference-between-a-master-node-and-a-worker-node">What is the difference between a master node and a worker node?</h3>
+<ul>
+<li>Master nodes, also called control plane nodes, are responsible for
+controlling and managing the overall operation of the Kubernetes cluster.
+They host components such as the API server, controller manager, scheduler,
+and etcd, which is the cluster database.</li>
+<li>Worker nodes, on the other hand, are where your applications (inside
+containers) actually run. They contain all the necessary services to manage
+the networking between the containers, communicate with the master node, and
+assign resources to the containers scheduled.</li>
+</ul>
+<h3 id="how-does-the-master-node-communicate-with-worker-nodes">How does the master node communicate with worker nodes?</h3>
+<p>The master node communicates with worker nodes through the Kubernetes API, which
+is exposed by the API server on the master node. The Kubelet, running on each
+worker node, communicates with the master node's API server. This way, the
+master node can schedule and control the state of workloads on worker nodes.</p>
+<h3 id="how-does-kubernetes-handle-node-failures-to-ensure-high-availability">How does Kubernetes handle node failures to ensure high availability?</h3>
+<ul>
+<li>Kubernetes uses various mechanisms to handle node failures. These include
+replication of application instances across different nodes, regular health
+checks, and automated pod rescheduling.</li>
+<li>For example, if a worker node fails, the Replication Controller notices the
+drop in the number of replicas, because the pods running on the failed node
+are no longer reachable. The Replication Controller then creates new pods on
+other available nodes to maintain the desired number of replicas.</li>
+<li>Similarly, the master nodes in a Kubernetes cluster can also be set up in a
+highly available configuration to ensure that the failure of a single master
+node doesn't bring down the entire cluster.</li>
+</ul>
+<h2 id="kubernetes-node"><a href="https://kubernetes.io/docs/concepts/architecture/nodes/">Kubernetes Node</a></h2>
+<h3 id="definition-1">Definition</h3>
+<p>A node is a worker machine in Kubernetes, which may be either a virtual or a
+physical machine, depending on the cluster. Each node contains the services
+necessary to run Pods and is managed by the master components. There are two
+types of nodes:</p>
+<ol>
+<li>
+<p><strong>Worker nodes</strong>: Machines where actual workloads (containers) run. They have
+Kubelet, an agent for managing the node and communicating with the Kubernetes
+master. They also have tools for handling container operations, like
+containerd or Docker.</p>
+</li>
+<li>
+<p><strong>Master nodes</strong>: The controlling machines that manage the worker nodes and
+the pods in the cluster. Master nodes communicate with worker nodes via the
+Kubernetes API, which the master node exposes. Master nodes schedule
+deployments and manage the desired state of the cluster.</p>
+</li>
+</ol>
+<h3 id="node-status">Node Status</h3>
+<p>Each node has a status that contains information about its capacity (CPU,
+memory, disk space), its conditions (Disk Pressure, Memory Pressure, PID
+Pressure, Ready), and its addresses (Host name, External IP, Internal IP).</p>
+<p>You can get the status of a node by running the following command:</p>
+<pre><code class="language-bash">kubectl get nodes
+</code></pre>
+<h3 id="node-lifecycle">Node Lifecycle</h3>
+<p>Kubernetes maintains the lifecycle of a node, from when it is first registered
+with the cluster, through its ongoing maintenance, to its eventual retirement or
+failure. Node Controller is the component responsible for noticing and
+responding when nodes go down.</p>
+<h3 id="pods"><a href="https://kubernetes.io/docs/concepts/workloads/pods/">Pods</a></h3>
+<h3 id="definition-2">Definition</h3>
+<p>A Pod (as in a pod of whales or pea pod) is a group of one or more
+<a href="https://kubernetes.io/docs/concepts/containers/">containers</a>, with shared
+storage and network resources, and a specification for how to run the
+containers. A Pod's contents are always co-located and co-scheduled, and run in
+a shared context. A Pod models an application-specific &quot;logical host&quot;: it
+contains one or more application containers which are relatively tightly
+coupled. In non-cloud contexts, applications executed on the same physical or
+virtual machine are analogous to cloud applications executed on the same logical
+host.</p>
+<h3 id="what-is-a-pod">What is a Pod?</h3>
 <blockquote>
-<p>so far created 1 pod with 1 container and is labelled key app value nginx.
-For eg, mlflow dashboard is a webserver.</p>
+<p>The shared context of a Pod is a set of Linux namespaces, cgroups, and
+potentially other facets of isolation - the same things that isolate a
+container. Within a Pod's context, the individual applications may have
+further sub-isolations applied.</p>
 </blockquote>
-<pre><code class="language-bash">kubectl apply -f deployment.yaml
-</code></pre>
-<p>You see 3 replicas.</p>
-<p>kubectl port-forward deployment/my-nginx-deployment 8080:80</p>
-<h2 id="service">Service</h2>
-<p>If you've created a <code>Service</code> of type <code>NodePort</code>, Kubernetes will allocate a port from a range (default is 30000-32767) on each Node for this Service, and any connection to this port on any Node is forwarded to the service.</p>
-<p>After applying the <code>Service</code> configuration with <code>kubectl apply -f &lt;filename&gt;</code>, you can find out what port was allocated by describing the service:</p>
-<pre><code class="language-bash">kubectl describe service my-nginx-service
-</code></pre>
-<p>Look for the <code>NodePort:</code> line under <code>Ports:</code>. The number after <code>NodePort:</code> is the port you can use on your local machine to access the service.</p>
-<p>If you're using a local Kubernetes solution like Minikube or Docker Desktop, you can access the service via <code>localhost:&lt;NodePort&gt;</code>. If you're using a cloud-based Kubernetes service, you'll need to use the public IP address of one of your nodes along with the NodePort to access the service.</p>
-<p>Also, note that depending on your firewall and security settings, you may need to open this NodePort in your firewall to allow traffic to the service.</p>
+<blockquote>
+<p>A Pod is similar to a set of containers with shared namespaces and shared
+filesystem volumes.</p>
+</blockquote>
+<p>Pods are the smallest deployable units in Kubernetes that can be created and
+managed. Each Pod represents a single instance of a running process in the
+cluster and can contain one or more containers. Containers within a Pod share an
+IP address and port space, and can communicate with one another using
+<code>localhost</code>. They can also share storage volumes.</p>
+<hr>
+<p><strong>Containers</strong>:
+<a href="https://kubernetes.io/docs/concepts/overview/what-is-kubernetes/#why-containers">Containers</a>
+are a technology for packaging the (compiled) code for an application along with
+the dependencies it needs at run time. Each container that you run is
+repeatable; the standardization from having dependencies included means you get
+the same behavior wherever you run it.</p>
+<h3 id="common-interview-questions-on-nodes-pods-and-containers-in-kubernetes">Common Interview Questions on Nodes, Pods, and Containers in Kubernetes</h3>
+<ol>
+<li>
+<p><strong>What is the relationship between a Pod, a Node, and a Container in
+Kubernetes?</strong></p>
+<p>In Kubernetes, a <strong>Node</strong> is a worker machine and it may be either a virtual
+or a physical machine. Each Node is managed by the Master and is configured
+with multiple components to manage the workloads.</p>
+<p>A <strong>Pod</strong> is the smallest and simplest deployable unit of computing that you
+can create and manage in Kubernetes. A Pod encapsulates an application's
+container (or, in some cases, multiple containers), storage resources, a
+unique network IP, and options that govern how the container(s) should run.
+A Pod is hosted inside a Node and multiple Pods can run on the same Node.</p>
+<p><strong>Containers</strong> are a good way to bundle and run your applications. A
+container runs natively on Linux and shares the kernel of the host machine
+with other containers. It runs a discrete process, taking no more memory
+than any other executable, making it lightweight. The nature of a container
+allows it to be easily packaged and shipped with its dependencies, which is
+encapsulated into a Kubernetes Pod.</p>
+</li>
+<li>
+<p><strong>What happens when a node in a Kubernetes cluster fails?</strong></p>
+<p>When a node in a Kubernetes cluster fails, the
+<a href="https://kubernetes.io/docs/concepts/architecture/control-plane-node-communication/#control-plane-to-node">Kubernetes master</a>
+will automatically detect this event. Once the Node Controller notices that
+a node has not reported back for a specified amount of time (the default is
+5 minutes), it will declare the node as unreachable. The workloads (Pods)
+running on that node will be scheduled for deletion. The Replication
+Controllers in the Kubernetes master will then take care of creating new
+pods and scheduling them onto the healthy nodes in the cluster, ensuring
+that the desired state of the application is maintained and providing high
+availability.</p>
+</li>
+<li>
+<p><strong>What is the role of Kubelet in a Kubernetes cluster?</strong></p>
+<p><a href="https://kubernetes.io/docs/concepts/overview/components/#kubelet">Kubelet</a>
+is a key component of a Kubernetes Node. It's responsible for ensuring that
+the containers in a Pod are running and in a healthy state. It maintains the
+desired state for pods, registers the node with the API server, performs
+health checks, collects resource metrics, and interacts with the container
+runtime on the node.</p>
+</li>
+</ol>
+<p>These are just some of the questions that can come up during an interview about
+Kubernetes. Remember, it's important to understand the principles behind the
+technology in order to answer questions effectively.</p>
+<h3 id="whats-a-pod">What's a Pod?</h3>
+<h3 id="whats-a-service">What's a Service?</h3>
+<p>Services are an abstract way to expose an application running on a set of Pods
+as a network service. Kubernetes gives Pods their own IP addresses and a single
+DNS name for a set of Pods, and can load-balance across them via a Service.</p>
+<h4 id="more-on-services-important">More on Services IMPORTANT</h4>
+<p>In Kubernetes, a Service is an abstraction which defines a logical set of Pods
+and a policy by which to access them. Services enable a loose coupling between
+dependent Pods.</p>
+<p>A Kubernetes Service is used to expose an application running on a set of Pods
+as a network service. Think of Pods as the running processes and Services as the
+front-end load balancer and traffic router.</p>
+<p>With Kubernetes, you don’t need to modify your application to use an unfamiliar
+service discovery mechanism. Kubernetes gives Pods their own IP addresses and a
+single DNS name for a set of Pods, and can load-balance across them.</p>
+<p>The set of Pods targeted by a Service is usually determined by a selector. If a
+Service has a selector, the Service controller will continuously monitor the
+running Pods in the Kubernetes cluster, and will create and update the Service’s
+endpoint list (the set of Pods that the Service’s selector will match) whenever
+the set of Pods in the cluster changes.</p>
+<p>There are different types of Services in Kubernetes:</p>
+<ol>
+<li>
+<p><strong>ClusterIP</strong>: Exposes the Service on a cluster-internal IP. This makes the
+Service only reachable from within the cluster. This is the default
+ServiceType.</p>
+</li>
+<li>
+<p><strong>NodePort</strong>: Exposes the Service on each Node’s IP at a static port (the
+NodePort). A ClusterIP Service, to which the NodePort Service routes, is
+automatically created.</p>
+</li>
+<li>
+<p><strong>LoadBalancer</strong>: Exposes the Service externally using a cloud provider’s
+load balancer. NodePort and ClusterIP Services, to which the external load
+balancer routes, are automatically created.</p>
+</li>
+<li>
+<p><strong>ExternalName</strong>: Maps the Service to the contents of the <code>externalName</code>
+field (e.g. <code>foo.bar.example.com</code>), by returning a CNAME record.</p>
+</li>
+</ol>
+<p>Each Service has a <code>type</code> field which defines the type of Service it is. The
+type dictates how the Service is exposed to network traffic.</p>
+<p>A Service in Kubernetes is crucial when you're dealing with dynamic Pod creation
+and destruction. When a Pod dies and gets replaced, it will have a different IP,
+but the Service ensures that the traffic will always get to the intended
+destination.</p>
+<h3 id="whats-a-deployment">What's a Deployment?</h3>
+<p>A Deployment provides declarative updates for Pods and ReplicaSets. You describe
+a desired state in a Deployment, and the Deployment controller changes the
+actual state to the desired state at a controlled rate.</p>
+<h3 id="summary">Summary</h3>
+<p>Here's a simplified hierarchy:</p>
+<ul>
+<li>Cluster: A set of Nodes.</li>
+<li>Node: An individual machine that runs containers.</li>
+<li>Pod: The smallest and simplest unit in the Kubernetes object model that you
+create or deploy. A Pod represents processes running on your Cluster.</li>
+<li>Service: An abstract way to expose an application running on a set of Pods
+as a network service.</li>
+</ul>
+<p>It's important to note that while Pods run on nodes, Services operate at the
+cluster level and are not tied to specific nodes. Instead, a Service routes
+traffic to appropriate Pods, no matter which node they are running on.</p>
 
         
         

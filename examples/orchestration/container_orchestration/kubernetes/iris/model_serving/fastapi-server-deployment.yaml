@@ -22,11 +22,10 @@ spec:
           mountPath: /model
       volumes:
       - name: model-volume
-        hostPath:
-          path: /Users/reighns/Downloads/iris/model
-          type: Directory
-
+        persistentVolumeClaim:
+          claimName: model-pvc
       # volumes:
       # - name: model-volume
-      #   persistentVolumeClaim:
-      #     claimName: model-pvc
+      #   hostPath:
+      #     path: /Users/reighns/Downloads/iris/model
+      #     type: Directory

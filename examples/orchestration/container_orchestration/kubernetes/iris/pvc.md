@@ -17,7 +17,11 @@ spec:
     path: "/Users/reighns/Downloads/iris/model"
 ```
 
-Save this to a file (e.g., `pv.yaml`), and then apply it with `kubectl apply -f pv.yaml`.
+Save this to a file (e.g., `model-pv.yaml`), and then apply it with `kubectl apply -f model-pv.yaml`.
+
+```bash
+kubectl get pv
+```
 
 2. Now you can create a PersistentVolumeClaim that will bind to the PersistentVolume you just created.
 

@@ -1,27 +1,22 @@
 # Kubernetes
 
 - [Kubernetes](#kubernetes)
-    - [Terminology](#terminology)
-    - [Setup Kubernetes Locally](#setup-kubernetes-locally)
-    - [Local Kubernetes Cluster](#local-kubernetes-cluster)
-        - [What's a Kubernetes Cluster?](#whats-a-kubernetes-cluster)
-        - [What's a Pod?](#whats-a-pod)
-        - [What's a Service?](#whats-a-service)
-            - [More on Services IMPORTANT](#more-on-services-important)
-        - [What's a Deployment?](#whats-a-deployment)
-        - [Summary](#summary)
-        - [Setting Up](#setting-up)
-        - [Cluster is Automatically Configured](#cluster-is-automatically-configured)
-    - [Useful Commands](#useful-commands)
-        - [kubectl cluster-info](#kubectl-cluster-info)
-        - [kubectl get nodes](#kubectl-get-nodes)
-        - [kubectl describe node](#kubectl-describe-node)
-        - [kubectl get pods](#kubectl-get-pods)
-        - [kubectl get services](#kubectl-get-services)
-        - [kubectl get deployments](#kubectl-get-deployments)
-            - [Create a Deployment](#create-a-deployment)
-            - [Verify the Deployment](#verify-the-deployment)
-        - [kubeclt get events](#kubeclt-get-events)
+  - [Terminology](#terminology)
+  - [Setup Kubernetes Locally](#setup-kubernetes-locally)
+  - [Local Kubernetes Cluster](#local-kubernetes-cluster)
+    - [Setting Up](#setting-up)
+    - [Cluster is Automatically Configured](#cluster-is-automatically-configured)
+  - [Useful Commands](#useful-commands)
+    - [kubectl cluster-info](#kubectl-cluster-info)
+    - [kubectl get nodes](#kubectl-get-nodes)
+    - [kubectl describe node](#kubectl-describe-node)
+    - [kubectl get pods](#kubectl-get-pods)
+    - [kubectl get services](#kubectl-get-services)
+    - [kubectl get deployments](#kubectl-get-deployments)
+      - [Create a Deployment](#create-a-deployment)
+      - [Verify the Deployment](#verify-the-deployment)
+    - [kubeclt get events](#kubeclt-get-events)
+  - [Debugging](#debugging)
 
 Let's think about Kubernetes as a containerized shipping company.
 
@@ -116,110 +111,6 @@ kubectl config use-context docker-desktop
 ```
 
 ## Local Kubernetes Cluster
-
-### What's a Kubernetes Cluster?
-
-A Kubernetes cluster is made up of a set of nodes, which are the machines
-(physical or virtual) where your workloads (containers) run.
-
-So a Kubernetes cluster can have many nodes. A node is a worker machine and may
-be either a virtual or a physical machine, depending on the cluster. Each node
-contains the services necessary to run Pods and is managed by the master
-components.
-
-There are two types of nodes:
-
-1. **Worker nodes**: These nodes run the workloads. They are controlled by the
-   master node and they run the actual containers of the applications.
-
-2. **Master node**: This node controls the worker nodes. It schedules the
-   deployment of the containers to the worker nodes. The master node also keeps
-   track of the state of the cluster.
-
-A cluster with more than one node allows you to run your applications and
-services in a high-availability setup, where one or more nodes can fail, and
-your applications will still be available. It also enables you to scale out your
-application or service by running more pods on more nodes.
-
-### What's a Pod?
-
-Pods are the smallest deployable units in Kubernetes that can be created and
-managed. Each Pod represents a single instance of a running process in the
-cluster and can contain one or more containers. Containers within a Pod share an
-IP address and port space, and can communicate with one another using
-`localhost`. They can also share storage volumes.
-
-### What's a Service?
-
-Services are an abstract way to expose an application running on a set of Pods
-as a network service. Kubernetes gives Pods their own IP addresses and a single
-DNS name for a set of Pods, and can load-balance across them via a Service.
-
-#### More on Services IMPORTANT
-
-In Kubernetes, a Service is an abstraction which defines a logical set of Pods
-and a policy by which to access them. Services enable a loose coupling between
-dependent Pods.
-
-A Kubernetes Service is used to expose an application running on a set of Pods
-as a network service. Think of Pods as the running processes and Services as the
-front-end load balancer and traffic router.
-
-With Kubernetes, you don’t need to modify your application to use an unfamiliar
-service discovery mechanism. Kubernetes gives Pods their own IP addresses and a
-single DNS name for a set of Pods, and can load-balance across them.
-
-The set of Pods targeted by a Service is usually determined by a selector. If a
-Service has a selector, the Service controller will continuously monitor the
-running Pods in the Kubernetes cluster, and will create and update the Service’s
-endpoint list (the set of Pods that the Service’s selector will match) whenever
-the set of Pods in the cluster changes.
-
-There are different types of Services in Kubernetes:
-
-1. **ClusterIP**: Exposes the Service on a cluster-internal IP. This makes the
-   Service only reachable from within the cluster. This is the default
-   ServiceType.
-
-2. **NodePort**: Exposes the Service on each Node’s IP at a static port (the
-   NodePort). A ClusterIP Service, to which the NodePort Service routes, is
-   automatically created.
-
-3. **LoadBalancer**: Exposes the Service externally using a cloud provider’s
-   load balancer. NodePort and ClusterIP Services, to which the external load
-   balancer routes, are automatically created.
-
-4. **ExternalName**: Maps the Service to the contents of the `externalName`
-   field (e.g. `foo.bar.example.com`), by returning a CNAME record.
-
-Each Service has a `type` field which defines the type of Service it is. The
-type dictates how the Service is exposed to network traffic.
-
-A Service in Kubernetes is crucial when you're dealing with dynamic Pod creation
-and destruction. When a Pod dies and gets replaced, it will have a different IP,
-but the Service ensures that the traffic will always get to the intended
-destination.
-
-### What's a Deployment?
-
-A Deployment provides declarative updates for Pods and ReplicaSets. You describe
-a desired state in a Deployment, and the Deployment controller changes the
-actual state to the desired state at a controlled rate.
-
-### Summary
-
-Here's a simplified hierarchy:
-
-- Cluster: A set of Nodes.
-- Node: An individual machine that runs containers.
-- Pod: The smallest and simplest unit in the Kubernetes object model that you
-    create or deploy. A Pod represents processes running on your Cluster.
-- Service: An abstract way to expose an application running on a set of Pods
-    as a network service.
-
-It's important to note that while Pods run on nodes, Services operate at the
-cluster level and are not tied to specific nodes. Instead, a Service routes
-traffic to appropriate Pods, no matter which node they are running on.
 
 ### Setting Up
 
@@ -788,3 +679,53 @@ containerPort accordingly.
 
 In the next session, we will learn how to **Set Up a Local Kubernetes Cluster**.
 
+## Debugging
+
+`kubectl` offers several commands to help you understand the state of your cluster and debug any issues. Here's a brief overview of some of these commands:
+
+1. `kubectl logs`: This command is used to print the logs from a container in a pod. If the pod has multiple containers, you need to specify the container to get its logs. This command is useful when you want to understand what's happening within your application at runtime or debug any runtime issues. For instance, any exceptions or errors that your application throws will be present in these logs.
+
+2. `kubectl describe`: This command gives detailed information about a resource (like a pod, deployment, service, etc.). It includes things like the current state of the resource, recent events, and metadata. It can help you understand the current state of your resource and track any recent changes.
+
+3. `kubectl get`: This command lists one or more resources. This can give you a quick overview of the resources currently in your cluster.
+
+4. `kubectl exec`: This command is used to run commands in a container. This can be very useful for debugging, as it allows you to inspect the container's filesystem, check the running processes, etc.
+
+5. `kubectl diff`: This command helps to find differences between the current live state and the configuration specified in files or other resources.
+
+The best command to use depends on what you're trying to achieve or the issue you're trying to debug. You might use `kubectl logs` if you're debugging an application issue, `kubectl describe` if you're trying to understand why a pod isn't starting, or `kubectl exec` if you're trying to explore the state of a running container.
+
+Here's a structured and logical sequence of steps you can follow to debug a failing Kubernetes application:
+
+1. **Identify the problem:** First, you should understand the symptoms of the issue. Is your application not accessible? Is it not responding as expected? Is there an outage?
+
+2. **Isolate the component:** Once you have identified the problem, determine the component that is causing the issue. This could be the service, the deployment, the pod, or even the node where the pod is running.
+
+3. **Check the Kubernetes Objects status:**
+
+   - **Pods**: Use the command `kubectl get pods`. If any pod is not in the "Running" state, it might be the source of the issue.
+
+   - **Nodes**: Check the status of the nodes with `kubectl get nodes`. If a node is in the "NotReady" state, the pods running on it might be affected.
+
+   - **Services**: Check the services with `kubectl get services`. If your application is not accessible, the issue might be with the service.
+
+4. **Check the Events:** Use `kubectl get events` to check for any abnormal events in the namespace.
+
+5. **Inspect the Pod:** Use `kubectl describe pod <pod-name>` for a failing pod. This command provides more detailed information about the pod and any events or errors associated with it.
+
+6. **Inspect the Pod logs:** Use `kubectl logs <pod-name>` to check the logs of the application running in the pod. This can give you more detailed error messages about the application-level issues.
+
+7. **Verify Resource Availability:** Ensure that your cluster has sufficient resources (CPU, memory, storage). If you're running out of any of these, it could cause pods to crash or be evicted.
+
+8. **Check Configuration Files:** If all the above steps do not point to a clear issue, check your Kubernetes configuration files (YAML manifests) for any misconfigurations.
+
+9. **Inspect Application Code:** If all else fails, the problem may lie with the application code itself. Debug the application outside of Kubernetes, if possible, to see if the issue persists.
+
+10. **Use Debugging Tools:** Use Kubernetes debugging and validation tools to get more insights if the problem remains unresolved.
+    1.  `kubeval` etc.
+
+Remember, the sequence might vary slightly depending on the nature of the problem. The general idea is to start from the high-level Kubernetes objects and go deeper until the root cause is found.
+
+```bash
+kubectl exec -it fastapi-server-deployment-5bf55f9f76-262nr -- /bin/bash
+```
