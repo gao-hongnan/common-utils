@@ -38,6 +38,8 @@ various software packages. Run the following command in your terminal:
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
+### Homebrew PATH
+
 macOS will prompt you to add Homebrew to your path.
 
 ## Install Java
@@ -59,7 +61,7 @@ brew install google-chrome --cask
 
 ```bash
 # Install Alt Tab
-brew install alt-tab --cask
+brew install --cask alt-tab
 ```
 
 ## VSCode
