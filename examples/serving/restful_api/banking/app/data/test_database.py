@@ -27,7 +27,6 @@ engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
 session = SessionLocal()
 
-
 accounts = session.query(Account).all()  # Returns a list of all Account objects
 for account in accounts:
     print(account.id, account.name, account.email, account.balance)
@@ -46,3 +45,11 @@ pprint(account.__dict__)
 
 transactions = account.transactions
 pprint(transactions[0].__dict__)
+
+
+new_account = Account(name="John Doe", email="john@example.com", balance=100.0)
+session.add(new_account)
+session.commit()
+
+account_john = session.query(Account).filter(Account.name == "John Doe").one()
+pprint(account_john.__dict__)
