@@ -73,3 +73,20 @@ plt.xlabel("Input Size")
 plt.ylabel("Time (seconds)")
 plt.legend()
 plt.show()
+
+
+{
+    "_sa_instance_state": <sqlalchemy.orm.state.InstanceState object at 0x106153820>,
+    "name": "Lindsey Riley",
+    "email": "nicholas55@example.com",
+    "balance": 3557.707193831535,
+    "id": 1,
+}
+{
+    "_sa_instance_state": <sqlalchemy.orm.state.InstanceState object at 0x106237f40>,
+    "amount": 383.6977248919248,
+    "account_id": 1,
+    "timestamp": datetime.datetime(2023, 3, 5, 8, 5, 55),
+    "type": "deposit",
+    "id": 1,
+}
