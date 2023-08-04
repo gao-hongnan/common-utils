@@ -1,6 +1,5 @@
-from fastapi import FastAPI, HTTPException, Body
+from fastapi import FastAPI, HTTPException
 from typing import List, Dict, Union
-from pydantic import BaseModel
 
 app = FastAPI()
 
