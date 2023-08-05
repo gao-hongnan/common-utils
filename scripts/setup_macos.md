@@ -202,12 +202,22 @@ The SSH agent is a program that holds your private keys, so you don't need to re
     Host *
       AddKeysToAgent yes
       UseKeychain yes
-      IdentityFile /Users/yourusername/.ssh/id_rsa
+      IdentityFile /Users/<USERNAME>/.ssh/id_rsa
     ```
 
-6. Replace `yourusername` with your actual username, then save and close the file.
+6. Replace `<USERNAME>` with your actual username, then save and close the file.
 
 7. Finally, run `ssh-add -K ~/.ssh/id_rsa` to add your SSH key to the SSH agent.
+
+    Note that you might see a warning message:
+
+    ```bash
+    WARNING: The -K and -A flags are deprecated and have been replaced
+            by the --apple-use-keychain and --apple-load-keychain
+            flags, respectively.  To suppress this warning, set the
+            environment variable APPLE_SSH_ADD_BEHAVIOR as described in
+            the ssh-add(1) manual page.
+    ```
 
 ### Adding the SSH key to your GitHub account
 
