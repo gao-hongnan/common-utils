@@ -1,5 +1,6 @@
+from typing import Dict, List, Union
+
 from fastapi import FastAPI, HTTPException
-from typing import List, Dict, Union
 
 app = FastAPI()
 
