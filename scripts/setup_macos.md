@@ -1,3 +1,30 @@
+# Setup macOS
+
+- [Setup macOS](#setup-macos)
+  - [ZSHRC](#zshrc)
+    - [NPM](#npm)
+    - [Tree](#tree)
+    - [P10K](#p10k)
+  - [Install Homebrew](#install-homebrew)
+    - [Homebrew PATH](#homebrew-path)
+  - [Install Java](#install-java)
+  - [Install Chrome](#install-chrome)
+  - [Install Alt Tab](#install-alt-tab)
+  - [VSCode](#vscode)
+  - [Docker](#docker)
+  - [Node](#node)
+  - [Tex Live](#tex-live)
+  - [Set up Git](#set-up-git)
+    - [Configure Local Git](#configure-local-git)
+    - [Cloning](#cloning)
+  - [Setting up SSH for GitHub](#setting-up-ssh-for-github)
+    - [Checking for existing SSH keys](#checking-for-existing-ssh-keys)
+    - [Generating a new SSH key pair](#generating-a-new-ssh-key-pair)
+    - [Starting the SSH agent and adding the SSH key](#starting-the-ssh-agent-and-adding-the-ssh-key)
+    - [Adding the SSH key to your GitHub account](#adding-the-ssh-key-to-your-github-account)
+    - [Testing your SSH connection](#testing-your-ssh-connection)
+    - [Configuring Git](#configuring-git)
+
 ## ZSHRC
 
 ```bash
@@ -74,8 +101,7 @@ Note in settings better put
 
 ```bash
 "terminal.integrated.env.osx": {
-    "PATH": ""
-    }
+    "PATH": "" }
 ```
 
 if you are macOS user to make VSCode use the same PATH as the terminal.
@@ -127,132 +153,93 @@ git clone git@github.com:gao-hongnan/gaohn-galaxy.git
 
 as an example. This is for SSH method.
 
-## Setting up SSH
+## Setting up SSH for GitHub
 
-Secure Shell (SSH) is a cryptographic network protocol that allows you to
-securely access network services over an unsecured network.
+### Checking for existing SSH keys
 
-In the context of GitHub, SSH is used to securely authenticate and communicate
-with GitHub servers without needing to provide your username and password every
-time. Here's how to set up SSH for GitHub on macOS.
+SSH keys come in pairs, one private and one public. They are used for secure communication with GitHub's servers.
 
-See
-[here](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
-also for guide.
+1. Start by opening Terminal.
+2. Enter the command `ls -al ~/.ssh` to see if any SSH keys already exist.
+3. This command lists the contents of your SSH directory. If files named `id_rsa` (private key) and `id_rsa.pub` (public key) appear, you already have a key pair and can skip to the section about adding the key to the SSH agent.
 
-### Check for existing SSH keys
+### Generating a new SSH key pair
 
-Open Terminal, and check if you already have an SSH key pair:
+If you don't see `id_rsa` and `id_rsa.pub` in your SSH directory:
 
-```bash
-ls -al ~/.ssh
-```
+1. Run this command in Terminal, replacing `<youremail@example.com>` with the email address you use for your GitHub account:
 
-If you see files like `id_rsa` and `id_rsa.pub`, you already have an SSH key
-pair. If not, continue to the next step.
+    ```bash
+    ssh-keygen -t rsa -b 4096 -C <youremail@example.com>
+    ```
 
-### Generate a new SSH key
+2. This command generates a new SSH key pair. It uses `-t rsa` to specify the type of key, `-b 4096` to specify the key length (4096 bits), and `-C <youremail@example.com>` to label the key with your email address.
 
-In the terminal, run the following command, replacing "youremail@example.com"
-with your email address associated with your GitHub account:
+3. After running this command, you'll be asked where to save the key. Press Enter to accept the default location (`~/.ssh/id_rsa`).
 
-```bash
-ssh-keygen -t rsa -b 4096 -C <youremail@example.com>
-```
+4. You'll also be asked to enter a passphrase for extra security. This is optional, but it can help protect your key if it ever falls into the wrong hands.
 
-Press Enter to accept the default file location, or specify a different location
-if desired.
+### Starting the SSH agent and adding the SSH key
 
-Now if you run `ls -al ~/.ssh`, you should see a new file called `id_rsa` and a
-new file called `id_rsa.pub`.
+The SSH agent is a program that holds your private keys, so you don't need to re-enter your passphrase every time you use a key.
 
-### Enter a passphrase (optional)
+1. Enter the command `eval "$(ssh-agent -s)"` to start the SSH agent in the background.
 
-You will be prompted to enter a passphrase to secure your SSH key. This is
-optional, but recommended for added security. Enter a passphrase or press Enter
-to skip.
+2. To ensure the SSH agent can find your key, you'll need to add it:
 
-### Start the SSH agent
+3. Start by making sure your .ssh directory has the right permissions. Enter `chmod 700 ~/.ssh`.
 
-Run the following command to start the SSH agent in the background:
+4. If you're using macOS 10.12.2 or newer, you'll also need to add a few lines to your ~/.ssh/config file to tell the SSH agent to automatically load your keys. You can do this with these commands:
 
-```bash
-eval "$(ssh-agent -s)"
-```
+    ```bash
+    touch ~/.ssh/config
+    open ~/.ssh/config
+    ```
 
-### Add SSH key to the SSH agent
+5. This creates the config file if it doesn't exist, and opens it in your default text editor. Add the following lines:
 
-First, ensure your .ssh directory has the correct permissions:
+    ```bash
+    Host *
+      AddKeysToAgent yes
+      UseKeychain yes
+      IdentityFile /Users/yourusername/.ssh/id_rsa
+    ```
 
-```bash
-chmod 700 ~/.ssh
-```
+6. Replace `yourusername` with your actual username, then save and close the file.
 
-If you are using macOS 10.12.2 or newer, modify your ~/.ssh/config file to
-automatically load keys into the SSH agent:
+7. Finally, run `ssh-add -K ~/.ssh/id_rsa` to add your SSH key to the SSH agent.
 
-```bash
-touch ~/.ssh/config
-```
+### Adding the SSH key to your GitHub account
 
-```bash
-vim ~/.ssh/config
-```
+1. To add the key to GitHub, you'll first need to copy it. Run `pbcopy < ~/.ssh/id_rsa.pub` to copy the public key to your clipboard.
 
-Add the following lines to the file, replacing /Users/yourusername/.ssh/id_rsa
-with the path to your private key if you specified a different location in step
-2:
+2. Then, navigate to GitHub and click on your profile photo, then click "Settings".
 
-```bash
-Host *
-  AddKeysToAgent yes
-  UseKeychain yes
-  IdentityFile /Users/yourusername/.ssh/id_rsa
-```
+3. In the sidebar, click "SSH and GPG keys", then "New SSH key".
 
-replace `yourusername` with your username.
+4. Paste your key into the "Key" field and give it a descriptive title.
 
-Save and close the file. Now, add the SSH key to the SSH agent:
+5. Click "Add SSH key" to finish.
 
-```bash
-ssh-add -K ~/.ssh/id_rsa
-```
+### Testing your SSH connection
 
-### Add the SSH key to your GitHub account
+1. To verify that everything is working, run `ssh -T git@github.com` in Terminal.
 
-```bash
-pbcopy < ~/.ssh/id_rsa.pub
-```
+2. The first time you do this, you'll see a warning message. Just type `yes` and press Enter.
 
-this will have copied the SSH key to your clipboard.
+3. If everything is set up correctly, you'll see this message: "Hi username! You've successfully authenticated, but GitHub does not provide shell access."
 
-Go to GitHub, and navigate to your account's settings page. Click on "SSH and
-GPG keys" in the sidebar, then click the "New SSH key" button.
+### Configuring Git
 
-Paste your SSH public key into the "Key" field, give it a descriptive title, and
-click "Add SSH key".
+1. Finally, it's a good idea to configure Git with your name and email address. This information will be included in each commit you make.
 
-### Test SSH connection
+2. Replace `Your Name` with your actual name and `<youremail@example.com>` with your actual email address associated with your GitHub account:
 
-In the terminal, run the following command:
+    ```bash
+    git config --global user.name "Your Name"
+    git config --global user.email "<youremail@example.com>"
+    ```
 
-```bash
-ssh -T git@github.com
-```
-
-First time you will see some warning, just type `yes` and press enter.
-
-Then you will see something like this:
-
-```bash
-Hi username! You've successfully authenticated, but GitHub does not provide shell access.
-```
-
-means you have successfully set up SSH for GitHub.
-
-### Configure Local Git
-
-```bash
-git config --global user.name "Your Name"
-git config --global user.email "youremail@example.com"
-```
+    Note that the `user.name` can be arbitrary, but the `user.email` must be the
+    same as the one you used to register your GitHub account, or else commits
+    you make will not be associated with your account.
