@@ -1,22 +1,18 @@
-from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 import os
-from typing import List
 import random
 from pathlib import Path
+from typing import List
 
-from app.models import Base
-from app.models.account import Account
-from app.models.transaction import Transaction
+from api.models import Base
+from api.models.transaction import Transaction
+from api.schemas import account, transaction
+from api.models.account import Account
 from faker import Faker
+from fastapi import Depends, FastAPI, HTTPException
+from rich.pretty import pprint
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import sessionmaker
-from rich.pretty import pprint
-from app.schemas import account, transaction
+from sqlalchemy.orm import Session, sessionmaker
 
 # Get the directory of the current script
 CURRENT_DIR = Path(os.path.dirname(os.path.abspath(__file__)))
