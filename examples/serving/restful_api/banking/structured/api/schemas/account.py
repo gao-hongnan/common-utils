@@ -1,14 +1,27 @@
 from pydantic import BaseModel
-from typing import List
+from typing import Optional
 
 
-class AccountCreate(BaseModel):
+class AccountCreateRequest(BaseModel):
     name: str
     email: str
     balance: float
 
 
-class Account(BaseModel):
+class AccountUpdateRequest(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    balance: Optional[float] = None
+
+
+class AccountResponse(BaseModel):
+    id: int
+    name: str
+    email: str
+    balance: float
+
+
+class AccountCreateOrUpdateResponse(BaseModel):
     id: int
     name: str
     email: str

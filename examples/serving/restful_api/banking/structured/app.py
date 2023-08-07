@@ -19,10 +19,15 @@ import time
 from datetime import datetime
 from typing import Any, Callable, Dict, TypeVar
 
-
-session = SessionLocal()
+from fastapi import FastAPI
+from api.views import account, transaction
 
 app = FastAPI()
+
+app.include_router(account.router, prefix="/accounts")
+app.include_router(transaction.router, prefix="/transactions")
+
+session = SessionLocal()
 
 
 @app.get("/", tags=["General"])
@@ -58,51 +63,3 @@ def _index(request: Request) -> Dict[str, Any]:
         "data": {},
     }
     return response
-
-
-@app.get("/accounts", response_model=List[account.Account])
-def get_accounts(db: Session = Depends(get_db)) -> List[account.Account]:
-    db_accounts = db.query(Account).all()
-    return db_accounts
-
-
-@app.get("/account/{account_id}", response_model=account.Account)
-def get_account(account_id: int, db: Session = Depends(get_db)):
-    db_account = db.query(Account).filter(Account.id == account_id).first()
-    if db_account is None:
-        raise HTTPException(status_code=404, detail="Account not found")
-    return db_account
-
-
-@app.post("/account/", response_model=account.Account)
-def create_account(account: account.AccountCreate, db: Session = Depends(get_db)):
-    db_account = Account(**account.model_dump(mode="python"), balance=0)
-    db.add(db_account)
-    db.commit()
-    db.refresh(db_account)
-    return db_account
-
-
-# @app.put("/account/{account_id}", response_model=Account)
-# def update_account(
-#     account_id: int,
-#     account: schemas.account.AccountCreate,
-#     db: Session = Depends(get_db),
-# ):
-#     db_account = db.query(Account).filter(Account.id == account_id).first()
-#     if db_account is None:
-#         raise HTTPException(status_code=404, detail="Account not found")
-#     for key, value in account.dict().items():
-#         setattr(db_account, key, value)
-#     db.commit()
-#     return db_account
-
-
-# @app.delete("/account/{account_id}")
-# def delete_account(account_id: int, db: Session = Depends(get_db)):
-#     db_account = db.query(Account).filter(Account.id == account_id).first()
-#     if db_account is None:
-#         raise HTTPException(status_code=404, detail="Account not found")
-#     db.delete(db_account)
-#     db.commit()
-#     return {"message": "Account has been deleted successfully!"}
