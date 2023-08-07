@@ -31,7 +31,7 @@ session = SessionLocal()
 app = FastAPI()
 
 
-def get_db():
+def get_db() -> None:
     db = SessionLocal()
     try:
         yield db

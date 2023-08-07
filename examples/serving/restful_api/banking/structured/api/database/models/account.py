@@ -1,6 +1,6 @@
-from sqlalchemy import Column, Integer, String, Float
+from api.database.base import Base
+from sqlalchemy import Column, Float, Integer, String
 from sqlalchemy.orm import relationship
-from . import Base
 
 
 class Account(Base):

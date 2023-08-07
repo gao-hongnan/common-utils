@@ -14,33 +14,20 @@ So when you hear the term "database seeding" or "seed data", it refers to the
 initial set of data that you're using to populate the database.
 """
 
-import os
 import random
-from pathlib import Path
 
-from api.models import Base
-from api.models.account import Account
-from api.models.transaction import Transaction
+from api.conf.base import SEED
+from api.database.base import Base
+from api.database.models.account import Account
+from api.database.models.transaction import Transaction
+from api.database.session import SessionLocal, engine
 from faker import Faker
-from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import sessionmaker
+
 from common_utils.core.common import seed_all
 
-seed_all(42, seed_torch=False)
+seed_all(seed=SEED, seed_torch=False)
 
-# Get the directory of the current script
-CURRENT_DIR = Path(os.path.dirname(os.path.abspath(__file__)))
-
-# Construct the path to the database file
-DATABASE_URL = CURRENT_DIR / "database.db"
-
-# Set up database URL as an environment variable for better flexibility
-
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{DATABASE_URL}")
-
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-SessionLocal = sessionmaker(bind=engine)
 
 fake = Faker()
 
