@@ -1,26 +1,9 @@
 from http import HTTPStatus
-from typing import Any, Dict, List, TypeVar, Callable
+from typing import Any, Dict
 
-from api.database.base import Base
-from api.database.models.account import Account
-from api.database.models.transaction import Transaction
-from api.database.session import SessionLocal, engine, get_db
-from api.schemas import account, transaction
-from faker import Faker
-from fastapi import Depends, FastAPI, HTTPException, Request
-from rich.pretty import pprint
-from sqlalchemy import create_engine
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session, sessionmaker
-import functools
-import os
-import threading
-import time
-from datetime import datetime
-from typing import Any, Callable, Dict, TypeVar
-
-from fastapi import FastAPI
+from api.database.session import SessionLocal
 from api.views import account, transaction
+from fastapi import FastAPI, Request
 
 app = FastAPI()
 

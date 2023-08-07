@@ -10,6 +10,7 @@ from api.schemas.transaction import (
 )
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from datetime import datetime
 
 router = APIRouter()
 
@@ -38,7 +39,12 @@ def create_transaction(
     transaction_data: TransactionCreateRequest, db: Session = Depends(get_db)
 ) -> TransactionCreateOrUpdateResponse:
     """Create a new transaction with the given details."""
-    transaction = Transaction(**transaction_data.dict())
+    # Convert timestamp string to datetime
+    transaction_data.timestamp = datetime.strptime(
+        transaction_data.timestamp, "%Y-%m-%dT%H:%M:%S"
+    )
+
+    transaction = Transaction(**transaction_data.model_dump(mode="python"))
     db.add(transaction)
     db.commit()
     db.refresh(transaction)
@@ -56,7 +62,7 @@ def update_transaction(
     if not transaction:
         raise HTTPException(status_code=404, detail="Transaction not found")
 
-    for key, value in transaction_data.dict().items():
+    for key, value in transaction_data.model_dump(mode="python").items():
         setattr(transaction, key, value)
 
     db.commit()

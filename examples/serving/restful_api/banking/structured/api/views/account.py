@@ -38,7 +38,7 @@ def create_account(
     account_data: AccountCreateRequest, db: Session = Depends(get_db)
 ) -> AccountCreateOrUpdateResponse:
     """Create a new account with the given details."""
-    account = Account(**account_data.dict())
+    account = Account(**account_data.model_dump(mode="python"))
     db.add(account)
     db.commit()
     db.refresh(account)
@@ -54,7 +54,7 @@ def update_account(
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
 
-    for key, value in account_data.dict().items():
+    for key, value in account_data.model_dump(mode="python").items():
         setattr(account, key, value)
 
     db.commit()

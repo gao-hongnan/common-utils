@@ -13,6 +13,13 @@ class TransactionCreateRequest(BaseModel):
     type: str
     timestamp: str
 
+    # convert timestamp
+    @validator("timestamp", pre=True)
+    def format_timestamp(cls, v):
+        if isinstance(v, datetime):
+            return v.isoformat()
+        return v
+
 
 # Used for updating an existing transaction
 class TransactionUpdateRequest(BaseModel):
@@ -20,6 +27,13 @@ class TransactionUpdateRequest(BaseModel):
     amount: Optional[float] = None
     type: Optional[str] = None
     timestamp: Optional[str] = None
+
+    # convert timestamp
+    @validator("timestamp", pre=True)
+    def format_timestamp(cls, v):
+        if isinstance(v, datetime):
+            return v.isoformat()
+        return v
 
 
 # Used for response when a transaction is created or updated
