@@ -5,7 +5,7 @@ from common_utils.cloud.aws.base import AWSCommandBuilder, AWSManagerBase
 
 
 class S3BucketManager(AWSManagerBase):
-    def __init__(self, region: str):
+    def __init__(self, region: str) -> None:
         self.region = region
 
     def create_bucket(
@@ -71,15 +71,23 @@ manager = S3BucketManager(region="us-west-2")
 create_bucket_flags = [
     ("--no-object-lock-enabled-for-bucket", None),
 ]
-bucket = manager.create_bucket(
-    base_name="gaohn-oregon-test-demo",
-    bucket_type="testtest",
-    options=create_bucket_flags,
-)
+# bucket = manager.create_bucket(
+#     base_name="gaohn-oregon-test-demo",
+#     bucket_type="testtest",
+#     options=create_bucket_flags,
+# )
+# manager.upload_to_bucket(
+#     bucket,
+#     "/Users/reighns/gaohn/pipeline/common-utils/requirements.txt",
+
+#     "source_files/llm-foundry-90795f37c16c008aae954df55fc4f3323bc581e4.zip",
+# )
+# manager.empty_bucket(bucket)
+# manager.delete_bucket(bucket, options=[("--region", "us-west-2")])
+
+bucket_name = "gaohn-oregon-test-demo-common"  #  f"{base_name}-{bucket_type}"
 manager.upload_to_bucket(
-    bucket,
-    "/Users/reighns/gaohn/pipeline/common-utils/requirements.txt",
-    "requirements.txt",
+    bucket_name,
+    "~/Downloads/llm-foundry-90795f37c16c008aae954df55fc4f3323bc581e4.zip",
+    "source_files/llm-foundry-90795f37c16c008aae954df55fc4f3323bc581e4.zip",
 )
-manager.empty_bucket(bucket)
-manager.delete_bucket(bucket, options=[("--region", "us-west-2")])
