@@ -1,16 +1,16 @@
+from datetime import datetime
 from typing import Dict, List
 
 from api.database.models.transaction import Transaction
 from api.database.session import get_db
 from api.schemas.transaction import (
-    TransactionCreateRequest,
-    TransactionUpdateRequest,
     TransactionCreateOrUpdateResponse,
+    TransactionCreateRequest,
     TransactionResponse,
+    TransactionUpdateRequest,
 )
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from datetime import datetime
 
 router = APIRouter()
 
@@ -61,6 +61,12 @@ def update_transaction(
     transaction = db.query(Transaction).get(transaction_id)
     if not transaction:
         raise HTTPException(status_code=404, detail="Transaction not found")
+
+    # Convert timestamp string to datetime if provided
+    if transaction_data.timestamp:
+        transaction_data.timestamp = datetime.strptime(
+            transaction_data.timestamp, "%Y-%m-%dT%H:%M:%S"
+        )
 
     for key, value in transaction_data.model_dump(mode="python").items():
         setattr(transaction, key, value)

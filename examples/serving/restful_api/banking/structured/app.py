@@ -44,5 +44,7 @@ def _index(request: Request) -> Dict[str, Any]:
         "message": HTTPStatus.OK.phrase,
         "status-code": HTTPStatus.OK.value,
         "data": {},
+        "method": request.method,
+        "url": request.url.path,
     }
     return response
