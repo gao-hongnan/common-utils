@@ -138,6 +138,17 @@ if __name__ == "__main__":
     ami_id = "ami-00970f57473724c10"  # Example AMI ID for Amazon Linux 2 in us-west-2; this might change over time
 
     # Additional optional parameters can be added as needed
+    # TODO: check if we should use : or = for the options
+    """
+    aws ec2 \
+    run-instances --count 1 \
+    --image-id ami-0a5a20c6f44946afe \
+    --instance-type t3.large \
+    --key-name oregon-gaohn \
+    --security-group-ids sg-03e74c4a82b6550dd \
+    --subnet-id subnet-0ed0273457ba67b31 \
+    --tag-specifications 'ResourceType=instance,Tags=[{Key=Category,Value=MLFlowServer},{Key=Name,Value=MLFlowServer},{Key=parallelcluster:cluster-name,Value=gaohn-oregon-test-demo}]'
+    """
     create_instance_options = [
         ("--key-name", "oregon-gaohn"),
         (
