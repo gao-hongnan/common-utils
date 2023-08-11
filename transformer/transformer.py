@@ -10,7 +10,7 @@ from common_utils.core.common import seed_all
 seed_all(42, seed_torch=True)
 
 
-# _ = nn.MultiheadAttention
+_ = nn.MultiheadAttention
 def clones(module, N):
     "Produce N identical layers."
     return nn.ModuleList([copy.deepcopy(module) for _ in range(N)])

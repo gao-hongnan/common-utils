@@ -49,29 +49,71 @@ class MultiHeadedAttention(nn.Module):
         # then apply linear transformations to each part. This is
         # WRONG. You apply linear transformations to the whole
         # embeddings and then split the result into 8 parts.
-        Q = self.W_q(embeddings) # Z @ W_q
-        K = self.W_k(embeddings) # Z @ W_k
-        V = self.W_v(embeddings) # Z @ W_v
+        W_q = self.W_q.weight
+        W_k = self.W_k.weight
+        W_v = self.W_v.weight
+
+        Q = embeddings @ W_q.T # Z @ W_q
+        K = embeddings @ W_k.T # Z @ W_k
+        V = embeddings @ W_v.T # Z @ W_v
+
+        # Q = self.W_q(embeddings) # Z @ W_q
+        # K = self.W_k(embeddings) # Z @ W_k
+        # V = self.W_v(embeddings) # Z @ W_v
         assert Q.shape == (nbatches, seq_len, self.d_q * self.H)
 
         # Splitting into multiple heads
         Q_heads = []
         K_heads = []
         V_heads = []
+
+
         for head in range(self.H):
-            Q_heads.append(Q[:, :, head * self.d_k : (head + 1) * self.d_k])
-            K_heads.append(K[:, :, head * self.d_k : (head + 1) * self.d_k])
-            V_heads.append(V[:, :, head * self.d_k : (head + 1) * self.d_k])
+            # ASSUMING d_q == d_k == d_v
+            # NOTE: see my notes on confusion of paper's usage of
+            # W^{q}_i, W^{k}_i, W^{v}_i where in fact the
+            # weights are shared across heads via W^{q}, W^{k}, W^{v}
+            head_start = head * self.d_q
+            head_end = (head + 1) * self.d_q
+            W_q_h = W_q[:, head_start:head_end]
+            W_k_h = W_k[:, head_start:head_end]
+            W_v_h = W_v[:, head_start:head_end]
+
+            Q_h = Q[:, :, head_start:head_end]
+            assert tensors_are_same(Q_h, embeddings @ W_q_h.T) # Z @ W^{q}_h
+
+            K_h = K[:, :, head_start:head_end]
+            assert tensors_are_same(K_h, embeddings @ W_k_h.T)
+
+            V_h = V[:, :, head_start:head_end]
+            assert tensors_are_same(V_h, embeddings @ W_v_h.T)
+
+            assert Q_h.shape == (nbatches, seq_len, self.d_q)
+            assert K_h.shape == (nbatches, seq_len, self.d_k)
+            assert V_h.shape == (nbatches, seq_len, self.d_v)
+
+            Q_heads.append(Q_h)
+            K_heads.append(K_h)
+            V_heads.append(V_h)
+
+        # as of now we are at the stage
+        # right before head_h = attention(Q_h, K_h, V_h)
+        # so next step apply attention to each head h.
 
         # Apply attention to each head
         head_outputs = []
-        for q, k, v in zip(Q_heads, K_heads, V_heads):
-            x, attn = attention(q, k, v, mask=mask, dropout=self.dropout)
+        for Q_h, K_h, V_h in zip(Q_heads, K_heads, V_heads):
+            # apply Q,K,V to attention
+            x, attn = attention(Q_h, K_h, V_h, mask=mask, dropout=self.dropout)
             head_outputs.append(x)
+            # FIXME: why is attn unused?
             self.attn = attn  # Store attention
 
         # Concatenate heads
+        # NOTE: this is the step where we concatenate the heads
+        # MultiHead(Q, K, V) = Concat(head_1, ..., head_H)W^{o}
         x_concat = torch.cat(head_outputs, dim=-1)
+        assert x_concat.shape == (nbatches, seq_len, self.d_model)
 
         # Apply final linear transformation
         return self.W_o(x_concat)
@@ -109,7 +151,7 @@ if __name__ == "__main__":
 
     loaded_out = torch.load("a.pt")
 
-    if tensors_are_same(out_no_mask, loaded_out):
+    if tensors_are_same(out_no_mask, loaded_out, atol=0, rtol=0):
         print("The tensors are the same!")
     else:
         print("The tensors are different!")

@@ -6,6 +6,11 @@
     - [General Notations](#general-notations)
     - [Attention Notations](#attention-notations)
   - [GOTCHA](#gotcha)
+  - [HEad is similar to kernels in CNN](#head-is-similar-to-kernels-in-cnn)
+  - [so the catch is you do not split the embeddings in H heads, instead you split the linear transformed embeddings?](#so-the-catch-is-you-do-not-split-the-embeddings-in-h-heads-instead-you-split-the-linear-transformed-embeddings)
+  - [Confusion on Weight matrix per head](#confusion-on-weight-matrix-per-head)
+    - [Approach 1: Single Large Weight Matrix Implementation (Paper's Code)](#approach-1-single-large-weight-matrix-implementation-papers-code)
+    - [Approach 2: Separate Weight Matrices Notation (Paper Notation)](#approach-2-separate-weight-matrices-notation-paper-notation)
 
 ## Notations
 
@@ -115,15 +120,15 @@ Dimensions and indexing pertaining to attention will be listed in the
   - $\mathbf{z}_{i, :}$: is the $D$ dimensional embedding vector for the
         token $x_i$ at the $i$-th position in the sequence.
 
-            In this context, each token in the sequence is represented by a $D$
-            dimensional vector. So, the output tensor $\mathbf{Z}$ captures the
-            dense representation of the sequence. Each token in the sequence is
-            replaced by its corresponding embedding vector from the embedding matrix
-            $\mathbf{E}$.
+                            In this context, each token in the sequence is represented by a $D$
+                            dimensional vector. So, the output tensor $\mathbf{Z}$ captures the
+                            dense representation of the sequence. Each token in the sequence is
+                            replaced by its corresponding embedding vector from the embedding matrix
+                            $\mathbf{E}$.
 
-            As before, the output tensor $\mathbf{Z}$ carries semantic information
-            about the tokens in the sequence. The closer two vectors are in this
-            embedding space, the more semantically similar they are.
+                            As before, the output tensor $\mathbf{Z}$ carries semantic information
+                            about the tokens in the sequence. The closer two vectors are in this
+                            embedding space, the more semantically similar they are.
 
 - $\mathbf{P}$: is the positional encoding tensor, created with sinusoidal
     functions of different frequencies:
@@ -197,22 +202,26 @@ Dimensions and indexing pertaining to attention will be listed in the
     into value representations for the $h$-th head.
   - Important that this matrix collapses to $\mathbf{W}_{1}^v$ when $H=1$
         and has shape $\mathbb{R}^{D \times D}$.
-- $\mathbf{W}^q \in \mathbb{R}^{D \times H \cdot d_q = D \times D}$: The query weight
-    matrix for all heads. It is used to transform the embeddings $\mathbf{Z}$
-    into query representations.
+- $\mathbf{W}^q \in \mathbb{R}^{D \times H \cdot d_q = D \times D}$: The query
+    weight matrix for all heads. It is used to transform the embeddings
+    $\mathbf{Z}$ into query representations.
 
-- $\mathbf{W}^k \in \mathbb{R}^{D \times H \cdot d_k = D \times D}$: The key weight matrix
-    for all heads. It is used to transform the embeddings $\mathbf{Z}$ into key
-    representations.
+- $\mathbf{W}^k \in \mathbb{R}^{D \times H \cdot d_k = D \times D}$: The key
+    weight matrix for all heads. It is used to transform the embeddings
+    $\mathbf{Z}$ into key representations.
 
-- $\mathbf{W}^v \in \mathbb{R}^{D \times H \cdot d_v = D \times D}$: The value weight
-    matrix for all heads. It is used to transform the embeddings $\mathbf{Z}$
-    into value representations.
+- $\mathbf{W}^v \in \mathbb{R}^{D \times H \cdot d_v = D \times D}$: The value
+    weight matrix for all heads. It is used to transform the embeddings
+    $\mathbf{Z}$ into value representations.
 
 - $\mathbf{Q} = \mathbf{Z} \mathbf{W}^q \in \mathbb{R}^{L \times D}$: The
     query matrix. It contains the query representations for all the tokens in
     the sequence. This is the matrix that is used to compute the attention
     scores.
+- $\mathbf{Q}_h = \mathbf{Z} \mathbf{W}_h^q \in \mathbb{R}^{L \times d_q}$:
+    The query matrix for the $h$-th head. It contains the query representations
+    for all the tokens in the sequence. This is the matrix that is used to
+    compute the attention scores for the $h$-th head.
 
 - $\mathbf{K} = \mathbf{Z} \mathbf{W}^k \in \mathbb{R}^{L \times D}$: The key
     matrix. It contains the key representations for all the tokens in the
@@ -312,29 +321,214 @@ attention mechanism in a neural network model.
 
 ## GOTCHA
 
-The notation \( W^{q}_i \) is used in the paper to denote the weight matrix for the queries (Q) of the \( i \)-th head. However, it's essential to understand how this is implemented in practice.
+The notation $W^{q}_i$ is used in the paper to denote the weight matrix for the
+queries (Q) of the $i$-th head. However, it's essential to understand how this
+is implemented in practice.
 
 The entire process can be seen as a two-step operation:
 
-1. **Apply Linear Transformations**: You apply linear transformations to the whole embeddings to create larger matrices for Q, K, V. These matrices have dimensions that account for all heads. In practice, this can be implemented using a single linear layer, such as:
+1. **Apply Linear Transformations**: You apply linear transformations to the
+   whole embeddings to create larger matrices for Q, K, V. These matrices have
+   dimensions that account for all heads. In practice, this can be implemented
+   using a single linear layer, such as:
 
-   \[
-   Q = \text{{embeddings}} @ \mathbf{W}^q
-   \]
+    $$
+    Q = \text{{embeddings}} @ \mathbf{W}^q
+    $$
 
-   where \( \mathbf{W}^q \) has dimensions \( D \times (h \cdot d_q) \).
+    where $\mathbf{W}^q$ has dimensions $D \times (h \cdot d_q)$.
 
-2. **Reshape and Split**: After applying the linear transformations, you reshape and split the result into individual heads. The reshaping ensures that the final dimensions are \([N, H, S, d_q]\), where \( N \) is the batch size, \( H \) is the number of heads, \( S \) is the sequence length, and \( d_q \) is the dimension of queries per head.
+2. **Reshape and Split**: After applying the linear transformations, you reshape
+   and split the result into individual heads. The reshaping ensures that the
+   final dimensions are $[N, H, S, d_q]$, where $N$ is the batch size, $H$ is
+   the number of heads, $S$ is the sequence length, and $d_q$ is the dimension
+   of queries per head.
 
-So, while the paper uses notation like \( W^{q}_i \), this doesn't mean that you directly apply a different linear transformation to different parts of the embeddings. Instead, you apply a single large linear transformation to the whole embeddings and then reshape the result to obtain the individual heads.
+So, while the paper uses notation like $W^{q}_i$, this doesn't mean that you
+directly apply a different linear transformation to different parts of the
+embeddings. Instead, you apply a single large linear transformation to the whole
+embeddings and then reshape the result to obtain the individual heads.
 
 In mathematical terms, the overall operation can be seen as:
 
-\[
+$$
 \begin{align*}
 Q_{\text{{all heads}}} & = \text{{embeddings}} @ \mathbf{W}^q \\
 Q_{\text{{head i}}} & = Q_{\text{{all heads}}}[:, i \cdot d_q : (i + 1) \cdot d_q]
 \end{align*}
-\]
+$$
 
-Here, \( Q_{\text{{all heads}}} \) is the result of applying the linear transformation, and \( Q_{\text{{head i}}} \) is the portion corresponding to the \( i \)-th head, obtained by slicing along the last dimension.
+Here, $Q_{\text{{all heads}}}$ is the result of applying the linear
+transformation, and $Q_{\text{{head i}}}$ is the portion corresponding to the
+$i$-th head, obtained by slicing along the last dimension.
+
+## HEad is similar to kernels in CNN
+
+The multi-head attention mechanism is similar to the convolutional layer in
+convolutional neural networks. In a convolutional layer, you apply multiple
+kernels to the input to obtain multiple feature maps. Similarly, in the
+multi-head attention mechanism, you apply multiple attention heads to the input
+to obtain multiple output vectors.
+
+## so the catch is you do not split the embeddings in H heads, instead you split the linear transformed embeddings?
+
+```
+        # Apply linear transformations to compute Q, K, V
+        # NOTE: here is an important misconception that if you have
+        # 8 heads, then you SPLIT the embeddings into 8 parts and
+        # then apply linear transformations to each part. This is
+        # WRONG. You apply linear transformations to the whole
+        # embeddings and then split the result into 8 parts.
+```
+
+You don't split the original embeddings into $H$ heads; instead, you apply
+linear transformations to the original embeddings and then split the transformed
+embeddings into $H$ heads.
+
+Here's the step-by-step process again, highlighting this specific aspect:
+
+1. Apply linear transformations for queries, keys, and values to the entire
+   embeddings, creating matrices $Q, K,$ and $V$.
+2. Split these transformed matrices into $H$ different heads, each having lower
+   dimensions (e.g., if the original dimension is 512 and there are 8 heads,
+   each head will have a dimension of 64).
+3. Process each head through the Scaled Dot-Product Attention mechanism.
+4. Concatenate the outputs from all the heads and pass through a final linear
+   layer.
+
+The split after the linear transformations allows the model to create multiple
+different projections of the input and process them independently. This enables
+the model to focus on different aspects of the input across the different heads,
+enhancing its ability to model complex relationships.
+
+## Confusion on Weight matrix per head
+
+The notation and explanation
+in the original papers and many articles do indeed mention separate weight
+matrices for each head, such as $W^{Q}_i$, but in implementation, it's common to
+represent these separate weights within a single large weight matrix. The
+notation might be different, but the mathematical operation is equivalent.
+
+Here's how the two approaches relate:
+
+1. **Separate Weight Matrices Notation (Paper Notation):** In the theoretical
+   description, you can imagine having separate weight matrices $W^{Q}_i$ for
+   each head, and then you multiply the input embeddings by each weight matrix,
+   applying the transformation separately for each head.
+
+2. **Single Large Weight Matrix Implementation (Your Code):** In your
+   implementation, you create one large weight matrix, $W_q$, that combines all
+   the individual weight matrices for each head. When you multiply the input
+   embeddings by $W_q$, you create a large transformed matrix. Then, by slicing
+   this large matrix, you separate it into $H$ different heads, effectively
+   applying the individual weight matrices $W^{Q}_i$ for each head.
+
+The two approaches are mathematically equivalent. In the second approach, the
+separate weight matrices for each head are not explicitly defined as learnable
+parameters in the code. Instead, they are implicitly represented within the
+single large weight matrix $W_q$ and separated by slicing after the linear
+transformation.
+
+This approach can be more efficient computationally and often aligns better with
+hardware and library optimizations, but it may create confusion when comparing
+to the paper's notation. The key is to understand that the mathematical
+relationships and learning dynamics are the same, even though the notation and
+coding structure might differ.
+
+### Approach 1: Single Large Weight Matrix Implementation (Paper's Code)
+
+In this approach, we concatenate all the individual weight matrices $W^{q}_{h}
+$
+into one large weight matrix $W_q$:
+
+$$
+\begin{aligned}
+W_q =  \begin{bmatrix} w^{q}_{1,1} & w^{q}_{1,2} & \ldots & w^{q}_{1,D} \\
+w^{q}_{2,1} & w^{q}_{2,2} & \ldots & w^{q}_{2,D} \\
+\vdots & \vdots & \ddots & \vdots \\
+w^{q}_{D,1} & w^{q}_{D,2} & \ldots & w^{q}_{D,D} \end{bmatrix}_{D \times D}
+&= \begin{bmatrix} W^{q}_1 & W^{q}_2 & \ldots & W^{q}_H \end{bmatrix} \in \mathbb{R}^{D \times D}
+\end{aligned}
+$$
+
+where each $W^{q}_h$ is a matrix with dimensions $D \times \frac{D}{H} = D \times d_q$.
+
+In other words, if the embedding dimension is 512 and there are 8 heads, the original
+$W^q$ matrix is of size $512 \times 512$, and we can decompose it into 8 matrices
+of size $512 \times 64$, each forming a column of the original matrix.
+
+---
+
+Side note: if users wanna see jacobian like block matrics:
+
+We can represent the matrix in blocks by grouping its elements. Here's an example that might suit your purpose:
+
+$$
+\begin{aligned}
+W_q &=  \begin{bmatrix}
+B^{q}_{1,1} & B^{q}_{1,2} & \ldots & B^{q}_{1,H} \\
+B^{q}_{2,1} & B^{q}_{2,2} & \ldots & B^{q}_{2,H} \\
+\vdots & \vdots & \ddots & \vdots \\
+B^{q}_{H,1} & B^{q}_{H,2} & \ldots & B^{q}_{H,H} \\
+\end{bmatrix}_{D \times D}
+\end{aligned}
+$$
+
+Where each block $B^{q}_{i,j}$ is a sub-matrix of size $m \times m$ (assuming $D$ is divisible by $H$ and $m = \frac{D}{H}$) and can be represented as:
+
+$$
+\begin{aligned}
+B^{q}_{i,j} =  \begin{bmatrix}
+w^{q}_{i \cdot m - m + 1, j \cdot m - m + 1} & \ldots & w^{q}_{i \cdot m - m + 1, j \cdot m} \\
+\vdots & \ddots & \vdots \\
+w^{q}_{i \cdot m, j \cdot m - m + 1} & \ldots & w^{q}_{i \cdot m, j \cdot m}
+\end{bmatrix}_{m \times m}
+\end{aligned}
+$$
+
+This representation can help visualize the matrix as a composition of smaller blocks, which might be useful in certain contexts, such as when dealing with partitioned matrices in numerical computations.
+
+---
+
+
+We then multiply the embeddings by this large
+weight matrix:
+
+$$
+Q = \mathbf{Z} \cdot W^{q}
+$$
+
+Then, we slice the result into $H$ parts:
+
+$$
+\begin{aligned}
+Q_{h} \in \mathbb{R}^{B \times L \times d_q} &= Q\left[:, :, h \cdot \frac{D}{H} : (h+1) \cdot \frac{D}{H}\right] \\
+&= Q\left[:, :, h \cdot d_q : (h+1) \cdot d_q\right] \\
+&= \mathbf{Z} \cdot W^{q}_{h}
+\end{aligned}
+$$
+
+where $W^{q}_{h}$ is the submatrix of $W^{q}$ that corresponds to the $h$-th
+head, or in other words, let's say $W^{q}_1$, the first head,
+it means subsetting the $W^q$ with rows dimension unchanged (i.e. 512), and
+taking the first 64 columns, resulting in a matrix of size $512 \times 64$.
+
+### Approach 2: Separate Weight Matrices Notation (Paper Notation)
+
+Suppose we have $H$ heads and our embedding matrix $\mathbf{Z}$ has dimensions
+$B \times L \times D$, where $B$ is the batch size, $L$ is the sequence length,
+and $D$ is the embedding dimension.
+
+For each head $h$, we have a weight matrix $W^{q}_{h}$ with dimensions $D
+\times \frac{D}{H} = D \times d_q$, and we apply this transformation to the embeddings:
+
+$$
+Q_{h} \in \mathbb{R}^{B \times L \times d_q} = \mathbf{Z} \cdot W^{q}_{h}
+$$
+
+
+So the confusion arises because in the code implementation we do not see
+an explicit definition of the separate weight matrices $W^{q}_{h}$, but they are
+implicitly represented within the single large weight matrix $W^{q}$.
+
+When you slice them out like in the code, you get the same result as if you had
