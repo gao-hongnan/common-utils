@@ -11,6 +11,7 @@
   - [Confusion on Weight matrix per head](#confusion-on-weight-matrix-per-head)
     - [Approach 1: Single Large Weight Matrix Implementation (Paper's Code)](#approach-1-single-large-weight-matrix-implementation-papers-code)
     - [Approach 2: Separate Weight Matrices Notation (Paper Notation)](#approach-2-separate-weight-matrices-notation-paper-notation)
+  - [is the FFN in encoder just a MLP layer](#is-the-ffn-in-encoder-just-a-mlp-layer)
 
 ## Notations
 
@@ -526,9 +527,29 @@ $$
 Q_{h} \in \mathbb{R}^{B \times L \times d_q} = \mathbf{Z} \cdot W^{q}_{h}
 $$
 
-
 So the confusion arises because in the code implementation we do not see
 an explicit definition of the separate weight matrices $W^{q}_{h}$, but they are
 implicitly represented within the single large weight matrix $W^{q}$.
+But actually you can see from approach 1, the $W^q$ is just a concatenation of
+all the $W^{q}_{h}$, so it's just a different way of representing the same thing.
 
-When you slice them out like in the code, you get the same result as if you had
+## is the FFN in encoder just a MLP layer
+
+Yes, the Feed-Forward Network (FFN) in the Transformer's encoder is essentially a Multi-Layer Perceptron (MLP) layer. It typically consists of two fully connected layers, with a non-linear activation function (usually ReLU) applied after the first layer.
+
+Here's the general structure of the FFN in the Transformer's encoder:
+
+1. **First Linear Layer:** The input is passed through a fully connected linear layer with weight matrix $W_1$ and bias $b_1$.
+2. **Activation Function:** A non-linear activation function (such as ReLU) is applied to the result of the first linear layer.
+3. **Second Linear Layer:** The activated output is then passed through another fully connected linear layer with weight matrix $W_2$ and bias $b_2$.
+4. **Optional Dropout:** Some implementations might include dropout for regularization after one or both of the linear layers.
+
+The mathematical expression for this process would look something like:
+
+$$
+\text{FFN}(x) = W_2 \cdot \text{ReLU}(W_1 \cdot x + b_1) + b_2
+$$
+
+Where $x$ is the input to the FFN, and $W_1$, $W_2$, $b_1$, and $b_2$ are learnable parameters.
+
+So, the FFN in the Transformer's encoder is effectively a specific form of a Multi-Layer Perceptron with two layers, with the goal of learning position-wise transformations of the input.
