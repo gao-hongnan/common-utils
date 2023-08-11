@@ -1,6 +1,7 @@
 # Setup macOS
 
 - [Setup macOS](#setup-macos)
+  - [Setup Miniconda/Python](#setup-minicondapython)
   - [ZSHRC](#zshrc)
     - [NPM](#npm)
     - [Tree](#tree)
@@ -24,6 +25,17 @@
     - [Adding the SSH key to your GitHub account](#adding-the-ssh-key-to-your-github-account)
     - [Testing your SSH connection](#testing-your-ssh-connection)
     - [Configuring Git](#configuring-git)
+
+## Setup Miniconda/Python
+
+I will usually check PyTorch's website to see the latest version of Python and Miniconda.
+
+```bash
+curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh
+sh Miniconda3-latest-MacOSX-arm64.sh
+```
+
+and follow instructions to install.
 
 ## ZSHRC
 

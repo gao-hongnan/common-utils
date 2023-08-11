@@ -2,10 +2,6 @@
 
 [![Continuous Integration](https://github.com/gao-hongnan/common-utils/actions/workflows/continuous_integration.yaml/badge.svg)](https://github.com/gao-hongnan/common-utils/actions/workflows/continuous_integration.yaml)
 
-## TODOs
-
-1. Use own `Logger` once the class is finalized in all scripts.
-
 ## Continuous Integration
 
 ### Virtual Environment

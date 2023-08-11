@@ -1,5 +1,5 @@
 from torch import nn
-from d2l import torch as d2l
+
 import torch
 import math
 import copy
@@ -30,7 +30,7 @@ class MultiHeadedAttention(nn.Module):
         self.H = H  # number of heads
 
         # shadow my notations
-        self.W_q = nn.Linear(self.d_model, self.d_q * self.H, bias=bias) # D x D
+        self.W_q = nn.Linear(self.d_model, self.d_q * self.H, bias=bias)  # D x D
         self.W_k = nn.Linear(self.d_model, self.d_k * self.H, bias=bias)
         self.W_v = nn.Linear(self.d_model, self.d_v * self.H, bias=bias)
         self.W_o = nn.Linear(self.d_model, self.d_model, bias=bias)
@@ -53,9 +53,9 @@ class MultiHeadedAttention(nn.Module):
         W_k = self.W_k.weight
         W_v = self.W_v.weight
 
-        Q = embeddings @ W_q.T # Z @ W_q
-        K = embeddings @ W_k.T # Z @ W_k
-        V = embeddings @ W_v.T # Z @ W_v
+        Q = embeddings @ W_q.T  # Z @ W_q
+        K = embeddings @ W_k.T  # Z @ W_k
+        V = embeddings @ W_v.T  # Z @ W_v
 
         # Q = self.W_q(embeddings) # Z @ W_q
         # K = self.W_k(embeddings) # Z @ W_k
@@ -66,7 +66,6 @@ class MultiHeadedAttention(nn.Module):
         Q_heads = []
         K_heads = []
         V_heads = []
-
 
         for head in range(self.H):
             # ASSUMING d_q == d_k == d_v
@@ -80,7 +79,7 @@ class MultiHeadedAttention(nn.Module):
             W_v_h = W_v[:, head_start:head_end]
 
             Q_h = Q[:, :, head_start:head_end]
-            assert tensors_are_same(Q_h, embeddings @ W_q_h.T) # Z @ W^{q}_h
+            assert tensors_are_same(Q_h, embeddings @ W_q_h.T)  # Z @ W^{q}_h
 
             K_h = K[:, :, head_start:head_end]
             assert tensors_are_same(K_h, embeddings @ W_k_h.T)
