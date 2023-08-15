@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gaohn-common-utils"
-version = "0.0.109"
+version = "0.0.110"
 authors = [
   { name="Gao Hongnan", email="hongnangao@gmail.com" },
 ]
@@ -51,8 +51,8 @@ dev = [
     "toml>=0.10,<1.0",
 ]
 
-[options.packages.find]
-include = ["common_utils"]
+[tool.setuptools]
+packages = ["common_utils"]
 
 [project.urls]
 "Homepage" = "https://github.com/gao-hongnan/common-utils"
