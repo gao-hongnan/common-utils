@@ -144,11 +144,11 @@ if __name__ == "__main__":
     # check the output shape
     # out_mask = model(X, Y, Y, mask=torch.ones((batch_size, num_queries, num_kvpairs)))
     out_no_mask = model(X, mask=None)
-    # torch.save(out_no_mask, "a.pt")
+    # torch.save(out_no_mask, "ground_truth_attention.pt")
     # pprint(out_no_mask)
     # print(out_no_mask.shape)
 
-    loaded_out = torch.load("a.pt")
+    loaded_out = torch.load("ground_truth_attention.pt")
 
     if tensors_are_same(out_no_mask, loaded_out, atol=0, rtol=0):
         print("The tensors are the same!")

@@ -12,6 +12,10 @@
     - [Approach 1: Single Large Weight Matrix Implementation (Paper's Code)](#approach-1-single-large-weight-matrix-implementation-papers-code)
     - [Approach 2: Separate Weight Matrices Notation (Paper Notation)](#approach-2-separate-weight-matrices-notation-paper-notation)
   - [is the FFN in encoder just a MLP layer](#is-the-ffn-in-encoder-just-a-mlp-layer)
+  - [All the Whys?](#all-the-whys)
+    - [Why Scaling by $\\sqrt{d\_k}$?](#why-scaling-by-sqrtd_k)
+    - [Why need Positional Encoding?](#why-need-positional-encoding)
+  - [References and Further Readings](#references-and-further-readings)
 
 ## Notations
 
@@ -25,7 +29,6 @@ Dimensions and indexing pertaining to attention will be listed in the
 [Attention Notations](#attention-notations) section.
 
 - $D$: embedding dimension. In the paper it is denoted as $d_{\text{model}}$.
-    We will use $D$ to stay consistent with the rest of the notes.
   - $d$: index of an element in the embedding vector.
 - $L$: sequence length.
   - $i$: index of a token in the sequence.
@@ -59,13 +62,14 @@ Dimensions and indexing pertaining to attention will be listed in the
         token represented as an integer from the set ${0, 1, ..., V-1}$.
   - $i$: is the index of a token in the sequence $\mathbf{X}$.
 
-- $O$: one-hot representation of the input sequence $\mathbf{X}$. This is a
-    $L \times V$ matrix, where each row represents a token in the sequence and
-    each column corresponds to a unique word in the vocabulary $\mathcal{V}$.
+- $\mathbf{O}$: one-hot representation of the input sequence $\mathbf{X}$.
+    This is a $L \times V$ matrix, where each row represents a token in the
+    sequence and each column corresponds to a unique word in the vocabulary
+    $\mathcal{V}$.
 
     $$
     \begin{aligned}
-    O &= \begin{bmatrix} o_{1,1} & o_{1,2} & \cdots & o_{1,V} \\ o_{2,1} & o_{2,2} & \cdots & o_{2,V} \\ \vdots & \vdots & \ddots & \vdots \\ o_{L,1} & o_{L,2} & \cdots & o_{L,V} \end{bmatrix} \in \mathbb{R}^{L \times V} \\
+    \mathbf{O} &= \begin{bmatrix} o_{1,1} & o_{1,2} & \cdots & o_{1,V} \\ o_{2,1} & o_{2,2} & \cdots & o_{2,V} \\ \vdots & \vdots & \ddots & \vdots \\ o_{L,1} & o_{L,2} & \cdots & o_{L,V} \end{bmatrix} \in \mathbb{R}^{L \times V} \\
     &= \begin{bmatrix} \text{---} & \mathbf{o}_{1, :} & \text{---} \\ \text{---} & \mathbf{o}_{2, :} & \text{---} \\ & \vdots & \\ \text{---} & \mathbf{o}_{L, :} & \text{---} \end{bmatrix} \in \mathbb{R}^{L \times V}
     \end{aligned}
     $$
@@ -97,15 +101,15 @@ Dimensions and indexing pertaining to attention will be listed in the
         $\mathbf{E}$ is the embedding vector for that word.
 
 - $\mathbf{Z}$: is the output tensor of the embedding layer, obtained by
-    matrix multiplying $O$ with $\mathbf{E}$, and it is defined as:
+    matrix multiplying $\mathbf{O}$ with $\mathbf{E}$, and it is defined as:
 
     $$
-    \mathbf{Z} = O \cdot \mathbf{E}
+    \mathbf{Z} = \mathbf{O} \cdot \mathbf{E}
     $$
 
     $$
     \begin{aligned}
-    \mathbf{Z} &= O \cdot \mathbf{E} \\
+    \mathbf{Z} &= \mathbf{O} \cdot \mathbf{E} \\
     &= \begin{bmatrix} z_{1,1} & z_{1,2} & \cdots & z_{1,D} \\ z_{2,1} & z_{2,2} & \cdots & z_{2,D} \\ \vdots & \vdots & \ddots & \vdots \\ z_{L,1} & z_{L,2} & \cdots & z_{L,D} \end{bmatrix} \in \mathbb{R}^{L \times D} \\
     &= \begin{bmatrix} \text{---} & \mathbf{z}_{1,:} & \text{---} \\ \text{---} & \mathbf{z}_{2,:} & \text{---} \\ & \vdots & \\ \text{---} & \mathbf{z}_{L,:} & \text{---} \end{bmatrix} \in \mathbb{R}^{L \times D}
     \end{aligned}
@@ -121,15 +125,15 @@ Dimensions and indexing pertaining to attention will be listed in the
   - $\mathbf{z}_{i, :}$: is the $D$ dimensional embedding vector for the
         token $x_i$ at the $i$-th position in the sequence.
 
-                            In this context, each token in the sequence is represented by a $D$
-                            dimensional vector. So, the output tensor $\mathbf{Z}$ captures the
-                            dense representation of the sequence. Each token in the sequence is
-                            replaced by its corresponding embedding vector from the embedding matrix
-                            $\mathbf{E}$.
+        In this context, each token in the sequence is represented by a $D$
+        dimensional vector. So, the output tensor $\mathbf{Z}$ captures the
+        dense representation of the sequence. Each token in the sequence is
+        replaced by its corresponding embedding vector from the embedding matrix
+        $\mathbf{E}$.
 
-                            As before, the output tensor $\mathbf{Z}$ carries semantic information
-                            about the tokens in the sequence. The closer two vectors are in this
-                            embedding space, the more semantically similar they are.
+        As before, the output tensor $\mathbf{Z}$ carries semantic information
+        about the tokens in the sequence. The closer two vectors are in this
+        embedding space, the more semantically similar they are.
 
 - $\mathbf{P}$: is the positional encoding tensor, created with sinusoidal
     functions of different frequencies:
@@ -188,21 +192,6 @@ Dimensions and indexing pertaining to attention will be listed in the
     and $H$ is the number of attention heads.
 - $d_q = D/H$: Dimension of the queries. Also usually set equal to $d_k$.
 - $d_v = D/H$: Dimension of the values. Usually set equal to $d_k$.
-- $\mathbf{W}_{h}^{q} \in \mathbb{R}^{D \times d_q}$: The query weight matrix
-    for the $h$-th head. It is used to transform the embeddings $\mathbf{Z}$
-    into query representations for the $h$-th head.
-  - Important that this matrix collapses to $\mathbf{W}_{1}^q$ when $H=1$
-        and has shape $\mathbb{R}^{D \times D}$.
-- $\mathbf{W}_{h}^{k} \in \mathbb{R}^{D \times d_k}$: The key weight matrix
-    for the $h$-th head. It is used to transform the embeddings $\mathbf{Z}$
-    into key representations for the $h$-th head.
-  - Important that this matrix collapses to $\mathbf{W}_{1}^k$ when $H=1$
-        and has shape $\mathbb{R}^{D \times D}$ since $d_k = D/H = D/1 = D$.
-- $\mathbf{W}_{h}^{v} \in \mathbb{R}^{D \times d_v}$: The value weight matrix
-    for the $h$-th head. It is used to transform the embeddings $\mathbf{Z}$
-    into value representations for the $h$-th head.
-  - Important that this matrix collapses to $\mathbf{W}_{1}^v$ when $H=1$
-        and has shape $\mathbb{R}^{D \times D}$.
 - $\mathbf{W}^q \in \mathbb{R}^{D \times H \cdot d_q = D \times D}$: The query
     weight matrix for all heads. It is used to transform the embeddings
     $\mathbf{Z}$ into query representations.
@@ -214,11 +203,32 @@ Dimensions and indexing pertaining to attention will be listed in the
 - $\mathbf{W}^v \in \mathbb{R}^{D \times H \cdot d_v = D \times D}$: The value
     weight matrix for all heads. It is used to transform the embeddings
     $\mathbf{Z}$ into value representations.
+- $\mathbf{W}_{h}^{q} \in \mathbb{R}^{D \times d_q}$: The query weight matrix
+    for the $h$-th head. It is used to transform the embeddings $\mathbf{Z}$
+    into query representations for the $h$-th head.
+  - Important that this matrix collapses to $\mathbf{W}_{1}^q$ when $H=1$
+        and has shape $\mathbb{R}^{D \times D}$.
+  - Note that this weight matrix is derived from $W^q$.
+- $\mathbf{W}_{h}^{k} \in \mathbb{R}^{D \times d_k}$: The key weight matrix
+    for the $h$-th head. It is used to transform the embeddings $\mathbf{Z}$
+    into key representations for the $h$-th head.
+  - Important that this matrix collapses to $\mathbf{W}_{1}^k$ when $H=1$
+        and has shape $\mathbb{R}^{D \times D}$ since $d_k = D/H = D/1 = D$.
+  - Note that this weight matrix is derived from $W^k$.
+- $\mathbf{W}_{h}^{v} \in \mathbb{R}^{D \times d_v}$: The value weight matrix
+    for the $h$-th head. It is used to transform the embeddings $\mathbf{Z}$
+    into value representations for the $h$-th head.
+  - Important that this matrix collapses to $\mathbf{W}_{1}^v$ when $H=1$
+        and has shape $\mathbb{R}^{D \times D}$.
+  - Note that this weight matrix is derived from $W^v$.
+
 
 - $\mathbf{Q} = \mathbf{Z} \mathbf{W}^q \in \mathbb{R}^{L \times D}$: The
     query matrix. It contains the query representations for all the tokens in
     the sequence. This is the matrix that is used to compute the attention
     scores.
+    - Each row of the matrix $\mathbf{Q}$ is a query vector $\mathbf{q}_{i}$
+        for the token at position $i$ in the sequence.
 - $\mathbf{Q}_h = \mathbf{Z} \mathbf{W}_h^q \in \mathbb{R}^{L \times d_q}$:
     The query matrix for the $h$-th head. It contains the query representations
     for all the tokens in the sequence. This is the matrix that is used to
@@ -228,10 +238,21 @@ Dimensions and indexing pertaining to attention will be listed in the
     matrix. It contains the key representations for all the tokens in the
     sequence. This is the matrix that is used to compute the attention scores.
 
+- $\mathbf{K}_h = \mathbf{Z} \mathbf{W}_h^k \in \mathbb{R}^{L \times d_k}$:
+    The key matrix for the $h$-th head. It contains the key representations for
+    all the tokens in the sequence. This is the matrix that is used to compute
+    the attention scores for the $h$-th head.
+
 - $\mathbf{V} = \mathbf{Z} \mathbf{W}^v \in \mathbb{R}^{L \times D}$: The
     value matrix. It contains the value representations for all the tokens in
     the sequence. This is the matrix where we apply the attention scores to
     compute the weighted average of the values.
+
+- $\mathbf{V}_h = \mathbf{Z} \mathbf{W}_h^v \in \mathbb{R}^{L \times d_v}$:
+    The value matrix for the $h$-th head. It contains the value representations
+    for all the tokens in the sequence. This is the matrix where we apply the
+    attention scores to compute the weighted average of the values for the
+    $h$-th head.
 
 - $\mathbf{q}_{i} = \mathbf{Q}_{i, :} \in \mathbb{R}^{d}$: The query vector
     for the token at position $i$ in the sequence.
@@ -240,36 +261,27 @@ Dimensions and indexing pertaining to attention will be listed in the
 - $\mathbf{v}_{i} = \mathbf{V}_{i, :} \in \mathbb{R}^{d}$: The value vector
     for the token at position $i$ in the sequence.
 
----
-
-Here's the notation for the provided text. This specifically describes a
-multi-head attention operation:
-
-- $d_q$: Dimension of the query before applying the query weight matrix.
-- $d_k$: Dimension of the key before applying the key weight matrix.
-- $d_v$: Dimension of the value before applying the value weight matrix.
-
-- $\mathbf{W}_i^{(q)} \in \mathbb{R}^{p_q \times d_q}$: Query weight matrix
-    for the $i$-th head, used to transform the query.
-- $\mathbf{W}_i^{(k)} \in \mathbb{R}^{p_k \times d_k}$: Key weight matrix for
-    the $i$-th head, used to transform the key.
-- $\mathbf{W}_i^{(v)} \in \mathbb{R}^{p_v \times d_v}$: Value weight matrix
-    for the $i$-th head, used to transform the value.
-
-- $p_q$: Dimension of the query after applying the query weight matrix
-    $\mathbf{W}_i^{(q)}$. It's the dimension of the query in the attention head
-    space.
-- $p_k$: Dimension of the key after applying the key weight matrix
-    $\mathbf{W}_i^{(k)}$. It's the dimension of the key in the attention head
-    space.
-- $p_v$: Dimension of the value after applying the value weight matrix
-    $\mathbf{W}_i^{(v)}$. It's the dimension of the value in the attention head
-    space.
-
 - $f(\cdot)$: Attention function (such as additive attention or scaled
     dot-product attention).
+  - Should we find a better notation?
 
-- $h$: Total number of attention heads.
+    The scaled dot-product attention function $f(\cdot)$ can be formulated as:
+
+    $$
+    f(\mathbf{Q}, \mathbf{K}, \mathbf{V}) = \text{softmax}\left( \frac{\mathbf{Q} \mathbf{K}^T}{\sqrt{d_k}} \right) \mathbf{V}
+    $$
+
+    For the $h$-th head, it can be represented as:
+
+    $$
+    f(\mathbf{Q}_h, \mathbf{K}_h, \mathbf{V}_h) = \text{softmax}\left( \frac{\mathbf{Q}_h \mathbf{K}_h^T}{\sqrt{d_k}} \right) \mathbf{V}_h
+    $$
+
+    In these formulas, $\mathbf{Q}$, $\mathbf{K}$, and $\mathbf{V}$ are the query, key, and value matrices, respectively. The function $\text{softmax}(\cdot)$ is applied row-wise. The division by $\sqrt{d_k}$ is a scaling factor that helps in training stability.
+
+---
+
+
 
 - $\mathbf{h}_i \in \mathbb{R}^{p_v}$: Output of the $i$-th attention head.
 
@@ -404,11 +416,11 @@ enhancing its ability to model complex relationships.
 
 ## Confusion on Weight matrix per head
 
-The notation and explanation
-in the original papers and many articles do indeed mention separate weight
-matrices for each head, such as $W^{Q}_i$, but in implementation, it's common to
-represent these separate weights within a single large weight matrix. The
-notation might be different, but the mathematical operation is equivalent.
+The notation and explanation in the original papers and many articles do indeed
+mention separate weight matrices for each head, such as $W^{Q}_i$, but in
+implementation, it's common to represent these separate weights within a single
+large weight matrix. The notation might be different, but the mathematical
+operation is equivalent.
 
 Here's how the two approaches relate:
 
@@ -452,17 +464,20 @@ w^{q}_{D,1} & w^{q}_{D,2} & \ldots & w^{q}_{D,D} \end{bmatrix}_{D \times D}
 \end{aligned}
 $$
 
-where each $W^{q}_h$ is a matrix with dimensions $D \times \frac{D}{H} = D \times d_q$.
+where each $W^{q}_h$ is a matrix with dimensions
+$D \times \frac{D}{H} = D \times d_q$.
 
-In other words, if the embedding dimension is 512 and there are 8 heads, the original
-$W^q$ matrix is of size $512 \times 512$, and we can decompose it into 8 matrices
-of size $512 \times 64$, each forming a column of the original matrix.
+In other words, if the embedding dimension is 512 and there are 8 heads, the
+original $W^q$ matrix is of size $512 \times 512$, and we can decompose it into
+8 matrices of size $512 \times 64$, each forming a column of the original
+matrix.
 
 ---
 
 Side note: if users wanna see jacobian like block matrics:
 
-We can represent the matrix in blocks by grouping its elements. Here's an example that might suit your purpose:
+We can represent the matrix in blocks by grouping its elements. Here's an
+example that might suit your purpose:
 
 $$
 \begin{aligned}
@@ -475,7 +490,8 @@ B^{q}_{H,1} & B^{q}_{H,2} & \ldots & B^{q}_{H,H} \\
 \end{aligned}
 $$
 
-Where each block $B^{q}_{i,j}$ is a sub-matrix of size $m \times m$ (assuming $D$ is divisible by $H$ and $m = \frac{D}{H}$) and can be represented as:
+Where each block $B^{q}_{i,j}$ is a sub-matrix of size $m \times m$ (assuming
+$D$ is divisible by $H$ and $m = \frac{D}{H}$) and can be represented as:
 
 $$
 \begin{aligned}
@@ -487,13 +503,13 @@ w^{q}_{i \cdot m, j \cdot m - m + 1} & \ldots & w^{q}_{i \cdot m, j \cdot m}
 \end{aligned}
 $$
 
-This representation can help visualize the matrix as a composition of smaller blocks, which might be useful in certain contexts, such as when dealing with partitioned matrices in numerical computations.
+This representation can help visualize the matrix as a composition of smaller
+blocks, which might be useful in certain contexts, such as when dealing with
+partitioned matrices in numerical computations.
 
 ---
 
-
-We then multiply the embeddings by this large
-weight matrix:
+We then multiply the embeddings by this large weight matrix:
 
 $$
 Q = \mathbf{Z} \cdot W^{q}
@@ -510,9 +526,9 @@ Q_{h} \in \mathbb{R}^{B \times L \times d_q} &= Q\left[:, :, h \cdot \frac{D}{H}
 $$
 
 where $W^{q}_{h}$ is the submatrix of $W^{q}$ that corresponds to the $h$-th
-head, or in other words, let's say $W^{q}_1$, the first head,
-it means subsetting the $W^q$ with rows dimension unchanged (i.e. 512), and
-taking the first 64 columns, resulting in a matrix of size $512 \times 64$.
+head, or in other words, let's say $W^{q}_1$, the first head, it means
+subsetting the $W^q$ with rows dimension unchanged (i.e. 512), and taking the
+first 64 columns, resulting in a matrix of size $512 \times 64$.
 
 ### Approach 2: Separate Weight Matrices Notation (Paper Notation)
 
@@ -520,29 +536,38 @@ Suppose we have $H$ heads and our embedding matrix $\mathbf{Z}$ has dimensions
 $B \times L \times D$, where $B$ is the batch size, $L$ is the sequence length,
 and $D$ is the embedding dimension.
 
-For each head $h$, we have a weight matrix $W^{q}_{h}$ with dimensions $D
-\times \frac{D}{H} = D \times d_q$, and we apply this transformation to the embeddings:
+For each head $h$, we have a weight matrix $W^{q}_{h}$ with dimensions
+$D
+\times \frac{D}{H} = D \times d_q$, and we apply this transformation to the
+embeddings:
 
 $$
 Q_{h} \in \mathbb{R}^{B \times L \times d_q} = \mathbf{Z} \cdot W^{q}_{h}
 $$
 
-So the confusion arises because in the code implementation we do not see
-an explicit definition of the separate weight matrices $W^{q}_{h}$, but they are
-implicitly represented within the single large weight matrix $W^{q}$.
-But actually you can see from approach 1, the $W^q$ is just a concatenation of
-all the $W^{q}_{h}$, so it's just a different way of representing the same thing.
+So the confusion arises because in the code implementation we do not see an
+explicit definition of the separate weight matrices $W^{q}_{h}$, but they are
+implicitly represented within the single large weight matrix $W^{q}$. But
+actually you can see from approach 1, the $W^q$ is just a concatenation of all
+the $W^{q}_{h}$, so it's just a different way of representing the same thing.
 
 ## is the FFN in encoder just a MLP layer
 
-Yes, the Feed-Forward Network (FFN) in the Transformer's encoder is essentially a Multi-Layer Perceptron (MLP) layer. It typically consists of two fully connected layers, with a non-linear activation function (usually ReLU) applied after the first layer.
+Yes, the Feed-Forward Network (FFN) in the Transformer's encoder is essentially
+a Multi-Layer Perceptron (MLP) layer. It typically consists of two fully
+connected layers, with a non-linear activation function (usually ReLU) applied
+after the first layer.
 
 Here's the general structure of the FFN in the Transformer's encoder:
 
-1. **First Linear Layer:** The input is passed through a fully connected linear layer with weight matrix $W_1$ and bias $b_1$.
-2. **Activation Function:** A non-linear activation function (such as ReLU) is applied to the result of the first linear layer.
-3. **Second Linear Layer:** The activated output is then passed through another fully connected linear layer with weight matrix $W_2$ and bias $b_2$.
-4. **Optional Dropout:** Some implementations might include dropout for regularization after one or both of the linear layers.
+1. **First Linear Layer:** The input is passed through a fully connected linear
+   layer with weight matrix $W_1$ and bias $b_1$.
+2. **Activation Function:** A non-linear activation function (such as ReLU) is
+   applied to the result of the first linear layer.
+3. **Second Linear Layer:** The activated output is then passed through another
+   fully connected linear layer with weight matrix $W_2$ and bias $b_2$.
+4. **Optional Dropout:** Some implementations might include dropout for
+   regularization after one or both of the linear layers.
 
 The mathematical expression for this process would look something like:
 
@@ -550,6 +575,57 @@ $$
 \text{FFN}(x) = W_2 \cdot \text{ReLU}(W_1 \cdot x + b_1) + b_2
 $$
 
-Where $x$ is the input to the FFN, and $W_1$, $W_2$, $b_1$, and $b_2$ are learnable parameters.
+Where $x$ is the input to the FFN, and $W_1$, $W_2$, $b_1$, and $b_2$ are
+learnable parameters.
 
-So, the FFN in the Transformer's encoder is effectively a specific form of a Multi-Layer Perceptron with two layers, with the goal of learning position-wise transformations of the input.
+So, the FFN in the Transformer's encoder is effectively a specific form of a
+Multi-Layer Perceptron with two layers, with the goal of learning position-wise
+transformations of the input.
+
+## All the Whys?
+
+https://uvadlc-notebooks.readthedocs.io/en/latest/tutorial_notebooks/tutorial6/Transformers_and_MHAttention.html
+
+### Why Scaling by $\sqrt{d_k}$?
+
+### Why need Positional Encoding?
+
+## References and Further Readings
+
+1. Stanford CS224N Course: [link](https://web.stanford.edu/class/cs224n/)
+2. Aman AI Transformers Primer:
+   [link](https://aman.ai/primers/ai/transformers/#transformer-core)
+3. Implementing a Transformer from Scratch in PyTorch:
+   [link](https://www.lesswrong.com/posts/2kyzD5NddfZZ8iuA7/implementing-a-transformer-from-scratch-in-pytorch-a-write)
+4. Illustrated Transformer by Jay Alammar:
+   [link](http://jalammar.github.io/illustrated-transformer/)
+5. Mislav Juric's Transformer from Scratch:
+   [link](https://github.com/MislavJuric/transformer-from-scratch/blob/main/layers/MultiHeadAttention.py)
+6. Peter Bloem's Blog on Transformers:
+   [link](https://peterbloem.nl/blog/transformers)
+7. Transformer Family Explained by Lilian Weng:
+   [link](https://lilianweng.github.io/posts/2023-01-27-the-transformer-family-v2/)
+8. D2L AI Book - Multihead Attention:
+   [link](https://d2l.ai/chapter_attention-mechanisms-and-transformers/multihead-attention.html)
+9. NLP Course at NTU:
+   [link](https://speech.ee.ntu.edu.tw/~hylee/ml/ml2021-course-data/self_v7.pdf)
+10. Attention Is All You Need (Original Transformer Paper):
+    [link](https://arxiv.org/pdf/1706.03762.pdf)
+11. Harvard NLP - Attention in Transformers:
+    [link](https://nlp.seas.harvard.edu/2018/04/03/attention.html#batches-and-masking)
+12. Annotated Transformer:
+    [link](http://nlp.seas.harvard.edu/annotated-transformer/)
+13. LabML AI - MultiHead Attention:
+    [link](https://nn.labml.ai/transformers/mha.html)
+14. NTU Speech and Language Processing Course:
+    [link](https://speech.ee.ntu.edu.tw/~hylee/ml/2023-spring.php)
+15. Google Colab - Self-Attention Example:
+    [link](https://colab.research.google.com/drive/1u-610KA-urqfJjDH5O0pecwfP--V9DQs?usp=sharing#scrollTo=iXZ5B0EKJGs8)
+16. Self-Attention from Scratch by Sebastian Raschka:
+    [link](https://sebastianraschka.com/blog/2023/self-attention-from-scratch.html)
+17. UvA DL Course - Transformers and MHAttention:
+    [link](https://uvadlc-notebooks.readthedocs.io/en/latest/tutorial_notebooks/tutorial6/Transformers_and_MHAttention.html)
+18. Simple Attention-based Text Prediction Model:
+    [link](https://datascience.stackexchange.com/questions/94205/a-simple-attention-based-text-prediction-model-from-scratch-using-pytorch)
+19. The AI Summer - Self-Attention Explanation:
+    [link](https://theaisummer.com/self-attention/#how-multi-head-attention-works-in-detail)
