@@ -6,6 +6,7 @@ import copy
 from rich.pretty import pprint
 import rich
 from common_utils.core.common import seed_all
+from d2l import torch as d2l
 
 seed_all(42, seed_torch=True)
 
@@ -49,13 +50,20 @@ class MultiHeadedAttention(nn.Module):
         # then apply linear transformations to each part. This is
         # WRONG. You apply linear transformations to the whole
         # embeddings and then split the result into 8 parts.
-        W_q = self.W_q.weight
-        W_k = self.W_k.weight
-        W_v = self.W_v.weight
+        W_q = self.W_q.weight # D x D
+        W_k = self.W_k.weight # D x D
+        W_v = self.W_v.weight # D x D
+
+        # NOTE: in pytorch, you need to transpose the weight matrix if
+        # you see their formula, so this has a bit of a different
+        # notation than in our notes. In our notes, we do not need to transpose.
 
         Q = embeddings @ W_q.T  # Z @ W_q
         K = embeddings @ W_k.T  # Z @ W_k
         V = embeddings @ W_v.T  # Z @ W_v
+        assert tensors_are_same(Q, self.W_q(embeddings))
+        assert tensors_are_same(K, self.W_k(embeddings))
+        assert tensors_are_same(V, self.W_v(embeddings))
 
         # Q = self.W_q(embeddings) # Z @ W_q
         # K = self.W_k(embeddings) # Z @ W_k
@@ -74,18 +82,23 @@ class MultiHeadedAttention(nn.Module):
             # weights are shared across heads via W^{q}, W^{k}, W^{v}
             head_start = head * self.d_q
             head_end = (head + 1) * self.d_q
-            W_q_h = W_q[:, head_start:head_end]
-            W_k_h = W_k[:, head_start:head_end]
-            W_v_h = W_v[:, head_start:head_end]
+
+            # NOTE: W_q_h, W_k_h, W_v_h are computed just to check that
+            # Q_h = embeddings @ W_q_h^T
+            W_q_h = W_q.T[:, head_start:head_end]
+            W_k_h = W_k.T[:, head_start:head_end]
+            W_v_h = W_v.T[:, head_start:head_end]
 
             Q_h = Q[:, :, head_start:head_end]
-            assert tensors_are_same(Q_h, embeddings @ W_q_h.T)  # Z @ W^{q}_h
+            pprint(embeddings.shape)
+            pprint(W_q_h.T.shape)
+            assert tensors_are_same(Q_h, embeddings @ W_q_h)  # Z @ W^{q}_h
 
             K_h = K[:, :, head_start:head_end]
-            assert tensors_are_same(K_h, embeddings @ W_k_h.T)
+            assert tensors_are_same(K_h, embeddings @ W_k_h)
 
             V_h = V[:, :, head_start:head_end]
-            assert tensors_are_same(V_h, embeddings @ W_v_h.T)
+            assert tensors_are_same(V_h, embeddings @ W_v_h)
 
             assert Q_h.shape == (nbatches, seq_len, self.d_q)
             assert K_h.shape == (nbatches, seq_len, self.d_k)
@@ -103,6 +116,7 @@ class MultiHeadedAttention(nn.Module):
         head_outputs = []
         for Q_h, K_h, V_h in zip(Q_heads, K_heads, V_heads):
             # apply Q,K,V to attention
+            # x.shape = [nbatches, seq_len, d_v] = [2, 4, 100]
             x, attn = attention(Q_h, K_h, V_h, mask=mask, dropout=self.dropout)
             head_outputs.append(x)
             # FIXME: why is attn unused?
@@ -112,6 +126,7 @@ class MultiHeadedAttention(nn.Module):
         # NOTE: this is the step where we concatenate the heads
         # MultiHead(Q, K, V) = Concat(head_1, ..., head_H)W^{o}
         x_concat = torch.cat(head_outputs, dim=-1)
+        pprint(x_concat.shape)
         assert x_concat.shape == (nbatches, seq_len, self.d_model)
 
         # Apply final linear transformation
@@ -139,11 +154,11 @@ if __name__ == "__main__":
     model = MultiHeadedAttention(H=num_heads, d_model=num_hiddens, bias=False)
     batch_size, num_queries, num_kvpairs = 2, 4, 6
     valid_lens = torch.tensor([3, 2])
-    X = torch.ones((batch_size, num_queries, num_hiddens))
-    Y = torch.ones((batch_size, num_kvpairs, num_hiddens))
+    X = torch.ones((batch_size, num_queries, num_hiddens)) # shape = [2, 4, 100]
+    # Y = torch.ones((batch_size, num_kvpairs, num_hiddens))
     # check the output shape
     # out_mask = model(X, Y, Y, mask=torch.ones((batch_size, num_queries, num_kvpairs)))
-    out_no_mask = model(X, mask=None)
+    out_no_mask = model.forward(embeddings=X, mask=None)
     # torch.save(out_no_mask, "ground_truth_attention.pt")
     # pprint(out_no_mask)
     # print(out_no_mask.shape)

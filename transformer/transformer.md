@@ -5,7 +5,7 @@
     - [Dimensions and Indexing](#dimensions-and-indexing)
     - [General Notations](#general-notations)
     - [Attention Notations](#attention-notations)
-  - [GOTCHA](#gotcha)
+  - [How $W^{q}\_i$ is implemented in practice?](#how-wq_i-is-implemented-in-practice)
   - [HEad is similar to kernels in CNN](#head-is-similar-to-kernels-in-cnn)
   - [so the catch is you do not split the embeddings in H heads, instead you split the linear transformed embeddings?](#so-the-catch-is-you-do-not-split-the-embeddings-in-h-heads-instead-you-split-the-linear-transformed-embeddings)
   - [Confusion on Weight matrix per head](#confusion-on-weight-matrix-per-head)
@@ -279,6 +279,8 @@ Dimensions and indexing pertaining to attention will be listed in the
 
     In these formulas, $\mathbf{Q}$, $\mathbf{K}$, and $\mathbf{V}$ are the query, key, and value matrices, respectively. The function $\text{softmax}(\cdot)$ is applied row-wise. The division by $\sqrt{d_k}$ is a scaling factor that helps in training stability.
 
+
+
 ---
 
 
@@ -332,7 +334,7 @@ This notation helps us understand the inner workings of the multi-head attention
 mechanism, and it provides a clear path for implementing the multi-head
 attention mechanism in a neural network model.
 
-## GOTCHA
+## How $W^{q}_i$ is implemented in practice?
 
 The notation $W^{q}_i$ is used in the paper to denote the weight matrix for the
 queries (Q) of the $i$-th head. However, it's essential to understand how this
@@ -386,12 +388,12 @@ to obtain multiple output vectors.
 ## so the catch is you do not split the embeddings in H heads, instead you split the linear transformed embeddings?
 
 ```
-        # Apply linear transformations to compute Q, K, V
-        # NOTE: here is an important misconception that if you have
-        # 8 heads, then you SPLIT the embeddings into 8 parts and
-        # then apply linear transformations to each part. This is
-        # WRONG. You apply linear transformations to the whole
-        # embeddings and then split the result into 8 parts.
+# Apply linear transformations to compute Q, K, V
+# NOTE: here is an important misconception that if you have
+# 8 heads, then you SPLIT the embeddings into 8 parts and
+# then apply linear transformations to each part. This is
+# WRONG. You apply linear transformations to the whole
+# embeddings and then split the result into 8 parts.
 ```
 
 You don't split the original embeddings into $H$ heads; instead, you apply
