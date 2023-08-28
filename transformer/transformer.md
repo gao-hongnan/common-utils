@@ -260,7 +260,37 @@ Dimensions and indexing pertaining to attention will be listed in the
     the token at position $i$ in the sequence.
 - $\mathbf{v}_{i} = \mathbf{V}_{i, :} \in \mathbb{R}^{d}$: The value vector
     for the token at position $i$ in the sequence.
+- $\mathbf{A} \in \mathbb{R}^{L \times L}$: The attention matrix. It contains
+    the attention scores for all the tokens in the sequence. It is computed as:
 
+    $$
+    \mathbf{A} = \text{softmax}\left( \frac{\mathbf{Q} \mathbf{K}^T}{\sqrt{d_k}} \right)
+    $$
+
+    where
+
+  - $L$: is the sequence length.
+  - $\mathbf{Q} \in \mathbb{R}^{L \times D}$: is the query matrix.
+  - $\mathbf{K} \in \mathbb{R}^{L \times D}$: is the key matrix.
+  - $\sqrt{d_k}$: is the scaling factor.
+  - $\text{softmax}(\cdot)$: is the softmax function applied row-wise.
+  - More concretely, this is the **self-attention matrix** between an input sequence $\mathbf{X} = (x_1, x_2, ..., x_L)$ and itself. Each row in the matrix $\mathbf{A}$ is the attention scores for a token in the sequence. The attention scores are computed by comparing the query vector for a token with the key vectors for all the tokens in the sequence.
+  - For instance, if the input sequence is "cat eat mouse", then the $L=3$, and the attention matrix $\mathbf{A}$'s first row is the attention
+  scores of the word cat with all other words, (cat & cat, cat & eat, cat & mouse). Similarly, the second row is the attention scores of the word eat with all other words, (eat & cat, eat & eat, eat & mouse). Lastly, the third row is the attention scores of the word mouse with all other words, (mouse & cat, mouse & eat, mouse & mouse).
+
+- $a_{i, j} \in \mathbf{A}$: The attention score between the query $i$ and the key $j$
+  in the sequence (please do not be confused with the $j$ index in vocabulary!). It is computed as:
+
+    $$
+    a_{i, j} = \text{softmax}\left(\frac{\mathbf{q}_{i} \mathbf{k}_{j}^T}{\sqrt{d_k}}\right)
+    $$
+
+    where
+
+  - $\mathbf{q}_{i} \in \mathbb{R}^{d}$: is the query vector for the $i$-th
+        token in the sequence.
+  - $\mathbf{k}_{j} \in \mathbb{R}^{d}$: is the key vector for the $j$-th
+        token in the sequence.
 - $f(\cdot)$: Attention function (such as additive attention or scaled
     dot-product attention).
   - Should we find a better notation?
@@ -268,7 +298,13 @@ Dimensions and indexing pertaining to attention will be listed in the
     The scaled dot-product attention function $f(\cdot)$ can be formulated as:
 
     $$
-    f(\mathbf{Q}, \mathbf{K}, \mathbf{V}) = \text{softmax}\left( \frac{\mathbf{Q} \mathbf{K}^T}{\sqrt{d_k}} \right) \mathbf{V}
+    \text{Attention}(\mathbf{Q}, \mathbf{K}, \mathbf{V}) := f(\mathbf{Q}, \mathbf{K}, \mathbf{V}) = \text{softmax}\left( \frac{\mathbf{Q} \mathbf{K}^T}{\sqrt{d_k}} \right) \mathbf{V} \in \mathbb{R}^{L \times D}
+    $$
+
+    or you can also substitute $\mathbf{A}$ to get the same result:
+
+    $$
+    \text{Attention}(\mathbf{Q}, \mathbf{K}, \mathbf{V}) := f(\mathbf{Q}, \mathbf{K}, \mathbf{V}) = \mathbf{A} \mathbf{V}
     $$
 
     For the $h$-th head, it can be represented as:

@@ -85,9 +85,9 @@ class MultiHeadedAttention(nn.Module):
 
             # NOTE: W_q_h, W_k_h, W_v_h are computed just to check that
             # Q_h = embeddings @ W_q_h^T
-            W_q_h = W_q.T[:, head_start:head_end]
-            W_k_h = W_k.T[:, head_start:head_end]
-            W_v_h = W_v.T[:, head_start:head_end]
+            W_q_h = W_q.T[:, head_start:head_end] # D x d_q
+            W_k_h = W_k.T[:, head_start:head_end] # D x d_k
+            W_v_h = W_v.T[:, head_start:head_end] # D x d_v
 
             Q_h = Q[:, :, head_start:head_end]
             pprint(embeddings.shape)
@@ -116,7 +116,7 @@ class MultiHeadedAttention(nn.Module):
         head_outputs = []
         for Q_h, K_h, V_h in zip(Q_heads, K_heads, V_heads):
             # apply Q,K,V to attention
-            # x.shape = [nbatches, seq_len, d_v] = [2, 4, 100]
+            # x.shape = [nbatches, seq_len, d_v] = [2, 4, 100] or [2, 4, 50] if 2 heads
             x, attn = attention(Q_h, K_h, V_h, mask=mask, dropout=self.dropout)
             head_outputs.append(x)
             # FIXME: why is attn unused?
@@ -150,7 +150,7 @@ def tensors_are_same(tensor1, tensor2, atol=1e-8, rtol=1e-5):
 
 
 if __name__ == "__main__":
-    num_hiddens, num_heads = 100, 1
+    num_hiddens, num_heads = 100, 2
     model = MultiHeadedAttention(H=num_heads, d_model=num_hiddens, bias=False)
     batch_size, num_queries, num_kvpairs = 2, 4, 6
     valid_lens = torch.tensor([3, 2])
@@ -163,7 +163,10 @@ if __name__ == "__main__":
     # pprint(out_no_mask)
     # print(out_no_mask.shape)
 
-    loaded_out = torch.load("ground_truth_attention.pt")
+    if num_heads == 1:
+        loaded_out = torch.load("single_head_ground_truth_attention.pt")
+    elif num_heads == 2:
+        loaded_out = torch.load("double_head_ground_truth_attention.pt")
 
     if tensors_are_same(out_no_mask, loaded_out, atol=0, rtol=0):
         print("The tensors are the same!")
