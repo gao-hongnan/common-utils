@@ -1,3 +1,6 @@
+# WRITING DISTRIBUTED APPLICATIONS WITH PYTORCH
+
+```python
 """
 qsub -I -l select=1:ngpus=4 -P 11003281 -l walltime=24:00:00 -q ai
 """
@@ -68,21 +71,8 @@ def display_dist_info(rank: int, world_size: int, logger: logging.Logger) -> Non
 
 
 def run(rank: int, world_size: int) -> None:
-    """Blocking point-to-point communication."""
-    tensor = torch.zeros(1)
-    print('Rank ', rank, ' has data ', tensor[0])
-    tensor = tensor.to(rank) # in 1 node, global rank = local rank
-    if rank == 0:
-        tensor += 1
-        # Send the tensor to processes other than 0
-        for other_rank in range(1, world_size):  # Sending to all other ranks
-            dist.send(tensor=tensor, dst=other_rank)
-    else:
-        # Receive tensor from process 0
-        dist.recv(tensor=tensor, src=0)
-
-    print('Rank ', rank, ' has data ', tensor[0])
-
+    """To be implemented."""
+    ...
 
 
 def main(world_size: int) -> None:
@@ -121,3 +111,49 @@ if __name__ == "__main__":
         world_size = args.world_size
 
     main(world_size)
+```
+
+```python
+def run(rank: int, world_size: int) -> None:
+    """Blocking point-to-point communication."""
+    tensor = torch.zeros(1)
+    print('Rank ', rank, ' has data ', tensor[0])
+    tensor = tensor.to(rank) # in 1 node, global rank = local rank
+    if rank == 0:
+        tensor += 1
+        # Send the tensor to processes other than 0
+        for other_rank in range(1, world_size):  # Sending to all other ranks
+            dist.send(tensor=tensor, dst=other_rank)
+    else:
+        # Receive tensor from process 0
+        dist.recv(tensor=tensor, src=0)
+
+    print('Rank ', rank, ' has data ', tensor[0])
+```
+
+Each rank effectively runs its own instance of the `run` function due to the `mp.Process` instantiation. Here's how it works in a step-by-step manner:
+
+1. **For Rank 0**:
+    - The process with `rank=0` starts and executes `run` function.
+    - The `if rank == 0:` condition is true.
+    - It increments its tensor from 0 to 1.
+    - It performs `dist.send` to send this tensor to ranks 1, 2, and 3.
+    - At this point, it has sent the data but hasn't confirmed that the data has been received by other ranks.
+
+2. **For Rank 1**:
+    - A new process is spawned with `rank=1`.
+    - This process runs the `run` function.
+    - The `else:` clause is executed.
+    - It waits to receive the tensor from `rank=0` using `dist.recv`.
+    - Once received, it prints the value, confirming the data transfer.
+
+3. **For Rank 2 and 3**:
+    - Similar to `rank=1`, new processes are spawned for `rank=2` and `rank=3`.
+    - They also go into the `else:` clause and wait to receive the tensor from `rank=0`.
+
+The `mp.Process` initiates these separate processes, and the `dist.send` and `dist.recv` functions handle the point-to-point data communication between these processes. Thus, the state (tensor) of `rank=0` is successfully transferred to ranks 1, 2, and 3.
+
+## References and Further Readings
+
+- https://pytorch.org/tutorials/intermediate/dist_tuto.html
+- https://github.com/seba-1511/dist_tuto.pth/blob/gh-pages/train_dist.py
