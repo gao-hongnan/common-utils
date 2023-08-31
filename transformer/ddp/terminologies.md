@@ -2,6 +2,10 @@
 
 Let's consider a machine learning training job on a cluster with 2 nodes (Node A and Node B), each having 4 GPUs.
 
+## Thread vs Process
+
+...
+
 ## Processes
 1. On Node A, you launch two processes: Process A1 controls GPU0 on Node A, and Process A2 controls GPU1 on Node A.
 2. On Node B, likewise, you launch two processes: Process B1 controls GPU0 on Node B, and Process B2 controls GPU1 on Node B.

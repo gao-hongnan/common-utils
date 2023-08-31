@@ -1,5 +1,11 @@
 # WRITING DISTRIBUTED APPLICATIONS WITH PYTORCH
 
+## Setup
+
+- Single Node
+- 4 GPUs
+- PBS
+
 ```python
 """
 qsub -I -l select=1:ngpus=4 -P 11003281 -l walltime=24:00:00 -q ai
@@ -68,8 +74,6 @@ def display_dist_info(rank: int, world_size: int, logger: logging.Logger) -> Non
     group_rank = dist.get_rank()
     logger.info(f"Rank within Default Process Group: {group_rank}")
 
-
-
 def run(rank: int, world_size: int) -> None:
     """To be implemented."""
     ...
@@ -113,6 +117,44 @@ if __name__ == "__main__":
     main(world_size)
 ```
 
+The `init_process_group` function essentially initiates a group of processes that can communicate with each other through the specified backend. Once this group is initiated, you can start using collective communication routines like broadcast, reduce, etc., or point-to-point communication routines like send and receive.
+
+Below, I break down each input argument and the environmental variables:
+
+### Input Arguments:
+
+1. **`backend`**: Specifies the communication backend to use. For NVIDIA GPUs, "nccl" is commonly used as it is optimized for such devices. Other options include "gloo" and "mpi". The backend establishes how tensors will be sent and received.
+
+2. **`rank`**: This is a unique identifier assigned to each process in a distributed setting. The `rank` is crucial for knowing which process sends or receives information from which other processes.
+
+3. **`world_size`**: This is the total number of processes involved in the communication. Essentially, it's the size of the communication group. For example, if you have 4 GPUs, the world_size would generally be 4.
+
+4. **`init_method`**: This is an optional argument that specifies how the distributed backend will be initialized. The most common value for this is `"env://"` which indicates that the initialization should use environment variables (`MASTER_ADDR` and `MASTER_PORT`) to set up the distributed group. Alternatively, you could provide a URL to a file (e.g., `"file:///path/to/store/file"`), and all processes will use this file to share initialization information.
+
+    When you specify `init_method='env://'`, the backend uses environment variables to find the address and port of the "master" process to initiate the distributed group. This is especially useful when you have distributed systems over a network and the IP address of the master node and the port are dynamically set or located in some cloud configuration. This way, you don't have to hard-code this information, providing a flexible mechanism to initiate the group.
+
+    The `init_method` complements the `MASTER_ADDR` and `MASTER_PORT` environment variables, providing a flexible mechanism for setting up the distributed group. Depending on what `init_method` is set to, the initialization process will look for connection information in either the environment variables or the specified file.
+
+### Environmental Variables:
+
+1. **`MASTER_ADDR`**: The IP address of the machine where the master process runs. All other processes connect to this address to set up the distributed system. Default is "localhost".
+
+2. **`MASTER_PORT`**: The port number on the master machine to which all other processes connect. This combined with `MASTER_ADDR` establishes the connection among all the processes. Default is "12356".
+
+
+
+
+
+
+
+
+
+## Point-to-Point Communication
+
+### [Send and Recv](https://pytorch.org/tutorials/intermediate/dist_tuto.html#id1)
+
+A transfer of data from one process to another is called a point-to-point communication. These are achieved through the `send` and `recv` functions or their immediate counter-parts, `isend` and `irecv`.
+
 ```python
 def run(rank: int, world_size: int) -> None:
     """Blocking point-to-point communication."""
@@ -152,6 +194,20 @@ Each rank effectively runs its own instance of the `run` function due to the `mp
     - They also go into the `else:` clause and wait to receive the tensor from `rank=0`.
 
 The `mp.Process` initiates these separate processes, and the `dist.send` and `dist.recv` functions handle the point-to-point data communication between these processes. Thus, the state (tensor) of `rank=0` is successfully transferred to ranks 1, 2, and 3.
+
+In the above example, both processes start with a zero tensor, then process 0 increments the tensor and sends it to process 1 so that they both end up with 1.0. Notice that processes 1,2 and 3 need to allocate memory in order to store the data it will receive.
+
+#### What does it mean by it needs to allocate memory?
+
+In a scenario with four processes, each process initializes its own tensor filled with zeroes in its respective memory space. Here's how the data flows:
+
+- **Process 0**: Modifies its tensor to 1 and sends this updated tensor to Processes 1, 2, and 3.
+- **Processes 1, 2, 3**: Each has its own pre-allocated tensor initialized to zero. When they execute `dist.recv`, they wait for the incoming data from Process 0.
+
+Upon receiving the data, each of Processes 1, 2, and 3 overwrites its initially zero-valued tensor with the received value of 1. Each process thus ends up with a tensor containing the value 1, but these tensors are separate instances stored in each process's individual memory space. The operation is in-place, meaning the pre-allocated memory for the tensors in Processes 1, 2, and 3 is directly updated. Process 0's tensor remains at its updated value of 1 and is not affected by the receive operations in the other processes.
+
+
+> The key is that `dist.recv` performs an in-place operation, modifying the tensor directly. The name `tensor` refers to a location in memory, and calling `dist.recv` changes the value stored in that memory location for Process 1. After the receive operation, the tensor's value in Process 1 becomes 1, replacing the initial zero. This does not affect the tensor in Process 0; they are separate instances in separate memory spaces.
 
 ## References and Further Readings
 
