@@ -24,6 +24,7 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     env:
       PACKAGES_TO_CHECK: "common_utils examples" # "package1 package2 package3"
+      WORKING_DIRECTORY: "."
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -44,9 +45,10 @@ jobs:
       - name: Install dev dependencies
         run: |
           python3 -m pip install --upgrade pip setuptools wheel
-          python3 -m pip install -r requirements_dev.txt
+          python3 -m pip install -r ${{ env.WORKING_DIRECTORY }}/requirements_dev.txt
       - name: Run Continuous Integration Action
         uses: ./.github/actions/continuous-integration
         with:
           packages_to_check: ${{ env.PACKAGES_TO_CHECK }}
+          working_directory: ${{ env.WORKING_DIRECTORY }}
         continue-on-error: true
