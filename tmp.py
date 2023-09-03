@@ -104,6 +104,55 @@ def main(world_size: int) -> None:
     for p in processes:
         p.join()
 
+import torch
+
+def tensor_with_vram(vram_MB, dtype=torch.float32, device="cuda"):
+    """Create a tensor that consumes the specified VRAM in MB."""
+
+    # Compute number of elements based on desired VRAM and data type size
+    bytes_per_element = torch.tensor([], dtype=dtype).element_size()
+    num_elements = int(vram_MB * 1e6 / bytes_per_element)
+
+    # Create a 1D tensor with the computed number of elements
+    tensor = torch.empty(num_elements, dtype=dtype, device=device)
+
+    return tensor
+
+# Test the function by creating a tensor that consumes 1GB of VRAM
+tensor_1GB = tensor_with_vram(1024)  # 1024 MB = 1 GB
+
+# Check tensor size and actual MB consumed
+print(tensor_1GB.size(), tensor_1GB.element_size() * tensor_1GB.numel() / 1e6)
+
+
+
+def get_memory_allocated():
+    return torch.cuda.memory_allocated() / 1e6  # MB
+
+def get_memory_cached():
+    return torch.cuda.memory_reserved() / 1e6  # MB
+
+print(f"Initial memory allocated: {get_memory_allocated()} MB")
+print(f"Initial memory cached: {get_memory_cached()} MB")
+
+# 1. Force Fragmentation
+# Create tensors to induce fragmentation.
+
+tensors = [tensor_with_vram(vram_MB=1024) for _ in range(39)]
+print(f"Memory after tensor allocations: {get_memory_allocated()} MiB")
+
+# Deallocate some tensors to induce fragmentation
+for i in range(5, 35, 5):  # Removing tensors at intervals
+    del tensors[i]
+torch.cuda.synchronize()  # Ensure CUDA operations are synchronized
+
+print(f"Memory after deleting some tensors: {get_memory_allocated()} MB")
+
+# 2. Attempt to allocate a contiguous tensor
+# Try to allocate a contiguous tensor of 2 GB
+tensor_2gb = tensor_with_vram(1024 * 2, device="cuda")
+print(f"Memory after allocating a contiguous tensor: {get_memory_allocated()} MB")
+
 
 if __name__ == "__main__":
     import argparse
