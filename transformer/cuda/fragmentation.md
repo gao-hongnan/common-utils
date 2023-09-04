@@ -7,9 +7,13 @@ The concept of fragmentation is akin to what happens on disk drives: over time, 
 Here's a conceptual illustration:
 
 ```
-Memory: |XXXX|----|XXXX|------|XXXXX|---|XXXXX|
+Initial Memory (6GB): |XXXXXX| all contiguous
+Free three non-contiguous blocks of 1GB each: |X-X-X-XX|
+Allocate a model that is 2GB but requires contiguous memory: |XX| fails because there is no contiguous block of 2GB
 Legend:  X - used block, - - free block
 ```
+
+Consider
 
 Even if the sum of the lengths of all free blocks (`-`) is greater than a new allocation request, the request might still fail if it requires a contiguous block larger than any individual free block.
 
@@ -54,77 +58,104 @@ If you were to push the memory utilization to its limits and then induce fragmen
 
 ```python
 import torch
+import os
 
-def tensor_with_vram(vram_MB, dtype=torch.float32, device="cuda"):
-    """Create a tensor that consumes the specified VRAM in MB."""
-
-    # Compute number of elements based on desired VRAM and data type size
-    bytes_per_element = torch.tensor([], dtype=dtype).element_size()
-    num_elements = int(vram_MB * 1e6 / bytes_per_element)
-
-    # Create a 1D tensor with the computed number of elements
-    tensor = torch.empty(num_elements, dtype=dtype, device=device)
-
-    return tensor
-
-# Test the function by creating a tensor that consumes 1GB of VRAM
-tensor_1GB = tensor_with_vram(1024)  # 1024 MB = 1 GB
-
-# Check tensor size and actual MB consumed
-print(tensor_1GB.size(), tensor_1GB.element_size() * tensor_1GB.numel() / 1e6)
-
-
+# Set the max_split_size_mb value
+os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:2048'  # For example, 512MB
 
 def get_memory_allocated():
     return torch.cuda.memory_allocated() / 1e6  # MB
 
-def get_memory_cached():
-    return torch.cuda.memory_reserved() / 1e6  # MB
+# Allocate tensors of varying sizes to prevent efficient coalescing.
+tensor_sizes = [(int(0.9 * 1024 * 256), 1024),  # Slightly less than 1GB
+                (int(1.1 * 1024 * 256), 1024),  # Slightly more than 1GB
+                (int(1 * 1024 * 256), 512),     # Different width, nearly 0.5GB
+                (int(1 * 1024 * 256), 2048)]    # Different width, nearly 2GB
 
-print(f"Initial memory allocated: {get_memory_allocated()} MB")
-print(f"Initial memory cached: {get_memory_cached()} MB")
+tensors = []
 
-# 1. Force Fragmentation
-# Create tensors to induce fragmentation.
+# Try to fill up the GPU memory with these tensors in a cyclic pattern.
+memory_full = False
+while not memory_full:
+    for size in tensor_sizes:
+        try:
+            tensors.append(torch.randn(size, device="cuda"))
+        except RuntimeError:
+            memory_full = True
+            break
 
-tensors = [tensor_with_vram(vram_MB=1024) for _ in range(39)]
-print(f"Memory after tensor allocations: {get_memory_allocated()} MiB")
+print(f"Memory after initial tensor allocations: {get_memory_allocated()} MiB")
 
+# Delete every third tensor and every fifth tensor to induce fragmentation.
+# indices_to_delete = set(list(range(2, len(tensors), 3)) + list(range(4, len(tensors), 5)))
 
-
-# Deallocate some tensors to induce fragmentation
-for i in range(5, 35, 5):  # Removing tensors at intervals
-    del tensors[i]
+# for idx in reversed(sorted(indices_to_delete)):
+#     del tensors[idx]
+del tensors[0]
+del tensors[10]
+del tensors[20]
 torch.cuda.synchronize()  # Ensure CUDA operations are synchronized
-
 
 print(f"Memory after deleting some tensors: {get_memory_allocated()} MB")
 
-# 2. Attempt to allocate a contiguous tensor
-# Try to allocate a contiguous tensor of 2 GB
-tensor_2gb = tensor_with_vram(1024 * 2, device="cuda").contiguous()
-print(f"Memory after allocating a contiguous tensor: {get_memory_allocated()} MB")
-
-
-# 2. Attempt Allocations
-# We'll try to allocate tensors in a loop and catch any failures.
-# success_count = 0
-# failure_count = 0
-# while success_count < 10:
-#     try:
-#         tensor = torch.randn(tensor_size).cuda()
-#         success_count += 1
-#     except RuntimeError as e:
-#         failure_count += 1
-#         if failure_count > 10:  # Limit to prevent infinite loop
-#             break
-
-# print(f"Successful allocations after fragmentation: {success_count}")
-# print(f"Failed allocations after fragmentation: {failure_count}")
+# Now, try to allocate a tensor larger than any individual gap but smaller than the sum of gaps.
+try:
+    big_tensor = torch.randn((int(3.4 * 1024 * 256), 1024), device="cuda").contiguous()  # 3GB tensor
+    print("Successfully allocated big_tensor!")
+except RuntimeError as e:
+    print(f"Allocation failed due to fragmentation: {e}")
 
 # 3. Memory Summary
 memory_summary = torch.cuda.memory_summary().split('\n')
 for line in memory_summary:
+    print(line)
     if 'num_alloc_retries' in line:
         print(line)
+
+memory_stats = torch.cuda.memory_stats()
+print(memory_stats)
 ```
+
+## Num Alloc Retries and cudaMalloc
+
+In PyTorch, the `"num_alloc_retries"` parameter refers to the number of times the allocator will attempt to allocate memory via `cudaMalloc` (see NVIDIA [docs](https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__MEMORY.html#group__CUDART__MEMORY_1g37d37965bfb4803b6d4e59ff26856356))
+after encountering a failure (i.e., running out of memory). If a memory allocation via `cudaMalloc` fails, PyTorch will:
+
+1. Flush its internal memory cache to free up any unused memory blocks.
+2. Try the `cudaMalloc` call again.
+
+This process helps PyTorch deal with memory fragmentation on the GPU. Memory fragmentation occurs when the GPU's free memory is divided into small chunks scattered throughout its memory space, rather than a contiguous block. Due to fragmentation, even if there is enough total free memory to satisfy a `cudaMalloc` request, the allocation might still fail because there isn't a single contiguous block of the required size.
+
+By flushing its internal memory cache, PyTorch attempts to mitigate the impact of fragmentation by consolidating memory, potentially turning multiple smaller free chunks into a larger, contiguous block.
+
+The `"num_alloc_retries"` parameter dictates how many times PyTorch will try this flush-and-retry process before giving up and raising an out-of-memory error. If all retries fail, then it's a strong indication that the GPU truly doesn't have enough free memory for the request, and it's not just a fragmentation issue.
+
+## **Memory Fragmentation in GPU during Training: A Diagnosis**
+
+**1. Log: CUDA Out-of-Memory (OOM) Error**
+
+```
+OutOfMemoryError: CUDA out of memory. Tried to allocate 4.88 GiB (GPU 2; 39.59
+GiB total capacity; 28.60 GiB already allocated; 3.92 GiB free; 33.95 GiB
+reserved in total by PyTorch). If reserved memory is substantially greater than allocated memory, consider
+setting max_split_size_mb to counteract fragmentation. Refer to PyTorch's Memory
+Management and PYTORCH_CUDA_ALLOC_CONF documentation.
+```
+
+This error signifies that while the GPU might have some memory available, it may not be in a single contiguous block that matches the allocation request, suggesting potential memory fragmentation.
+
+**2. Increasing `alloc_retries`**
+`alloc_retries` progressively becoming higher, suggesting that there is a "continuous allocation and deallocation" process, causing "many gaps" in the gpu memory, consider the below simplified example:
+
+**Illustrative Example:**
+Imagine the GPU memory as a series of blocks. In a simplified scenario:
+- **Initial State**: A fully occupied 6GB memory block: |XXXXXX|.
+- **Deallocations**: After freeing up three non-contiguous blocks of 1GB each, the memory looks like: |X-X-X-XX|.
+- **Allocation Attempt**: A subsequent effort to allocate a contiguous 2GB block (represented as |XX|) for a model would fail. Despite there being 3GB of free memory, no single contiguous space can accommodate the 2GB request.
+- **Legend**: X - occupied block; - - free block.
+
+
+
+## References and Further Readings
+
+- https://fastai1.fast.ai/dev/gpu.html#unusable-gpu-ram-per-process
