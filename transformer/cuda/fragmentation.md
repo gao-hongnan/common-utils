@@ -1,3 +1,45 @@
+# CUDA Memory
+
+## Allocated, Reserved, Cached, Free and Total Memory
+
+- `torch.cuda.memory_allocated(device)`
+- `torch.cuda.memory_reserved(device)`
+- `torch.cuda.memory_cached(device)` deprecated to `torch.cuda.memory_reserved(device)`
+- Free =
+
+In the context of CUDA GPU memory, "reserved" and "allocated" are terms used to describe two different aspects of GPU memory management. Understanding their distinction can help you manage and diagnose memory-related issues in CUDA applications better. Here's a breakdown:
+
+1. **Allocated Memory**:
+   - This refers to the actual GPU memory that has been allocated and is currently being used by tensors or other GPU-related data structures.
+   - For instance, when you create a tensor in PyTorch and move it to the GPU, a certain amount of GPU memory gets allocated to hold that tensor's data.
+   - It represents the actual memory consumption of your data on the GPU at a given point in time.
+
+2. **Reserved Memory (also known as Cached Memory in some contexts)**:
+   - This is a pool of GPU memory that the deep learning framework (like TensorFlow or PyTorch) reserves ahead of time to speed up subsequent allocations.
+   - When you allocate GPU memory for the first time, the framework might reserve a larger chunk of memory than what's needed for that specific allocation. This is done to anticipate future memory requests and to avoid constantly asking the GPU for more memory, which can be an expensive operation in terms of time.
+   - Reserved memory might not all be in use (i.e., allocated) at a given moment. It's like a buffer.
+   - Over time, as more tensors or data structures are moved to or created on the GPU, they can take up parts of this reserved memory without the need for additional memory requests to the GPU.
+
+The advantage of having this distinction is that by reserving (or caching) memory ahead of time, deep learning frameworks can achieve better performance during training or inference, as they minimize the overhead of frequent memory allocation requests. However, this can sometimes lead to confusion when monitoring GPU memory usage, as the reserved memory might be significantly larger than the allocated memory, making it seem like the GPU is running out of memory even when there's still unused reserved memory available.
+
+To get a clearer picture of memory usage, tools and utilities like `nvidia-smi` can be used to monitor both the reserved and allocated memory on a CUDA GPU.
+
+## Page
+The explanation provided illustrates the concept of memory fragmentation, specifically as it relates to GPU memory. Let's break down the core points:
+
+1. **Basic Memory Allocation**:
+   The initial sequence demonstrates GPU RAM allocation. After allocating 2GB, then 4GB, and deleting the first 2GB allocation, the GPU memory usage pattern shows 4GB being used in the middle of the GPU memory, with 2GB free on either side. This presents a potential fragmentation problem because there's no contiguous block of 3GB available, even though 4GB is free in total.
+
+2. **CUDA's Memory Management**:
+   The author then clarifies that the simple example is not entirely valid for CUDA. CUDA's memory management system internally has the ability to relocate physical memory pages, making them appear as contiguous blocks to frameworks like PyTorch. This relocation capability means that, in most real-world scenarios, CUDA can manage to find and allocate memory by reusing fragmented portions, as long as the fragments are larger than or equal to the page size. In the example provided, the contiguous 3GB allocation might succeed because of this memory management.
+
+3. **Memory Page Size**:
+   The author further explains that memory allocations smaller than a page (most often 2MB on CUDA devices) would lead to real fragmentation. This means that if multiple small allocations of less than a page size are made, the memory would genuinely fragment, and it could be hard to find large contiguous blocks after that.
+
+In essence, the author is highlighting that while memory fragmentation is a valid concern in many systems, CUDA's memory management mitigates this problem to a great extent by relocating pages. However, very small allocations (less than the memory page size) can still lead to genuine fragmentation issues.
+
+---
+
 First, some context:
 
 CUDA's memory allocator will attempt to find a block of unused memory that fits the size of the requested tensor. If it cannot find a large enough contiguous block of memory due to fragmentation, it will try to flush the cache and allocate again, thus leading to "allocation retries".
@@ -154,8 +196,61 @@ Imagine the GPU memory as a series of blocks. In a simplified scenario:
 - **Allocation Attempt**: A subsequent effort to allocate a contiguous 2GB block (represented as |XX|) for a model would fail. Despite there being 3GB of free memory, no single contiguous space can accommodate the 2GB request.
 - **Legend**: X - occupied block; - - free block.
 
+## Allocated vs Reserved Memory
 
+In the context of CUDA GPU memory, "reserved" and "allocated" are terms used to describe two different aspects of GPU memory management. Understanding their distinction can help you manage and diagnose memory-related issues in CUDA applications better. Here's a breakdown:
+
+1. **Allocated Memory**:
+   - This refers to the actual GPU memory that has been allocated and is currently being used by tensors or other GPU-related data structures.
+   - For instance, when you create a tensor in PyTorch and move it to the GPU, a certain amount of GPU memory gets allocated to hold that tensor's data.
+   - It represents the actual memory consumption of your data on the GPU at a given point in time.
+
+2. **Reserved Memory (also known as Cached Memory in some contexts)**:
+   - This is a pool of GPU memory that the deep learning framework (like TensorFlow or PyTorch) reserves ahead of time to speed up subsequent allocations.
+   - When you allocate GPU memory for the first time, the framework might reserve a larger chunk of memory than what's needed for that specific allocation. This is done to anticipate future memory requests and to avoid constantly asking the GPU for more memory, which can be an expensive operation in terms of time.
+   - Reserved memory might not all be in use (i.e., allocated) at a given moment. It's like a buffer.
+   - Over time, as more tensors or data structures are moved to or created on the GPU, they can take up parts of this reserved memory without the need for additional memory requests to the GPU.
+
+The advantage of having this distinction is that by reserving (or caching) memory ahead of time, deep learning frameworks can achieve better performance during training or inference, as they minimize the overhead of frequent memory allocation requests. However, this can sometimes lead to confusion when monitoring GPU memory usage, as the reserved memory might be significantly larger than the allocated memory, making it seem like the GPU is running out of memory even when there's still unused reserved memory available.
+
+To get a clearer picture of memory usage, tools and utilities like `nvidia-smi` can be used to monitor both the reserved and allocated memory on a CUDA GPU.
+
+## Torch Empty Cache
+
+The basic intuition is if cuda is going to OOM, it will internally
+do a `cudaMalloc` and if that fails, it will do a `cudaFree` and then
+retry the `cudaMalloc`. This is done a few times before it gives up.
+So in a sense it will do `torch.cuda.empty_cache()` internally.
+So the pytorch discussion mentioned it may not always work.
+
+- https://discuss.pytorch.org/t/how-can-we-release-gpu-memory-cache/14530/31
+- https://discuss.pytorch.org/t/about-torch-cuda-empty-cache/34232/28
+
+The sequence `del`, `gc.collect()`, and `torch.cuda.empty_cache()` is often used to ensure that tensors are completely removed from GPU memory, especially when you're trying to manage and understand GPU memory consumption or debug out-of-memory issues. Each step has its specific role:
+
+1. **`del`**:
+   - This command is used to delete a Python object.
+   - When you `del` a tensor, it removes the reference to the tensor object in your Python program.
+   - It does not necessarily mean that the memory used by the tensor has been freed immediately.
+   - By deleting the tensor's reference, you make it eligible for garbage collection (assuming there are no other references to it).
+
+2. **`gc.collect()`**:
+   - Python's memory management uses reference counting, meaning objects (like tensors) are automatically deallocated once their reference count drops to zero. But Python also has a garbage collector to handle reference cycles (i.e., when two objects reference each other and hence can't be cleared by reference counting alone).
+   - `gc.collect()` manually triggers Python's garbage collector. This will clean up objects that have been dereferenced (by the `del` command) but are still in memory due to reference cycles.
+   - In most normal scenarios, you don't need to call `gc.collect()` explicitly as Python handles this automatically. However, in critical applications (like when working with limited GPU memory), you might want to ensure that garbage-collected objects are cleared immediately.
+
+3. **`torch.cuda.empty_cache()`**:
+   - PyTorch uses a caching memory allocator to speed up memory allocations. This means that after a tensor is deleted, its memory might not get released back to the OS but will instead stay in PyTorch's memory pool.
+   - `torch.cuda.empty_cache()` releases this cache, freeing up the GPU memory.
+   - Without this command, even if you delete tensors in your Python program, the GPU memory consumption might not decrease because the memory is still being held in the cache.
+
+In practice, when you're dealing with GPU memory fragmentation or trying to understand/debug memory consumption, it's useful to use this sequence to ensure that the memory is truly freed. It gives a more accurate picture of the memory landscape and helps when trying to fit large models or tensors into GPU memory.
+
+You still can do step 2 and 3 without 1 but this will only clear the PyTorch's caching
+memory allocator.
 
 ## References and Further Readings
 
-- https://fastai1.fast.ai/dev/gpu.html#unusable-gpu-ram-per-process
+- https://docs.fast.ai/dev/gpu.html
+- https://pytorch.org/tutorials/recipes/recipes/tuning_guide.html
+- https://pytorch.org/docs/stable/notes/cuda.html#memory-management
