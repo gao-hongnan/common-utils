@@ -5,6 +5,7 @@
     - [Dimensions and Indexing](#dimensions-and-indexing)
     - [General Notations](#general-notations)
     - [Attention Notations](#attention-notations)
+  - [Attention (Show this first)](#attention-show-this-first)
   - [How $W^{q}\_i$ is implemented in practice?](#how-wq_i-is-implemented-in-practice)
   - [HEad is similar to kernels in CNN](#head-is-similar-to-kernels-in-cnn)
   - [so the catch is you do not split the embeddings in H heads, instead you split the linear transformed embeddings?](#so-the-catch-is-you-do-not-split-the-embeddings-in-h-heads-instead-you-split-the-linear-transformed-embeddings)
@@ -13,6 +14,8 @@
     - [Approach 2: Separate Weight Matrices Notation (Paper Notation)](#approach-2-separate-weight-matrices-notation-paper-notation)
   - [is the FFN in encoder just a MLP layer](#is-the-ffn-in-encoder-just-a-mlp-layer)
   - [All the Whys?](#all-the-whys)
+    - [What are the different Subspaces?](#what-are-the-different-subspaces)
+    - [Why Softmax?](#why-softmax)
     - [Why Scaling by $\\sqrt{d\_k}$?](#why-scaling-by-sqrtd_k)
     - [Why need Positional Encoding?](#why-need-positional-encoding)
   - [References and Further Readings](#references-and-further-readings)
@@ -125,15 +128,15 @@ Dimensions and indexing pertaining to attention will be listed in the
   - $\mathbf{z}_{i, :}$: is the $D$ dimensional embedding vector for the
         token $x_i$ at the $i$-th position in the sequence.
 
-        In this context, each token in the sequence is represented by a $D$
-        dimensional vector. So, the output tensor $\mathbf{Z}$ captures the
-        dense representation of the sequence. Each token in the sequence is
-        replaced by its corresponding embedding vector from the embedding matrix
-        $\mathbf{E}$.
+            In this context, each token in the sequence is represented by a $D$
+            dimensional vector. So, the output tensor $\mathbf{Z}$ captures the
+            dense representation of the sequence. Each token in the sequence is
+            replaced by its corresponding embedding vector from the embedding matrix
+            $\mathbf{E}$.
 
-        As before, the output tensor $\mathbf{Z}$ carries semantic information
-        about the tokens in the sequence. The closer two vectors are in this
-        embedding space, the more semantically similar they are.
+            As before, the output tensor $\mathbf{Z}$ carries semantic information
+            about the tokens in the sequence. The closer two vectors are in this
+            embedding space, the more semantically similar they are.
 
 - $\mathbf{P}$: is the positional encoding tensor, created with sinusoidal
     functions of different frequencies:
@@ -218,16 +221,16 @@ Dimensions and indexing pertaining to attention will be listed in the
 - $\mathbf{W}_{h}^{v} \in \mathbb{R}^{D \times d_v}$: The value weight matrix
     for the $h$-th head. It is used to transform the embeddings $\mathbf{Z}$
     into value representations for the $h$-th head.
+
   - Important that this matrix collapses to $\mathbf{W}_{1}^v$ when $H=1$
         and has shape $\mathbb{R}^{D \times D}$.
   - Note that this weight matrix is derived from $W^v$.
-
 
 - $\mathbf{Q} = \mathbf{Z} \mathbf{W}^q \in \mathbb{R}^{L \times D}$: The
     query matrix. It contains the query representations for all the tokens in
     the sequence. This is the matrix that is used to compute the attention
     scores.
-    - Each row of the matrix $\mathbf{Q}$ is a query vector $\mathbf{q}_{i}$
+  - Each row of the matrix $\mathbf{Q}$ is a query vector $\mathbf{q}_{i}$
         for the token at position $i$ in the sequence.
 - $\mathbf{Q}_h = \mathbf{Z} \mathbf{W}_h^q \in \mathbb{R}^{L \times d_q}$:
     The query matrix for the $h$-th head. It contains the query representations
@@ -274,12 +277,22 @@ Dimensions and indexing pertaining to attention will be listed in the
   - $\mathbf{K} \in \mathbb{R}^{L \times D}$: is the key matrix.
   - $\sqrt{d_k}$: is the scaling factor.
   - $\text{softmax}(\cdot)$: is the softmax function applied row-wise.
-  - More concretely, this is the **self-attention matrix** between an input sequence $\mathbf{X} = (x_1, x_2, ..., x_L)$ and itself. Each row in the matrix $\mathbf{A}$ is the attention scores for a token in the sequence. The attention scores are computed by comparing the query vector for a token with the key vectors for all the tokens in the sequence.
-  - For instance, if the input sequence is "cat eat mouse", then the $L=3$, and the attention matrix $\mathbf{A}$'s first row is the attention
-  scores of the word cat with all other words, (cat & cat, cat & eat, cat & mouse). Similarly, the second row is the attention scores of the word eat with all other words, (eat & cat, eat & eat, eat & mouse). Lastly, the third row is the attention scores of the word mouse with all other words, (mouse & cat, mouse & eat, mouse & mouse).
+  - More concretely, this is the **self-attention matrix** between an input
+        sequence $\mathbf{X} = (x_1, x_2, ..., x_L)$ and itself. Each row in the
+        matrix $\mathbf{A}$ is the attention scores for a token in the sequence.
+        The attention scores are computed by comparing the query vector for a
+        token with the key vectors for all the tokens in the sequence.
+  - For instance, if the input sequence is "cat eat mouse", then the $L=3$,
+        and the attention matrix $\mathbf{A}$'s first row is the attention
+        scores of the word cat with all other words, (cat & cat, cat & eat, cat
+        & mouse). Similarly, the second row is the attention scores of the word
+        eat with all other words, (eat & cat, eat & eat, eat & mouse). Lastly,
+        the third row is the attention scores of the word mouse with all other
+        words, (mouse & cat, mouse & eat, mouse & mouse).
 
-- $a_{i, j} \in \mathbf{A}$: The attention score between the query $i$ and the key $j$
-  in the sequence (please do not be confused with the $j$ index in vocabulary!). It is computed as:
+- $a_{i, j} \in \mathbf{A}$: The attention score between the query $i$ and the
+    key $j$ in the sequence (please do not be confused with the $j$ index in
+    vocabulary!). It is computed as:
 
     $$
     a_{i, j} = \text{softmax}\left(\frac{\mathbf{q}_{i} \mathbf{k}_{j}^T}{\sqrt{d_k}}\right)
@@ -291,11 +304,14 @@ Dimensions and indexing pertaining to attention will be listed in the
         token in the sequence.
   - $\mathbf{k}_{j} \in \mathbb{R}^{d}$: is the key vector for the $j$-th
         token in the sequence.
+
 - $f(\cdot)$: Attention function (such as additive attention or scaled
     dot-product attention).
+
   - Should we find a better notation?
 
-    The scaled dot-product attention function $f(\cdot)$ can be formulated as:
+    The scaled dot-product attention function $f(\cdot)$ can be formulated
+    as:
 
     $$
     \text{Attention}(\mathbf{Q}, \mathbf{K}, \mathbf{V}) := f(\mathbf{Q}, \mathbf{K}, \mathbf{V}) = \text{softmax}\left( \frac{\mathbf{Q} \mathbf{K}^T}{\sqrt{d_k}} \right) \mathbf{V} \in \mathbb{R}^{L \times D}
@@ -313,13 +329,12 @@ Dimensions and indexing pertaining to attention will be listed in the
     f(\mathbf{Q}_h, \mathbf{K}_h, \mathbf{V}_h) = \text{softmax}\left( \frac{\mathbf{Q}_h \mathbf{K}_h^T}{\sqrt{d_k}} \right) \mathbf{V}_h
     $$
 
-    In these formulas, $\mathbf{Q}$, $\mathbf{K}$, and $\mathbf{V}$ are the query, key, and value matrices, respectively. The function $\text{softmax}(\cdot)$ is applied row-wise. The division by $\sqrt{d_k}$ is a scaling factor that helps in training stability.
-
-
+    In these formulas, $\mathbf{Q}$, $\mathbf{K}$, and $\mathbf{V}$ are the
+    query, key, and value matrices, respectively. The function
+    $\text{softmax}(\cdot)$ is applied row-wise. The division by
+    $\sqrt{d_k}$ is a scaling factor that helps in training stability.
 
 ---
-
-
 
 - $\mathbf{h}_i \in \mathbb{R}^{p_v}$: Output of the $i$-th attention head.
 
@@ -369,6 +384,31 @@ Let's break this down:
 This notation helps us understand the inner workings of the multi-head attention
 mechanism, and it provides a clear path for implementing the multi-head
 attention mechanism in a neural network model.
+
+## Attention (Show this first)
+
+Both `torch.bmm` and `torch.matmul` can be used for matrix multiplication in PyTorch, but their use cases and behaviors are somewhat different, especially with higher-dimensional tensors. Let's break this down:
+
+1. **torch.bmm**:
+    - It stands for "batch matrix multiplication".
+    - It expects tensors to be of rank 3: `(batch_size, rows, cols)`.
+    - It performs matrix multiplication for each batch between corresponding matrices.
+
+    For example, given two tensors `A` of shape `(B, M, N)` and `B` of shape `(B, N, P)`, the output will be of shape `(B, M, P)`.
+
+2. **torch.matmul**:
+    - It's a more general-purpose matrix multiplication function.
+    - When two 3D tensors are passed, it behaves like `torch.bmm`.
+    - However, it can handle tensors of rank > 3 as well. When given higher-dimensional tensors, it considers the last two dimensions as matrices to be multiplied and broadcasts over the remaining dimensions.
+
+    Given two tensors `A` of shape `(X, Y, M, N)` and `B` of shape `(X, Y, N, P)`, the output will be of shape `(X, Y, M, P)`.
+
+In the context of the provided code, both methods achieve the same result because:
+
+- The shape of the `queries` and transposed `keys` tensors matches the expected input shape for `torch.bmm` in the `DotProductAttention` class.
+- In the `attention` function, the shape of `query` and transposed `key` tensors is also compatible with both `torch.bmm` and `torch.matmul`.
+
+So, when used for 3D tensors, `torch.bmm` and `torch.matmul` can give the same result. The discrepancy arises primarily with higher-dimensional tensors, where the broadcasting behavior of `torch.matmul` distinguishes it from `torch.bmm`.
 
 ## How $W^{q}_i$ is implemented in practice?
 
@@ -622,9 +662,83 @@ transformations of the input.
 
 ## All the Whys?
 
-https://uvadlc-notebooks.readthedocs.io/en/latest/tutorial_notebooks/tutorial6/Transformers_and_MHAttention.html
+<https://uvadlc-notebooks.readthedocs.io/en/latest/tutorial_notebooks/tutorial6/Transformers_and_MHAttention.html>
+
+### What are the different Subspaces?
+
+See <https://www.youtube.com/watch?v=UPtG_38Oq8o> around 25min...
+
+Change X to Z.
+
+To explain the idea that the keys and queries matrices act as linear
+transformations to enhance embeddings for attention, let's break it down
+step-by-step.
+
+1. **Background Context**: When working with the transformer architecture, or
+   any architecture that utilizes the attention mechanism, we begin with input
+   embeddings. These embeddings are vectors that represent the information
+   (usually words or subwords) that we want the model to process.
+
+1. **Assumptions**:
+
+- Let's assume we have a sequence of tokens, represented by the embedding
+    matrix $\mathbf{X} \in \mathbb{R}^{L \times D}$, where $L$ is the sequence
+    length and $D$ is the embedding dimension.
+- We want to obtain the query, key, and value matrices from these embeddings.
+    Each of these matrices is produced by multiplying the embeddings with their
+    respective weight matrices: $\mathbf{W^Q}$, $\mathbf{W^K}$, and
+    $\mathbf{W^V}$.
+
+1. **Step-by-Step Transformation**:
+
+- **Query Matrix**: To obtain the query matrix $\mathbf{Q}$, we perform the
+    following linear transformation:
+
+    $$
+    \mathbf{Q} = \mathbf{X} \mathbf{W^Q}
+    $$
+
+    Here, $\mathbf{W^Q} \in \mathbb{R}^{D \times D'}$ is the weight matrix for
+    the queries, and $D'$ is the dimensionality of the query vectors. This
+    multiplication transforms the embeddings in $\mathbf{X}$ to enhance them for
+    the attention mechanism's querying process.
+
+- **Key Matrix**: Similarly, to obtain the key matrix $\mathbf{K}$, we do:
+
+    $$
+    \mathbf{K} = \mathbf{X} \mathbf{W^K}
+    $$
+
+    Here, $\mathbf{W^K} \in \mathbb{R}^{D \times D'}$ is the weight matrix for
+    the keys.
+
+- **Value Matrix**: The value matrix $\mathbf{V}$ is obtained in a similar
+    manner:
+    $$
+    \mathbf{V} = \mathbf{X} \mathbf{W^V}
+    $$
+    Here, $\mathbf{W^V} \in \mathbb{R}^{D \times D'}$ is the weight matrix for
+    the values.
+
+4. **Reasoning**: These linear transformations project the original embeddings
+   into a space where the attention mechanism can more effectively compute
+   similarities (for queries and keys) and aggregate information (for values).
+   The weight matrices $\mathbf{W^Q}$, $\mathbf{W^K}$, and $\mathbf{W^V}$ are
+   learned during training to optimize the attention mechanism's performance for
+   the given task.
+
+In summary, by applying these transformations, the model can focus on different
+aspects of the input data when computing attention scores and aggregating
+information, leading to a more powerful and flexible representation.
+
+### Why Softmax?
+
+See <https://www.youtube.com/watch?v=UPtG_38Oq8o> around 16 min.
 
 ### Why Scaling by $\sqrt{d_k}$?
+
+- <https://d2l.ai/chapter_attention-mechanisms-and-transformers/attention-scoring-functions.html>
+- <https://uvadlc-notebooks.readthedocs.io/en/latest/tutorial_notebooks/tutorial6/Transformers_and_MHAttention.html>
 
 ### Why need Positional Encoding?
 

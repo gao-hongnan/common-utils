@@ -8,19 +8,18 @@ import rich
 from common_utils.core.common import seed_all
 from d2l import torch as d2l
 
+from torch.nn import Transformer
+from abc import ABC, abstractmethod
+from attention import attention
+
 seed_all(42, seed_torch=True)
 
 
-# _ = nn.MultiheadAttention
-def clones(module, N):
-    "Produce N identical layers."
-    return nn.ModuleList([copy.deepcopy(module) for _ in range(N)])
-
 
 class MultiHeadedAttention(nn.Module):
-    def __init__(self, H, d_model, dropout=0.1, bias=False):
+    def __init__(self, H, d_model, dropout=0.1, bias=False) -> None:
         "Take in model size and number of heads."
-        super(MultiHeadedAttention, self).__init__()
+        super().__init__()
         assert d_model % H == 0
 
         self.d_model = d_model  # D
@@ -133,16 +132,6 @@ class MultiHeadedAttention(nn.Module):
         return self.W_o(x_concat)
 
 
-def attention(query, key, value, mask=None, dropout=None):
-    "Compute 'Scaled Dot Product Attention'"
-    d_k = query.size(-1)
-    scores = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(d_k)
-    if mask is not None:
-        scores = scores.masked_fill(mask == 0, -1e9)
-    p_attn = scores.softmax(dim=-1)
-    if dropout is not None:
-        p_attn = dropout(p_attn)
-    return torch.matmul(p_attn, value), p_attn
 
 
 def tensors_are_same(tensor1, tensor2, atol=1e-8, rtol=1e-5):
@@ -167,6 +156,8 @@ if __name__ == "__main__":
         loaded_out = torch.load("single_head_ground_truth_attention.pt")
     elif num_heads == 2:
         loaded_out = torch.load("double_head_ground_truth_attention.pt")
+    else:
+        raise ValueError("num_heads must be 1 or 2")
 
     if tensors_are_same(out_no_mask, loaded_out, atol=0, rtol=0):
         print("The tensors are the same!")
