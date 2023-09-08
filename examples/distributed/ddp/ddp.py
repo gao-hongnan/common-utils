@@ -4,7 +4,7 @@ qsub -I -l select=1:ngpus=4 -P 11003281 -l walltime=24:00:00 -q ai
 import logging
 import os
 import socket
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Literal, Optional
 
@@ -13,9 +13,37 @@ import torch.distributed as dist
 import torch.multiprocessing as mp
 from rich.logging import RichHandler
 from multigpu import prepare_dataloader, load_train_objs, Trainer
+from transformers import (
+    AutoModelForMultipleChoice,
+    TrainingArguments,
+    Trainer,
+    AutoModel,
+)
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def configure_logger(rank: int) -> logging.Logger:
+    """
+    Configure and return a logger for a given process rank.
+
+    Parameters
+    ----------
+    rank : int
+        The rank of the process for which the logger is being configured.
+
+    Returns
+    -------
+    logging.Logger
+        Configured logger for the specified process rank.
+
+    Notes
+    -----
+    The logger is configured to write logs to a file named `process_{rank}.log` and
+    display logs with severity level INFO and above. The reason to write each rank's
+    logs to a separate file is to avoid the non-deterministic ordering of log
+    messages from different ranks in the same file.
+    """
     handlers = [logging.FileHandler(filename=f"process_{rank}.log")]  # , RichHandler()]
     logging.basicConfig(
         level="INFO",
@@ -26,34 +54,69 @@ def configure_logger(rank: int) -> logging.Logger:
     return logging.getLogger(f"Process-{rank}")
 
 
-def init_env(**kwargs: Dict[str, Any]) -> None:
+@dataclass(init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=False)
+class InitEnvArgs:
+    """Initialize environment variables. The attribute must be
+    named such that the upper case version is the same as the
+    environment variable name.
+    """
+
+    master_addr: str = field(
+        default="localhost", metadata={"help": "IP address of the machine"}
+    )
+    master_port: str = field(default="12356", metadata={"help": "The port number"})
+
+
+def init_env(cfg: InitEnvArgs) -> None:
     """Initialize environment variables."""
-    os.environ["MASTER_ADDR"] = kwargs.pop(
-        "master_addr", "localhost"
-    )  # IP address of the machine
-    os.environ["MASTER_PORT"] = kwargs.pop("master_port", "12356")  # port number
-    os.environ.update(kwargs)
+    cfg: Dict[str, str] = asdict(cfg)
+
+    for key, value in cfg.items():
+        upper_key = key.upper()
+        os.environ[upper_key] = value
+
+
+@dataclass(init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=False)
+class InitProcessGroupArgs:
+    """From torch/distributed/distributed_c10d.py:
+    There are 2 main ways to initialize a process group:
+    1. Specify ``store``, ``rank``, and ``world_size`` explicitly.
+    2. Specify ``init_method`` (a URL string) which indicates where/how
+        to discover peers. Optionally specify ``rank`` and ``world_size``,
+        or encode all required parameters in the URL and omit them.
+
+    If neither is specified, ``init_method`` is assumed to be "env://".
+    """
+
+    rank: int = field(default=-1, metadata={"help": "Rank of the current process"})
+    world_size: int = field(
+        default=-1, metadata={"help": "Number of processes participating in the job"}
+    )
+    backend: str = field(
+        default="nccl", metadata={"help": "Name of the backend to use"}
+    )
+    init_method: str = field(
+        default="env://",
+        metadata={"help": "URL specifying how to initialize the package"},
+    )
 
 
 def init_process(
-    rank: int,
-    world_size: int,
-    backend: str,
+    cfg: InitProcessGroupArgs,
     logger: logging.Logger,
-    fn: Optional[Callable] = None,
-    **kwargs: Dict[str, Any],
+    func: Optional[Callable] = None,
 ) -> None:
     """Initialize the distributed environment via init_process_group."""
 
-    logger = configure_logger(rank)
+    logger = configure_logger(rank=cfg.rank)
 
-    dist.init_process_group(backend=backend, rank=rank, world_size=world_size, **kwargs)
-    logger.info(f"Initialized process group: Rank {rank} out of {world_size}")
+    dist.init_process_group(**asdict(cfg))
+    logger.info(f"Initialized process group: Rank {cfg.rank} out of {cfg.world_size}")
 
-    display_dist_info(rank, world_size, logger)
+    display_dist_info(cfg.rank, cfg.world_size, logger)
 
-    if fn is not None:
-        fn(rank, world_size)
+    if func is not None:
+        func(cfg.rank, cfg.world_size)
 
 
 def display_dist_info(rank: int, world_size: int, logger: logging.Logger) -> None:
@@ -86,24 +149,23 @@ def run(rank: int, world_size: int) -> None:
 
 def main(world_size: int) -> None:
     """Main driver function."""
-    init_env()
+    init_env(cfg=InitEnvArgs())
     processes = []
     mp.set_start_method("spawn")
     logger = configure_logger("main")
 
     for rank in range(world_size):
+        init_process_group_args = InitProcessGroupArgs(rank=rank, world_size=world_size)
         p = mp.Process(
             target=init_process,
-            args=(rank, world_size, "nccl", logger, run),
-            kwargs={"init_method": "env://"},
+            args=(init_process_group_args, logger, run),
+            # kwargs={},
         )
         p.start()
         processes.append(p)
 
     for p in processes:
         p.join()
-
-
 
 
 if __name__ == "__main__":
