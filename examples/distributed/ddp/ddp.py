@@ -12,60 +12,17 @@ import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
 from rich.logging import RichHandler
-from multigpu import prepare_dataloader, load_train_objs, Trainer
+# from multigpu import prepare_dataloader, load_train_objs, Trainer
 from transformers import (
     AutoModelForMultipleChoice,
     TrainingArguments,
     Trainer,
     AutoModel,
 )
+from utils import configure_logger
+from config import InitEnvArgs, InitProcessGroupArgs
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-
-def configure_logger(rank: int) -> logging.Logger:
-    """
-    Configure and return a logger for a given process rank.
-
-    Parameters
-    ----------
-    rank : int
-        The rank of the process for which the logger is being configured.
-
-    Returns
-    -------
-    logging.Logger
-        Configured logger for the specified process rank.
-
-    Notes
-    -----
-    The logger is configured to write logs to a file named `process_{rank}.log` and
-    display logs with severity level INFO and above. The reason to write each rank's
-    logs to a separate file is to avoid the non-deterministic ordering of log
-    messages from different ranks in the same file.
-    """
-    handlers = [logging.FileHandler(filename=f"process_{rank}.log")]  # , RichHandler()]
-    logging.basicConfig(
-        level="INFO",
-        format="%(asctime)s [%(levelname)s]: %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-        handlers=handlers,
-    )
-    return logging.getLogger(f"Process-{rank}")
-
-
-@dataclass(init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=False)
-class InitEnvArgs:
-    """Initialize environment variables. The attribute must be
-    named such that the upper case version is the same as the
-    environment variable name.
-    """
-
-    master_addr: str = field(
-        default="localhost", metadata={"help": "IP address of the machine"}
-    )
-    master_port: str = field(default="12356", metadata={"help": "The port number"})
-
 
 def init_env(cfg: InitEnvArgs) -> None:
     """Initialize environment variables."""
@@ -74,31 +31,6 @@ def init_env(cfg: InitEnvArgs) -> None:
     for key, value in cfg.items():
         upper_key = key.upper()
         os.environ[upper_key] = value
-
-
-@dataclass(init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=False)
-class InitProcessGroupArgs:
-    """From torch/distributed/distributed_c10d.py:
-    There are 2 main ways to initialize a process group:
-    1. Specify ``store``, ``rank``, and ``world_size`` explicitly.
-    2. Specify ``init_method`` (a URL string) which indicates where/how
-        to discover peers. Optionally specify ``rank`` and ``world_size``,
-        or encode all required parameters in the URL and omit them.
-
-    If neither is specified, ``init_method`` is assumed to be "env://".
-    """
-
-    rank: int = field(default=-1, metadata={"help": "Rank of the current process"})
-    world_size: int = field(
-        default=-1, metadata={"help": "Number of processes participating in the job"}
-    )
-    backend: str = field(
-        default="nccl", metadata={"help": "Name of the backend to use"}
-    )
-    init_method: str = field(
-        default="env://",
-        metadata={"help": "URL specifying how to initialize the package"},
-    )
 
 
 def init_process(
