@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field, asdict
 from typing import Literal
 
+
 @dataclass(init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=False)
 class InitEnvArgs:
     """Initialize environment variables. The attribute must be
@@ -12,6 +13,8 @@ class InitEnvArgs:
         default="localhost", metadata={"help": "IP address of the machine"}
     )
     master_port: str = field(default="12356", metadata={"help": "The port number"})
+
+
 @dataclass(init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=False)
 class InitProcessGroupArgs:
     """From torch/distributed/distributed_c10d.py:

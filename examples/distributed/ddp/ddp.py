@@ -3,7 +3,6 @@ qsub -I -l select=1:ngpus=4 -P 11003281 -l walltime=24:00:00 -q ai
 """
 import logging
 import os
-import socket
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Literal, Optional
@@ -12,6 +11,7 @@ import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
 from rich.logging import RichHandler
+
 # from multigpu import prepare_dataloader, load_train_objs, Trainer
 from transformers import (
     AutoModelForMultipleChoice,
@@ -19,10 +19,11 @@ from transformers import (
     Trainer,
     AutoModel,
 )
-from utils import configure_logger
+from utils import configure_logger, display_dist_info
 from config import InitEnvArgs, InitProcessGroupArgs
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 def init_env(cfg: InitEnvArgs) -> None:
     """Initialize environment variables."""
@@ -49,17 +50,6 @@ def init_process(
 
     if func is not None:
         func(cfg.rank, cfg.world_size)
-
-
-def display_dist_info(rank: int, world_size: int, logger: logging.Logger) -> None:
-    logger.info(f"Explicit Rank: {rank}")
-    logger.info(f"Explicit World Size: {world_size}")
-    logger.info(f"Machine Hostname: {socket.gethostname()}")
-    logger.info(f"PyTorch Distributed Available: {dist.is_available()}")
-    logger.info(f"World Size in Initialized Process Group: {dist.get_world_size()}")
-
-    group_rank = dist.get_rank()
-    logger.info(f"Rank within Default Process Group: {group_rank}")
 
 
 def run(rank: int, world_size: int) -> None:
