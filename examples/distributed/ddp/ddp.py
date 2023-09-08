@@ -46,7 +46,7 @@ def init_process(
     dist.init_process_group(**asdict(cfg))
     logger.info(f"Initialized process group: Rank {cfg.rank} out of {cfg.world_size}")
 
-    display_dist_info(cfg.rank, cfg.world_size, logger)
+    display_dist_info(cfg.rank, cfg.world_size, format="table", logger=logger)
 
     if func is not None:
         func(cfg.rank, cfg.world_size)
