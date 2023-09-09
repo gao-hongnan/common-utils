@@ -28,6 +28,7 @@ def init_env(cfg: InitEnvArgs) -> None:
 
 def init_process(
     cfg: InitProcessGroupArgs,
+    node_rank: int,
     logger: logging.Logger,
     func: Optional[Callable] = None,
 ) -> None:
@@ -37,7 +38,7 @@ def init_process(
 
     dist.init_process_group(**asdict(cfg))
 
-    dist_info = DistributedInfo()
+    dist_info = DistributedInfo(node_rank=0)
     assert dist_info.global_rank == cfg.rank
     assert dist_info.world_size == cfg.world_size
 
@@ -70,7 +71,7 @@ def run(rank: int, world_size: int) -> None:
     print("Rank ", rank, " has data ", tensor[0])
 
 
-def main(world_size: int) -> None:
+def main(world_size: int, node_rank: int) -> None:
     """Main driver function."""
     init_env(cfg=InitEnvArgs())
     processes = []
@@ -81,7 +82,7 @@ def main(world_size: int) -> None:
         init_process_group_args = InitProcessGroupArgs(rank=rank, world_size=world_size)
         p = mp.Process(
             target=init_process,
-            args=(init_process_group_args, logger, run),
+            args=(init_process_group_args, node_rank, logger, run),
             # kwargs={},
         )
         p.start()
@@ -98,12 +99,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "--world_size", default=None, type=int, help="Total number of GPUs"
     )
+    parser.add_argument(
+        "--node_rank", default=0, type=int, help="Node rank for multi-node training"
+    )
 
     args = parser.parse_args()
 
-    if not args.world_size:
-        world_size = torch.cuda.device_count()
-    else:
-        world_size = args.world_size
-
-    main(world_size)
+    main(
+        world_size=args.world_size if args.world_size else torch.cuda.device_count(),
+        node_rank=args.node_rank,
+    )

@@ -6,6 +6,8 @@ from tabulate import tabulate
 from rich.logging import RichHandler
 from config.base import DistributedInfo
 from dataclasses import asdict
+
+
 def cleanup():
     dist.destroy_process_group()
 

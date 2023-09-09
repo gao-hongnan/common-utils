@@ -48,9 +48,11 @@ class InitProcessGroupArgs:
 # the attributes are not.
 # TODO: not taking into account of group argument in dist.xxx(group=group)
 # TODO: num_nodes is hard to get programmatically
-@dataclass(init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=True)
+@dataclass(init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=False)
 class DistributedInfo:
     """Information about the distributed environment."""
+
+    node_rank: int = field(default=0, metadata={"help": "Rank of the node."})
 
     is_dist_avail_and_initialized: bool = field(
         default_factory=dist.is_available,
@@ -60,7 +62,9 @@ class DistributedInfo:
     )
     global_rank: int = field(
         default_factory=dist.get_rank,
-        metadata={"help": "Global rank of the process in the distributed setup."},
+        metadata={
+            "help": "Global rank of the process in the distributed setup, can also be calculated via node_rank * num_gpus_in_curr_node_rank + local_rank where node_rank index starts from 0."
+        },
     )
     world_size: int = field(
         default_factory=dist.get_world_size,
@@ -68,7 +72,7 @@ class DistributedInfo:
             "help": "Total number of processes participating in the distributed setup."
         },
     )
-    n_gpus_per_node: int = field(
+    num_gpus_in_curr_node_rank: int = field(
         default_factory=torch.cuda.device_count,
         metadata={"help": "Number of GPUs available on the current node."},
     )
@@ -77,7 +81,7 @@ class DistributedInfo:
         metadata={
             "help": "Local rank of the process, computed based on rank and GPUs per node."
         },
-    )  # Will be computed based on rank and n_gpus_per_node
+    )  # Will be computed based on rank and num_gpus_in_curr_node_rank
     device: torch.device = field(
         init=False, metadata={"help": "The torch device, either CPU or specific GPU."}
     )  # Will be computed based on local_rank
@@ -87,18 +91,13 @@ class DistributedInfo:
     )
 
     def __post_init__(self) -> None:
-        self.local_rank = self.global_rank % self.n_gpus_per_node
+        self.local_rank = self.global_rank % self.num_gpus_in_curr_node_rank
         self.device = torch.device(f"cuda:{self.local_rank}")
 
     @property
     def is_master(self) -> bool:
         """Check if the current rank is the master (rank 0)."""
         return self.global_rank == 0
-
-    @property
-    def global_rank(self) -> int:
-        """Compute global rank across all nodes and GPUs."""
-        return self.global_rank * self.n_gpus_per_node + self.local_rank
 
     def get_help(self, field_name: str) -> str:
         """Retrieve the help metadata for a specific field."""
