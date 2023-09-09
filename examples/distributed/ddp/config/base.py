@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field, fields
 from typing import Literal
+import socket
 
 import torch
 import torch.distributed as dist
@@ -43,11 +44,23 @@ class InitProcessGroupArgs:
     )
 
 
-@dataclass
+# frozen=True means that the class is immutable but in actual fact
+# the attributes are not.
+# TODO: not taking into account of group argument in dist.xxx(group=group)
+# TODO: num_nodes is hard to get programmatically
+@dataclass(init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=True)
 class DistributedInfo:
-    rank: int = field(
+    """Information about the distributed environment."""
+
+    is_dist_avail_and_initialized: bool = field(
+        default_factory=dist.is_available,
+        metadata={
+            "help": "Whether the distributed package is available and initialized."
+        },
+    )
+    global_rank: int = field(
         default_factory=dist.get_rank,
-        metadata={"help": "Rank of the process in the distributed setup."},
+        metadata={"help": "Global rank of the process in the distributed setup."},
     )
     world_size: int = field(
         default_factory=dist.get_world_size,
@@ -69,6 +82,10 @@ class DistributedInfo:
         init=False, metadata={"help": "The torch device, either CPU or specific GPU."}
     )  # Will be computed based on local_rank
 
+    node_hostname: str = field(
+        default_factory=socket.gethostname, metadata={"help": "Hostname of the node."}
+    )
+
     def __post_init__(self) -> None:
         self.local_rank = self.rank % self.n_gpus_per_node
         self.device = torch.device(f"cuda:{self.local_rank}")
@@ -76,12 +93,12 @@ class DistributedInfo:
     @property
     def is_master(self) -> bool:
         """Check if the current rank is the master (rank 0)."""
-        return self.rank == 0
+        return self.global_rank == 0
 
     @property
     def global_rank(self) -> int:
         """Compute global rank across all nodes and GPUs."""
-        return self.rank * self.n_gpus_per_node + self.local_rank
+        return self.global_rank * self.n_gpus_per_node + self.local_rank
 
     def get_help(self, field_name: str) -> str:
         """Retrieve the help metadata for a specific field."""

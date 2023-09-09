@@ -16,8 +16,6 @@ import torch.multiprocessing as mp
 from config.base import InitEnvArgs, InitProcessGroupArgs, DistributedInfo
 from utils import configure_logger, display_dist_info
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 
 def init_env(cfg: InitEnvArgs) -> None:
     """Initialize environment variables."""
@@ -38,11 +36,18 @@ def init_process(
     logger = configure_logger(rank=cfg.rank)
 
     dist.init_process_group(**asdict(cfg))
-    logger.info(f"Initialized process group: Rank {cfg.rank} out of {cfg.world_size}")
 
     dist_info = DistributedInfo()
+    assert dist_info.global_rank == cfg.rank
+    assert dist_info.world_size == cfg.world_size
+
+    logger.info(
+        f"Initialized process group: Rank {dist_info.global_rank} out of {dist_info.world_size}."
+    )
+
     logger.info(f"Distributed info: {dist_info}")
-    display_dist_info(cfg.rank, cfg.world_size, format="table", logger=logger)
+
+    display_dist_info(dist_info=dist_info, format="table", logger=logger)
 
     if func is not None:
         func(cfg.rank, cfg.world_size)

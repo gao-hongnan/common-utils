@@ -3,8 +3,9 @@ import torch.distributed as dist
 import socket
 from typing import Dict, Union, Optional
 from tabulate import tabulate
-
-
+from rich.logging import RichHandler
+from config.base import DistributedInfo
+from dataclasses import asdict
 def cleanup():
     dist.destroy_process_group()
 
@@ -29,8 +30,7 @@ def get_dist_info(rank: int, world_size: int) -> Dict[str, Union[int, str, bool]
 
 
 def display_dist_info(
-    rank: int,
-    world_size: int,
+    dist_info: DistributedInfo,
     format: str = "string",  # pylint: disable=redefined-builtin
     logger: Optional[logging.Logger] = None,
 ) -> Optional[str]:
@@ -48,25 +48,25 @@ def display_dist_info(
     Formatted string or table if logger is not provided, otherwise logs the
     information.
     """
-    info_dict = get_dist_info(rank, world_size)
+    dist_info: Dict[str, Union[int, str, bool]] = asdict(dist_info)
 
     if logger:
-        for key, value in info_dict.items():
+        for key, value in dist_info.items():
             logger.info(f"{key}: {value}")
 
     if format == "string":
-        info_str = "\n".join([f"{key}: {value}" for key, value in info_dict.items()])
+        info_str = "\n".join([f"{key}: {value}" for key, value in dist_info.items()])
         return info_str
 
     elif format == "table":
-        return tabulate([info_dict], headers="keys", tablefmt="grid")
+        return tabulate([dist_info], headers="keys", tablefmt="grid")
 
     else:
         print("Invalid format specified. Choose 'string' or 'table'.")
         return
 
 
-def configure_logger(rank: int) -> logging.Logger:
+def configure_logger(rank: int, print_to_console: bool = False) -> logging.Logger:
     """
     Configure and return a logger for a given process rank.
 
@@ -87,7 +87,10 @@ def configure_logger(rank: int) -> logging.Logger:
     logs to a separate file is to avoid the non-deterministic ordering of log
     messages from different ranks in the same file.
     """
-    handlers = [logging.FileHandler(filename=f"process_{rank}.log")]  # , RichHandler()]
+    handlers = [logging.FileHandler(filename=f"process_{rank}.log")]
+    if print_to_console:
+        handlers.append(RichHandler())
+
     logging.basicConfig(
         level="INFO",
         format="%(asctime)s [%(levelname)s]: %(message)s",
