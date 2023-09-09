@@ -87,7 +87,7 @@ class DistributedInfo:
     )
 
     def __post_init__(self) -> None:
-        self.local_rank = self.rank % self.n_gpus_per_node
+        self.local_rank = self.global_rank % self.n_gpus_per_node
         self.device = torch.device(f"cuda:{self.local_rank}")
 
     @property
