@@ -147,10 +147,11 @@ def main(
 ):
     init_env(cfg=InitEnvArgs())
     cfg = InitProcessGroupArgs(rank=rank, world_size=world_size)
-    init_process(cfg, node_rank, configure_logger(rank=rank))
+    logger = configure_logger(rank=rank)
+    init_process(cfg, node_rank, logger)
     dataset, model, optimizer = load_train_objs()
     train_data = prepare_dataloader(dataset, batch_size)
-    trainer = Trainer(model, train_data, optimizer, rank, save_every)
+    trainer = Trainer(model, train_data, optimizer, rank, save_every, logger)
     trainer.train(total_epochs)
     destroy_process_group()
 
