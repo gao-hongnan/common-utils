@@ -38,7 +38,7 @@ def init_process(
 
     dist.init_process_group(**asdict(cfg))
 
-    dist_info = DistributedInfo(node_rank=0)
+    dist_info = DistributedInfo(node_rank=node_rank)
     assert dist_info.global_rank == cfg.rank
     assert dist_info.world_size == cfg.world_size
 
