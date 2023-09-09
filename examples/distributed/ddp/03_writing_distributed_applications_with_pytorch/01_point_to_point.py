@@ -1,5 +1,9 @@
 """
-qsub -I -l select=1:ngpus=4 -P 11003281 -l walltime=24:00:00 -q ai
+qsub -I -l select=1:ngpus=4 -P <project_name> -l walltime=24:00:00 -q <queue_name>
+module load cuda/<cuda_version> or module load cuda for latest version
+cd examples/distributed/ddp && \
+export PYTHONPATH=$PYTHONPATH:$(pwd) && \
+python 03_writing_distributed_applications_with_pytorch/01_point_to_point.py --world_size 4
 """
 import logging
 import os
@@ -9,7 +13,7 @@ from typing import Callable, Dict, Optional
 import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
-from config.base import InitEnvArgs, InitProcessGroupArgs
+from config.base import InitEnvArgs, InitProcessGroupArgs, DistributedInfo
 from utils import configure_logger, display_dist_info
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -36,6 +40,8 @@ def init_process(
     dist.init_process_group(**asdict(cfg))
     logger.info(f"Initialized process group: Rank {cfg.rank} out of {cfg.world_size}")
 
+    dist_info = DistributedInfo()
+    logger.info(f"Distributed info: {dist_info}")
     display_dist_info(cfg.rank, cfg.world_size, format="table", logger=logger)
 
     if func is not None:
@@ -84,9 +90,6 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="simple distributed training job")
-    # parser.add_argument('total_epochs', type=int, help='Total epochs to train the model')
-    # parser.add_argument('save_every', type=int, help='How often to save a snapshot')
-    # parser.add_argument('--batch_size', default=32, type=int, help='Input batch size on each device (default: 32)')
     parser.add_argument(
         "--world_size", default=None, type=int, help="Total number of GPUs"
     )

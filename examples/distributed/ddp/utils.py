@@ -5,6 +5,10 @@ from typing import Dict, Union, Optional
 from tabulate import tabulate
 
 
+def cleanup():
+    dist.destroy_process_group()
+
+
 def get_dist_info(rank: int, world_size: int) -> Dict[str, Union[int, str, bool]]:
     """Gather information about the distributed environment.
 
@@ -27,7 +31,7 @@ def get_dist_info(rank: int, world_size: int) -> Dict[str, Union[int, str, bool]
 def display_dist_info(
     rank: int,
     world_size: int,
-    format: str = "string", # pylint: disable=redefined-builtin
+    format: str = "string",  # pylint: disable=redefined-builtin
     logger: Optional[logging.Logger] = None,
 ) -> Optional[str]:
     """Display information about the distributed environment in a given format or log it.

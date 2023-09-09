@@ -1,5 +1,8 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from typing import Literal
+
+import torch
+import torch.distributed as dist
 
 
 @dataclass(init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=False)
@@ -38,3 +41,51 @@ class InitProcessGroupArgs:
         default="env://",
         metadata={"help": "URL specifying how to initialize the package"},
     )
+
+
+@dataclass
+class DistributedInfo:
+    rank: int = field(
+        default_factory=dist.get_rank,
+        metadata={"help": "Rank of the process in the distributed setup."},
+    )
+    world_size: int = field(
+        default_factory=dist.get_world_size,
+        metadata={
+            "help": "Total number of processes participating in the distributed setup."
+        },
+    )
+    n_gpus_per_node: int = field(
+        default_factory=torch.cuda.device_count,
+        metadata={"help": "Number of GPUs available on the current node."},
+    )
+    local_rank: int = field(
+        init=False,
+        metadata={
+            "help": "Local rank of the process, computed based on rank and GPUs per node."
+        },
+    )  # Will be computed based on rank and n_gpus_per_node
+    device: torch.device = field(
+        init=False, metadata={"help": "The torch device, either CPU or specific GPU."}
+    )  # Will be computed based on local_rank
+
+    def __post_init__(self) -> None:
+        self.local_rank = self.rank % self.n_gpus_per_node
+        self.device = torch.device(f"cuda:{self.local_rank}")
+
+    @property
+    def is_master(self) -> bool:
+        """Check if the current rank is the master (rank 0)."""
+        return self.rank == 0
+
+    @property
+    def global_rank(self) -> int:
+        """Compute global rank across all nodes and GPUs."""
+        return self.rank * self.n_gpus_per_node + self.local_rank
+
+    def get_help(self, field_name: str) -> str:
+        """Retrieve the help metadata for a specific field."""
+        for f in fields(self):
+            if f.name == field_name:
+                return f.metadata.get("help", "")
+        return ""
