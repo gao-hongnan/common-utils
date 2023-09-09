@@ -72,12 +72,15 @@ class Trainer:
         optimizer: torch.optim.Optimizer,
         gpu_id: int,
         save_every: int,
+        logger: Optional[logging.Logger] = None,
     ) -> None:
         self.gpu_id = gpu_id
         self.model = model.to(gpu_id)
         self.train_data = train_data
         self.optimizer = optimizer
         self.save_every = save_every
+        self.logger = logger
+
         self.model = DDP(model, device_ids=[gpu_id])  # impt
 
         print(f"self.gpu_id={self.gpu_id}")
@@ -93,6 +96,8 @@ class Trainer:
         b_sz = len(next(iter(self.train_data))[0])
         print(
             f"[GPU{self.gpu_id}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_data)}"
+        )
+        self.logger.info(f"[GPU{self.gpu_id}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_data)}"
         )
         self.train_data.sampler.set_epoch(epoch)
         for source, targets in self.train_data:
