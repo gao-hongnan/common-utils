@@ -64,18 +64,6 @@ def init_process(
         func(cfg.rank, cfg.world_size)
 
 
-# def ddp_setup(rank, world_size):
-#     """
-#     Args:
-#         rank: Unique identifier of each process
-#         world_size: Total number of processes
-#     """
-#     os.environ["MASTER_ADDR"] = "localhost" # IP address of the machine
-#     os.environ["MASTER_PORT"] = "12355"
-#     init_process_group(backend="nccl", rank=rank, world_size=world_size)
-#     torch.cuda.set_device(rank)
-
-
 class Trainer:
     def __init__(
         self,
@@ -154,7 +142,7 @@ def main(
 ):
     init_env(cfg=InitEnvArgs())
     cfg = InitProcessGroupArgs(rank=rank, world_size=world_size)
-    init_process(cfg, node_rank, configure_logger("main"))
+    init_process(cfg, node_rank, configure_logger(rank=rank))
     dataset, model, optimizer = load_train_objs()
     train_data = prepare_dataloader(dataset, batch_size)
     trainer = Trainer(model, train_data, optimizer, rank, save_every)
