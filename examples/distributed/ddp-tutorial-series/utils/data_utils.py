@@ -17,7 +17,7 @@ class ToyDataset(Dataset):
         self.target_dimensions = target_dimensions
 
         self.X = torch.randn(num_samples, num_dimensions)
-        self.y = torch.randint(0, 2, (num_samples, target_dimensions)).squeeze()
+        self.y = torch.rand(num_samples, target_dimensions)
 
     def __len__(self) -> int:
         return self.num_samples
