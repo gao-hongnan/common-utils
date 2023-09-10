@@ -12,6 +12,18 @@ python 01_single_node_multi_gpu/01_basic.py \
     --init_method "env://" \
     --master_addr "localhost" \
     --master_port "12356"
+
+and compare with:
+python 01_single_node_multi_gpu/01_basic.py \
+    --num_nodes 1 \
+    --num_gpus_per_node 4 \
+    --world_size 4 \
+    --node_rank 0 \
+    --backend "nccl" \
+    --init_method "env://" \
+    --master_addr "localhost" \
+    --master_port "12356" \
+    --no_world_size_in_init_process
 """
 import argparse
 import logging
