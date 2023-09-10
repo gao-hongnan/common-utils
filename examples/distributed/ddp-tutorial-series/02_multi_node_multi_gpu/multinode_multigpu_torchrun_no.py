@@ -118,12 +118,10 @@ class Trainer:
         avg_loss = total_loss / len(
             self.train_data
         )  # Calculate average loss for the epoch
-        print(
-            f"[GPU{self.global_rank}] Epoch {epoch} | Average Loss: {avg_loss:.4f}"
-        )  # Print the average loss
+        print(f"[GPU{self.global_rank}] Epoch {epoch} | Average Loss: {avg_loss:.4f}")
         self.logger.info(
             f"[GPU{self.global_rank}] Epoch {epoch} | Average Loss: {avg_loss:.4f}"
-        )  # Print the average loss
+        )
 
     def _save_snapshot(self, epoch):
         snapshot = {

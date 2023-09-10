@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.distributed import DistributedSampler
 from utils.data_utils import ToyDataset, prepare_dataloader
 from config.base import DataLoaderConfig, DistributedSamplerConfig
-from utils.common_utils import configure_logger, display_dist_info, init_env
+from utils.common_utils import configure_logger, display_dist_info, init_env, seed_all
 
 
 def init_process(
@@ -23,19 +23,16 @@ def init_process(
     node_rank: int,
     logger: logging.Logger,
     func: Optional[Callable] = None,
-) -> None:
+) -> DistributedInfo:
     """Initialize the distributed environment via init_process_group."""
-
-    logger = configure_logger(rank=cfg.rank)
 
     dist.init_process_group(**asdict(cfg))
 
     dist_info = DistributedInfo(node_rank=node_rank)
-    assert dist_info.global_rank == cfg.rank
-    assert dist_info.world_size == cfg.world_size
 
     logger.info(
-        f"Initialized process group: Rank {dist_info.global_rank} out of {dist_info.world_size}."
+        f"Initialized process group: Rank {dist_info.global_rank} "
+        f"out of {dist_info.world_size}."
     )
 
     logger.info(f"Distributed info: {dist_info}")
@@ -44,6 +41,7 @@ def init_process(
 
     if func is not None:
         func(cfg.rank, cfg.world_size)
+    return dist_info
 
 
 class Trainer:
@@ -73,6 +71,7 @@ class Trainer:
         loss = F.cross_entropy(output, targets)
         loss.backward()
         self.optimizer.step()
+        return loss
 
     def _run_epoch(self, epoch):
         b_sz = len(next(iter(self.train_data))[0])
@@ -83,10 +82,21 @@ class Trainer:
             f"[GPU{self.gpu_id}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_data)}"
         )
         self.train_data.sampler.set_epoch(epoch)
+
+        total_loss = 0.0  # Initialize total loss for the epoch
         for source, targets in self.train_data:
-            source = source.to(self.gpu_id)
-            targets = targets.to(self.gpu_id)
-            self._run_batch(source, targets)
+            source = source.to(self.local_rank)
+            targets = targets.to(self.local_rank)
+            batch_loss = self._run_batch(source, targets)
+            total_loss += batch_loss
+
+        avg_loss = total_loss / len(
+            self.train_data
+        )  # Calculate average loss for the epoch
+        print(f"[GPU{self.global_rank}] Epoch {epoch} | Average Loss: {avg_loss:.8f}")
+        self.logger.info(
+            f"[GPU{self.global_rank}] Epoch {epoch} | Average Loss: {avg_loss:.8f}"
+        )
 
     def _save_checkpoint(self, epoch):
         ckp = self.model.module.state_dict()  # impt
@@ -152,6 +162,8 @@ def main(
 
 
 if __name__ == "__main__":
+    seed_all(0)
+
     import argparse
 
     parser = argparse.ArgumentParser(description="simple distributed training job")
