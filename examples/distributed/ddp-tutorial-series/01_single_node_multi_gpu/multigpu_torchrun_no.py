@@ -1,3 +1,4 @@
+"""python 01_single_node_multi_gpu/multigpu_torchrun_no.py 50 10 --node_rank 0"""
 import logging
 import os
 from dataclasses import asdict
@@ -150,7 +151,7 @@ def main(
         shuffle=False,
         sampler=distributed_sampler,
     )
-    train_data = prepare_dataloader(dataset, **asdict(dataloader_config))
+    train_data = prepare_dataloader(dataset, cfg=dataloader_config)
 
     trainer = Trainer(model, train_data, optimizer, rank, save_every, logger)
     trainer.train(total_epochs)

@@ -1,7 +1,7 @@
 """
 qsub -I -l select=1:ngpus=4 -P <project_name> -l walltime=24:00:00 -q <queue_name>
 module load cuda/<cuda_version> or module load cuda for latest version
-cd examples/distributed/ddp && \
+cd examples/distributed/ddp-tutorial-series && \
 export PYTHONPATH=$PYTHONPATH:$(pwd) && \
 python 03_writing_distributed_applications_with_pytorch/01_point_to_point.py --world_size 4
 """
