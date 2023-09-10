@@ -85,8 +85,8 @@ class Trainer:
 
         total_loss = 0.0  # Initialize total loss for the epoch
         for source, targets in self.train_data:
-            source = source.to(self.local_rank)
-            targets = targets.to(self.local_rank)
+            source = source.to(self.gpu_id)
+            targets = targets.to(self.gpu_id)
             batch_loss = self._run_batch(source, targets)
             total_loss += batch_loss
 
