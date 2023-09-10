@@ -71,8 +71,10 @@ def display_dist_info(
         return info_str
 
     elif format == "table":
-        return tabulate([dist_info], headers="keys", tablefmt="grid")
-
+        table_str = tabulate([dist_info], headers="keys", tablefmt="grid")
+        if logger:
+            logger.info("\n" + table_str)  # log the entire table as one message
+        return table_str
     else:
         print("Invalid format specified. Choose 'string' or 'table'.")
         return
