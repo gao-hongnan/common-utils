@@ -1,26 +1,19 @@
 # Single Node Multi GPU
 
-## 01_basic and 02_basic
+## 01_basic (no_world_size_in_init_process true vs false)
 
 We pry open the basics without using `torchrun` or `torch.distributed.launch`
 and on a single node with multiple GPUs.
 
 ```bash
-❯ diff 01_basic.py 02_basic.py
-6c6
-< python 01_single_node_multi_gpu/01_basic.py \
----
-> python 01_single_node_multi_gpu/02_basic.py \
-69c69
-<         world_size=args.world_size,
----
->         # world_size=args.world_size,
-132a133,134
->     # new args
->     init_env_args.world_size = args.world_size
+- world_size=args.world_size,
++ # world_size=args.world_size,
+-
++ init_env_args.world_size = args.world_size
 ```
 
-note that in `02_basic.py` I did not specify `world_size`
+note that if flag is I did `no_world_size_in_init_process` to be `True`, then
+we do not specify `world_size`
 in `dist.init_process_group` and instead set the environment
 variable `WORLD_SIZE` to `4` (the total number of GPUs on my machine).
 This is achieved by setting `init_env_args.world_size = args.world_size`

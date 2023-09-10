@@ -78,6 +78,37 @@ def main(local_rank: int, args: argparse.Namespace, init_env_args: InitEnvArgs) 
     assert dist_info.global_rank == global_rank
     assert dist_info.local_rank == local_rank
 
+
+def main_without_world_size_in_init_process(
+    local_rank: int, args: argparse.Namespace, init_env_args: InitEnvArgs
+) -> None:
+    """Main driver function."""
+    assert args.world_size == args.num_nodes * args.num_gpus_per_node
+
+    global_rank = local_rank + args.node_rank * args.num_gpus_per_node
+    logger = configure_logger(rank=global_rank)  # unique rank across all nodes
+
+    logger.info(
+        f"Initializing the following Environment variables: {str(init_env_args)}"
+    )
+    init_env(init_env_args)
+
+    init_process_group_args = InitProcessGroupArgs(
+        rank=global_rank,  # not local_rank
+        # world_size=args.world_size,
+        backend=args.backend,
+        init_method=args.init_method,
+    )
+    logger.info(f"Process group arguments: {str(init_process_group_args)}")
+    dist_info: DistributedInfo = init_process(
+        init_process_group_args, args.node_rank, logger=logger
+    )
+    torch.cuda.set_device(local_rank)
+
+    assert dist_info.global_rank == global_rank
+    assert dist_info.local_rank == local_rank
+
+
 def parse_args() -> argparse.Namespace:
     """
     Parses the input arguments for the distributed training job.
@@ -123,6 +154,7 @@ def parse_args() -> argparse.Namespace:
         help="Master port for distributed job. See InitEnvArgs for more details.",
     )
 
+    parser.add_argument("--no_world_size_in_init_process", action="store_true")
     return parser.parse_args()
 
 
@@ -135,13 +167,24 @@ if __name__ == "__main__":
     )
     # the rank "spawned" by mp is the local rank.
     # you can use for loop also, see torch/multiprocessing/spawn.py
-    mp.spawn(
-        main,
-        # see args=(fn, i, args, error_queue) in start_processes where i is the
-        # local rank derived from nprocs
-        args=(args, init_env_args),
-        nprocs=args.num_gpus_per_node,
-        join=True,
-        daemon=False,
-        start_method="spawn",
-    )
+    if not args.no_world_size_in_init_process:
+        mp.spawn(
+            main,
+            # see args=(fn, i, args, error_queue) in start_processes where i is the
+            # local rank derived from nprocs
+            args=(args, init_env_args),
+            nprocs=args.num_gpus_per_node,
+            join=True,
+            daemon=False,
+            start_method="spawn",
+        )
+    else:
+        init_env_args.world_size = str(args.world_size)
+        mp.spawn(
+            main_without_world_size_in_init_process,
+            args=(args, init_env_args),
+            nprocs=args.num_gpus_per_node,
+            join=True,
+            daemon=False,
+            start_method="spawn",
+        )
