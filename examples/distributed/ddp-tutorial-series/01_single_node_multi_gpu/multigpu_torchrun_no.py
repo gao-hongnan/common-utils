@@ -68,7 +68,7 @@ class Trainer:
     def _run_batch(self, source, targets):
         self.optimizer.zero_grad()
         output = self.model(source)
-        loss = F.cross_entropy(output, targets)
+        loss = F.mse_loss(output, targets)
         loss.backward()
         self.optimizer.step()
         return loss
@@ -128,6 +128,9 @@ def main(
     total_epochs: int,
     batch_size: int,
 ):
+    # NOTE: seeding must be done inside the process, not outside for ddp.
+    seed_all(0, seed_torch=True)
+
     init_env(cfg=InitEnvArgs())
 
     cfg = InitProcessGroupArgs(rank=rank, world_size=world_size)
@@ -162,7 +165,6 @@ def main(
 
 
 if __name__ == "__main__":
-    seed_all(0)
 
     import argparse
 
