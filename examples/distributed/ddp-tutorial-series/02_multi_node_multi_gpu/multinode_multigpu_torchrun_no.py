@@ -227,7 +227,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--node_rank", default=0, type=int, help="Node rank for multi-node training"
     )
-    parser.add_argument("--nproc_per_node", default=2, type=int, help="Number of GPUs per node")
+    parser.add_argument(
+        "--nproc_per_node", default=2, type=int, help="Number of GPUs per node"
+    )
 
     args = parser.parse_args()
 

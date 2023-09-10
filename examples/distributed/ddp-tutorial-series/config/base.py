@@ -70,9 +70,25 @@ class InitEnvArgs:
     """
 
     master_addr: str = field(
-        default="localhost", metadata={"help": "IP address of the machine"}
+        default="localhost",
+        metadata={
+            "help": (
+                "This refers to the IP address (or hostname) of the machine or node "
+                "where the rank 0 process is running. It acts as the reference point "
+                "for all other nodes and GPUs in the distributed setup. All other "
+                "processes will connect to this address for synchronization and "
+                "communication."
+            )
+        },
     )
-    master_port: str = field(default="12356", metadata={"help": "The port number"})
+
+    master_port: str = field(
+        default="12356",
+        metadata={
+            "help": "Denotes an available port on the `MASTER_ADDR` machine. "
+            "All processes will use this port number for communication."
+        },
+    )
 
 
 @dataclass(init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=False)
@@ -149,6 +165,7 @@ class DistributedInfo:
     )
 
     def __post_init__(self) -> None:
+        # FIXME: local rank won't work if 1 process spans across multiple gpus.
         self.local_rank = self.global_rank % self.num_gpus_in_curr_node_rank
         self.device = torch.device(f"cuda:{self.local_rank}")
 
