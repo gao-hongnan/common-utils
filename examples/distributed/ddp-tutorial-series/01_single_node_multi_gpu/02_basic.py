@@ -3,7 +3,15 @@ qsub -I -l select=1:ngpus=4 -P <project_name> -l walltime=24:00:00 -q <queue_nam
 module load cuda/<cuda_version> or module load cuda for latest version
 cd examples/distributed/ddp-tutorial-series && \
 export PYTHONPATH=$PYTHONPATH:$(pwd) && \
-python 03_writing_distributed_applications_with_pytorch/01_point_to_point.py --world_size 4
+python 01_single_node_multi_gpu/01_basic.py \
+    --num_nodes 1 \
+    --num_gpus_per_node 4 \
+    --world_size 4 \
+    --node_rank 0 \
+    --backend "nccl" \
+    --init_method "env://" \
+    --master_addr "localhost" \
+    --master_port "12356"
 """
 import argparse
 import logging
