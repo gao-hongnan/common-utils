@@ -1,30 +1,19 @@
 import logging
 import os
 from dataclasses import asdict
-from typing import Callable, Dict, Optional
+from typing import Callable, Dict, Optional, Tuple
 
 import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
 import torch.nn.functional as F
 from config.base import DistributedInfo, InitEnvArgs, InitProcessGroupArgs
-from torch.distributed import destroy_process_group, init_process_group
+from torch.distributed import destroy_process_group
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.distributed import DistributedSampler
-from utils import configure_logger, display_dist_info
-
-
-class MyTrainDataset(Dataset):
-    def __init__(self, size):
-        self.size = size
-        self.data = [(torch.rand(20), torch.rand(1)) for _ in range(size)]
-
-    def __len__(self):
-        return self.size
-
-    def __getitem__(self, index):
-        return self.data[index]
+from utils.common_utils import configure_logger, display_dist_info
+from utils.data_utils import ToyDataset
 
 
 def init_env(cfg: InitEnvArgs) -> None:
@@ -97,7 +86,8 @@ class Trainer:
         print(
             f"[GPU{self.gpu_id}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_data)}"
         )
-        self.logger.info(f"[GPU{self.gpu_id}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_data)}"
+        self.logger.info(
+            f"[GPU{self.gpu_id}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_data)}"
         )
         self.train_data.sampler.set_epoch(epoch)
         for source, targets in self.train_data:
