@@ -72,9 +72,13 @@ class Trainer:
         save_every: int,
         snapshot_path: str,
         logger: Optional[logging.Logger] = None,
+        local_rank: int = -1,
+        global_rank: int = -1,
     ) -> None:
-        self.local_rank = int(os.environ["LOCAL_RANK"])
-        self.global_rank = int(os.environ["RANK"])
+        # self.local_rank = int(os.environ["LOCAL_RANK"])
+        # self.global_rank = int(os.environ["RANK"])
+        self.local_rank = local_rank
+        self.global_rank = global_rank
         self.model = model.to(self.local_rank)
         self.train_data = train_data
         self.optimizer = optimizer
@@ -156,6 +160,7 @@ def main(
     rank: int,
     world_size: int,
     node_rank: int,
+    nproc_per_node: int,
     save_every: int,
     total_epochs: int,
     batch_size: int,
@@ -189,8 +194,18 @@ def main(
     )
     train_data = prepare_dataloader(dataset, cfg=dataloader_config)
 
-    logger = configure_logger(rank=os.environ["RANK"])
-    trainer = Trainer(model, train_data, optimizer, save_every, snapshot_path, logger)
+    global_rank = node_rank * nproc_per_node + rank
+    logger = configure_logger(rank=rank)
+    trainer = Trainer(
+        model,
+        train_data,
+        optimizer,
+        save_every,
+        snapshot_path,
+        logger,
+        local_rank=rank,
+        global_rank=global_rank,
+    )
     trainer.train(total_epochs)
     destroy_process_group()
 
@@ -210,22 +225,25 @@ if __name__ == "__main__":
         help="Input batch size on each device (default: 32)",
     )
     parser.add_argument(
-    "--node_rank", default=0, type=int, help="Node rank for multi-node training"
-)
+        "--node_rank", default=0, type=int, help="Node rank for multi-node training"
+    )
+    parser.add_argument("--nproc_per_node", default=2, type=int, help="Number of GPUs per node")
 
     args = parser.parse_args()
 
     # main(args.save_every, args.total_epochs, args.batch_size)#
     # this is local world size for 1 node
+    # NOTE: mp spawns' rank is local rank.
     world_size = torch.cuda.device_count()
     mp.spawn(
         main,
         args=(
             world_size,
             args.node_rank,
+            args.nproc_per_node,
             args.save_every,
             args.total_epochs,
             args.batch_size,
         ),
-       nprocs=world_size,
+        nprocs=world_size,
     )
