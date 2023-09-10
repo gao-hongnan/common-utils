@@ -171,8 +171,8 @@ def main(
 
     dataset, model, optimizer = load_train_objs()
     distributed_sampler_config = DistributedSamplerConfig(
-        num_replicas=os.environ["WORLD_SIZE"],
-        rank=os.environ["RANK"],
+        num_replicas=world_size,
+        rank=rank,
         shuffle=True,
         seed=0,
         drop_last=True,
