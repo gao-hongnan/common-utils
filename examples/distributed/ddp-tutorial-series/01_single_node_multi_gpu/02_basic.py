@@ -12,6 +12,21 @@ python 01_single_node_multi_gpu/02_basic.py \
     --init_method "env://" \
     --master_addr "localhost" \
     --master_port "12356"
+
+```bash
+❯ diff 01_basic.py 02_basic.py
+6c6
+< python 01_single_node_multi_gpu/01_basic.py \
+---
+> python 01_single_node_multi_gpu/02_basic.py \
+69c69
+<         world_size=args.world_size,
+---
+>         # world_size=args.world_size,
+132a133,134
+>     # new args
+>     init_env_args.world_size = args.world_size
+```
 """
 import argparse
 import logging
@@ -131,7 +146,7 @@ if __name__ == "__main__":
         master_addr=args.master_addr, master_port=args.master_port
     )
     # new args
-    init_env_args.world_size = args.world_size
+    init_env_args.world_size = str(args.world_size)
     # the rank "spawned" by mp is the local rank.
     # you can use for loop also, see torch/multiprocessing/spawn.py
     mp.spawn(

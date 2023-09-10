@@ -30,14 +30,12 @@ def init_process(
     node_rank: int,
     logger: logging.Logger,
     func: Optional[Callable] = None,
-) -> None:
+) -> DistributedInfo:
     """Initialize the distributed environment via init_process_group."""
 
     dist.init_process_group(**asdict(cfg))
 
     dist_info = DistributedInfo(node_rank=node_rank)
-    # assert dist_info.global_rank == cfg.rank
-    # assert dist_info.world_size == cfg.world_size
 
     logger.info(
         f"Initialized process group: Rank {dist_info.global_rank} "
@@ -50,6 +48,7 @@ def init_process(
 
     if func is not None:
         func(cfg.rank, cfg.world_size)
+    return dist_info
 
 
 def main(local_rank: int, args: argparse.Namespace, init_env_args: InitEnvArgs) -> None:
@@ -71,9 +70,13 @@ def main(local_rank: int, args: argparse.Namespace, init_env_args: InitEnvArgs) 
         init_method=args.init_method,
     )
     logger.info(f"Process group arguments: {str(init_process_group_args)}")
-    init_process(init_process_group_args, args.node_rank, logger=logger)
+    dist_info: DistributedInfo = init_process(
+        init_process_group_args, args.node_rank, logger=logger
+    )
     torch.cuda.set_device(local_rank)
 
+    assert dist_info.global_rank == global_rank
+    assert dist_info.local_rank == local_rank
 
 def parse_args() -> argparse.Namespace:
     """
