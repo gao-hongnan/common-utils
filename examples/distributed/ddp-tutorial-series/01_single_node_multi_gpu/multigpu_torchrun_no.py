@@ -143,7 +143,9 @@ def main(
         seed=0,
         drop_last=True,
     )
-    distributed_sampler = DistributedSampler(dataset=dataset,**asdict(distributed_sampler_config))
+    distributed_sampler = DistributedSampler(
+        dataset=dataset, **asdict(distributed_sampler_config)
+    )
     dataloader_config = DataLoaderConfig(
         batch_size=batch_size,
         num_workers=0,

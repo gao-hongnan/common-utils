@@ -1,25 +1,66 @@
-import torch
-import torch.nn.functional as F
-from torch.utils.data import Dataset, DataLoader
-
-import torch.multiprocessing as mp
-from torch.utils.data.distributed import DistributedSampler
-from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.distributed import init_process_group, destroy_process_group
+import logging
 import os
+from dataclasses import asdict
+from typing import Callable, Dict, Optional, Tuple
+
+import torch
+import torch.distributed as dist
+import torch.multiprocessing as mp
+import torch.nn.functional as F
+from config.base import (
+    DataLoaderConfig,
+    DistributedInfo,
+    DistributedSamplerConfig,
+    InitEnvArgs,
+    InitProcessGroupArgs,
+)
+from torch.distributed import destroy_process_group, init_process_group
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.distributed import DistributedSampler
 from utils.common_utils import configure_logger, display_dist_info
 from utils.data_utils import ToyDataset, prepare_dataloader
-from config.base import DataLoaderConfig, DistributedSamplerConfig
-from dataclasses import asdict
-from typing import Callable, Dict, Optional, Tuple
-import logging
 
-def ddp_setup():
-    init_process_group(backend="nccl")
-    torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
+# def ddp_setup():
+#     init_process_group(backend="nccl")
+#     torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
+
+
+def init_env(cfg: InitEnvArgs) -> None:
+    """Initialize environment variables."""
+    cfg: Dict[str, str] = asdict(cfg)
+
+    for key, value in cfg.items():
+        upper_key = key.upper()
+        os.environ[upper_key] = value
+
+
+def init_process(
+    cfg: InitProcessGroupArgs,
+    node_rank: int,
+    logger: logging.Logger,
+    func: Optional[Callable] = None,
+) -> None:
+    """Initialize the distributed environment via init_process_group."""
+
+    logger = configure_logger(rank=cfg.rank)
+
+    dist.init_process_group(**asdict(cfg))
+
+    dist_info = DistributedInfo(node_rank=node_rank)
+    assert dist_info.global_rank == cfg.rank
+    assert dist_info.world_size == cfg.world_size
+
+    logger.info(
+        f"Initialized process group: Rank {dist_info.global_rank} out of {dist_info.world_size}."
+    )
+
+    logger.info(f"Distributed info: {dist_info}")
+
+    display_dist_info(dist_info=dist_info, format="table", logger=logger)
+
+    if func is not None:
+        func(cfg.rank, cfg.world_size)
 
 
 class Trainer:
@@ -30,7 +71,7 @@ class Trainer:
         optimizer: torch.optim.Optimizer,
         save_every: int,
         snapshot_path: str,
-              logger: Optional[logging.Logger] = None,
+        logger: Optional[logging.Logger] = None,
     ) -> None:
         self.local_rank = int(os.environ["LOCAL_RANK"])
         self.global_rank = int(os.environ["RANK"])
@@ -79,9 +120,15 @@ class Trainer:
             batch_loss = self._run_batch(source, targets)
             total_loss += batch_loss
 
-        avg_loss = total_loss / len(self.train_data)  # Calculate average loss for the epoch
-        print(f"[GPU{self.global_rank}] Epoch {epoch} | Average Loss: {avg_loss:.4f}")  # Print the average loss
-        self.logger.info(f"[GPU{self.global_rank}] Epoch {epoch} | Average Loss: {avg_loss:.4f}")  # Print the average loss
+        avg_loss = total_loss / len(
+            self.train_data
+        )  # Calculate average loss for the epoch
+        print(
+            f"[GPU{self.global_rank}] Epoch {epoch} | Average Loss: {avg_loss:.4f}"
+        )  # Print the average loss
+        self.logger.info(
+            f"[GPU{self.global_rank}] Epoch {epoch} | Average Loss: {avg_loss:.4f}"
+        )  # Print the average loss
 
     def _save_snapshot(self, epoch):
         snapshot = {
@@ -105,14 +152,23 @@ def load_train_objs():
     return train_set, model, optimizer
 
 
-
 def main(
+    rank: int,
+    world_size: int,
+    node_rank: int,
     save_every: int,
     total_epochs: int,
     batch_size: int,
     snapshot_path: str = "snapshot.pt",
 ):
-    ddp_setup()
+    init_env(cfg=InitEnvArgs())
+
+    cfg = InitProcessGroupArgs(rank=rank, world_size=world_size)
+
+    logger = configure_logger(rank=rank)
+
+    init_process(cfg, node_rank, logger)
+
     dataset, model, optimizer = load_train_objs()
     distributed_sampler_config = DistributedSamplerConfig(
         num_replicas=os.environ["WORLD_SIZE"],
@@ -121,7 +177,9 @@ def main(
         seed=0,
         drop_last=True,
     )
-    distributed_sampler = DistributedSampler(dataset=dataset,**asdict(distributed_sampler_config))
+    distributed_sampler = DistributedSampler(
+        dataset=dataset, **asdict(distributed_sampler_config)
+    )
     dataloader_config = DataLoaderConfig(
         batch_size=batch_size,
         num_workers=0,
@@ -151,6 +209,23 @@ if __name__ == "__main__":
         type=int,
         help="Input batch size on each device (default: 32)",
     )
+    parser.add_argument(
+    "--node_rank", default=0, type=int, help="Node rank for multi-node training"
+)
+
     args = parser.parse_args()
 
-    main(args.save_every, args.total_epochs, args.batch_size)
+    # main(args.save_every, args.total_epochs, args.batch_size)#
+    # this is local world size for 1 node
+    world_size = torch.cuda.device_count()
+    mp.spawn(
+        main,
+        args=(
+            world_size,
+            args.node_rank,
+            args.save_every,
+            args.total_epochs,
+            args.batch_size,
+        ),
+       nprocs=world_size,
+    )
