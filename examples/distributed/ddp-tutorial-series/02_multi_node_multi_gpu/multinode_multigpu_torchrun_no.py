@@ -7,7 +7,15 @@ from torch.utils.data.distributed import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import init_process_group, destroy_process_group
 import os
-
+from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.utils.data import DataLoader, Dataset
+from torch.utils.data.distributed import DistributedSampler
+from utils.common_utils import configure_logger, display_dist_info
+from utils.data_utils import ToyDataset, prepare_dataloader
+from config.base import DataLoaderConfig, DistributedSamplerConfig
+from dataclasses import asdict
+from typing import Callable, Dict, Optional, Tuple
+import logging
 
 def ddp_setup():
     init_process_group(backend="nccl")
@@ -22,6 +30,7 @@ class Trainer:
         optimizer: torch.optim.Optimizer,
         save_every: int,
         snapshot_path: str,
+              logger: Optional[logging.Logger] = None,
     ) -> None:
         self.local_rank = int(os.environ["LOCAL_RANK"])
         self.global_rank = int(os.environ["RANK"])
@@ -29,6 +38,7 @@ class Trainer:
         self.train_data = train_data
         self.optimizer = optimizer
         self.save_every = save_every
+        self.logger = logger
         self.epochs_run = 0
         self.snapshot_path = snapshot_path
         if os.path.exists(snapshot_path):
@@ -50,17 +60,28 @@ class Trainer:
         loss = F.cross_entropy(output, targets)
         loss.backward()
         self.optimizer.step()
+        return loss
 
     def _run_epoch(self, epoch):
         b_sz = len(next(iter(self.train_data))[0])
         print(
             f"[GPU{self.global_rank}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_data)}"
         )
+        self.logger.info(
+            f"[GPU{self.gpu_id}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_data)}"
+        )
         self.train_data.sampler.set_epoch(epoch)
+
+        total_loss = 0.0  # Initialize total loss for the epoch
         for source, targets in self.train_data:
             source = source.to(self.local_rank)
             targets = targets.to(self.local_rank)
-            self._run_batch(source, targets)
+            batch_loss = self._run_batch(source, targets)
+            total_loss += batch_loss
+
+        avg_loss = total_loss / len(self.train_data)  # Calculate average loss for the epoch
+        print(f"[GPU{self.global_rank}] Epoch {epoch} | Average Loss: {avg_loss:.4f}")  # Print the average loss
+        self.logger.info(f"[GPU{self.global_rank}] Epoch {epoch} | Average Loss: {avg_loss:.4f}")  # Print the average loss
 
     def _save_snapshot(self, epoch):
         snapshot = {
@@ -78,20 +99,11 @@ class Trainer:
 
 
 def load_train_objs():
-    train_set = MyTrainDataset(2048)  # load your dataset
+    train_set = ToyDataset(num_samples=2048, num_dimensions=20, target_dimensions=1)
     model = torch.nn.Linear(20, 1)  # load your model
     optimizer = torch.optim.SGD(model.parameters(), lr=1e-3)
     return train_set, model, optimizer
 
-
-def prepare_dataloader(dataset: Dataset, batch_size: int):
-    return DataLoader(
-        dataset,
-        batch_size=batch_size,
-        pin_memory=True,
-        shuffle=False,
-        sampler=DistributedSampler(dataset),
-    )
 
 
 def main(
@@ -102,8 +114,25 @@ def main(
 ):
     ddp_setup()
     dataset, model, optimizer = load_train_objs()
-    train_data = prepare_dataloader(dataset, batch_size)
-    trainer = Trainer(model, train_data, optimizer, save_every, snapshot_path)
+    distributed_sampler_config = DistributedSamplerConfig(
+        num_replicas=os.environ["WORLD_SIZE"],
+        rank=os.environ["RANK"],
+        shuffle=True,
+        seed=0,
+        drop_last=True,
+    )
+    distributed_sampler = DistributedSampler(dataset=dataset,**asdict(distributed_sampler_config))
+    dataloader_config = DataLoaderConfig(
+        batch_size=batch_size,
+        num_workers=0,
+        pin_memory=True,
+        shuffle=False,
+        sampler=distributed_sampler,
+    )
+    train_data = prepare_dataloader(dataset, cfg=dataloader_config)
+
+    logger = configure_logger(rank=os.environ["RANK"])
+    trainer = Trainer(model, train_data, optimizer, save_every, snapshot_path, logger)
     trainer.train(total_epochs)
     destroy_process_group()
 
