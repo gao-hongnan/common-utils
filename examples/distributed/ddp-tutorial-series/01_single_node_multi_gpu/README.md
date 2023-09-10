@@ -1,5 +1,42 @@
 # Single Node Multi GPU
 
+## 01_basic and 02_basic
+
+We pry open the basics without using `torchrun` or `torch.distributed.launch`
+and on a single node with multiple GPUs.
+
+```bash
+❯ diff 01_basic.py 02_basic.py
+6c6
+< python 01_single_node_multi_gpu/01_basic.py \
+---
+> python 01_single_node_multi_gpu/02_basic.py \
+69c69
+<         world_size=args.world_size,
+---
+>         # world_size=args.world_size,
+132a133,134
+>     # new args
+>     init_env_args.world_size = args.world_size
+```
+
+note that in `02_basic.py` I did not specify `world_size`
+in `dist.init_process_group` and instead set the environment
+variable `WORLD_SIZE` to `4` (the total number of GPUs on my machine).
+This is achieved by setting `init_env_args.world_size = args.world_size`
+as `init_env` will set the environment variables.
+
+Note that if you do not set this environment variable, you will get the following error:
+
+```bash
+ValueError: Error initializing torch.distributed using env:// rendezvous: environment variable WORLD_SIZE expected, but not set
+```
+
+So you have to either:
+
+- set the environment variable `WORLD_SIZE` to the total number of GPUs on your machine
+- or set `world_size` in `dist.init_process_group` to the total number of GPUs on your machine
+
 ## Caveats
 
 1. **Calculating the Global Rank**:

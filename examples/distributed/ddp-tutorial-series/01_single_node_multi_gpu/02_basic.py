@@ -3,7 +3,7 @@ qsub -I -l select=1:ngpus=4 -P <project_name> -l walltime=24:00:00 -q <queue_nam
 module load cuda/<cuda_version> or module load cuda for latest version
 cd examples/distributed/ddp-tutorial-series && \
 export PYTHONPATH=$PYTHONPATH:$(pwd) && \
-python 01_single_node_multi_gpu/01_basic.py \
+python 01_single_node_multi_gpu/02_basic.py \
     --num_nodes 1 \
     --num_gpus_per_node 4 \
     --world_size 4 \
@@ -15,24 +15,14 @@ python 01_single_node_multi_gpu/01_basic.py \
 """
 import argparse
 import logging
-import os
-import torch
 from dataclasses import asdict
-from typing import Callable, Dict, Optional
+from typing import Callable, Optional
 
+import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
 from config.base import DistributedInfo, InitEnvArgs, InitProcessGroupArgs
-from utils.common_utils import configure_logger, display_dist_info
-
-
-def init_env(cfg: InitEnvArgs) -> None:
-    """Initialize environment variables."""
-    cfg: Dict[str, str] = asdict(cfg)
-
-    for key, value in cfg.items():
-        upper_key = key.upper()
-        os.environ[upper_key] = value
+from utils.common_utils import configure_logger, display_dist_info, init_env
 
 
 def init_process(

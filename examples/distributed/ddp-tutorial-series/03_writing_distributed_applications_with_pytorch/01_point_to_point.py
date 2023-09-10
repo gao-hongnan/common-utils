@@ -14,16 +14,7 @@ import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
 from config.base import InitEnvArgs, InitProcessGroupArgs, DistributedInfo
-from utils.common_utils import configure_logger, display_dist_info
-
-
-def init_env(cfg: InitEnvArgs) -> None:
-    """Initialize environment variables."""
-    cfg: Dict[str, str] = asdict(cfg)
-
-    for key, value in cfg.items():
-        upper_key = key.upper()
-        os.environ[upper_key] = value
+from utils.common_utils import configure_logger, display_dist_info, init_env
 
 
 def init_process(

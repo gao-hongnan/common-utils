@@ -1,15 +1,25 @@
 import logging
-import torch.distributed as dist
+import os
 import socket
-from typing import Dict, Union, Optional
-from tabulate import tabulate
-from rich.logging import RichHandler
-from config.base import DistributedInfo
 from dataclasses import asdict
+from typing import Dict, Optional, Union
+
+import torch.distributed as dist
+from config.base import DistributedInfo, InitEnvArgs
+from rich.logging import RichHandler
+from tabulate import tabulate
 
 
-def cleanup():
-    dist.destroy_process_group()
+def init_env(cfg: InitEnvArgs) -> None:
+    """Initialize environment variables."""
+    # use __dict__ to get all the attributes of the dataclass
+    # if use asdict may not fetch new assigned attributes
+    # after the dataclass is instantiated.
+    cfg: Dict[str, str] = {**cfg.__dict__}
+
+    for key, value in cfg.items():
+        upper_key = key.upper()
+        os.environ[upper_key] = value
 
 
 def get_dist_info(rank: int, world_size: int) -> Dict[str, Union[int, str, bool]]:

@@ -15,24 +15,14 @@ python 01_single_node_multi_gpu/01_basic.py \
 """
 import argparse
 import logging
-import os
 from dataclasses import asdict
-from typing import Callable, Dict, Optional
+from typing import Callable, Optional
 
 import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
 from config.base import DistributedInfo, InitEnvArgs, InitProcessGroupArgs
-from utils.common_utils import configure_logger, display_dist_info
-
-
-def init_env(cfg: InitEnvArgs) -> None:
-    """Initialize environment variables."""
-    cfg: Dict[str, str] = asdict(cfg)
-
-    for key, value in cfg.items():
-        upper_key = key.upper()
-        os.environ[upper_key] = value
+from utils.common_utils import configure_logger, display_dist_info, init_env
 
 
 def init_process(

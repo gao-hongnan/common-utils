@@ -18,21 +18,12 @@ from torch.distributed import destroy_process_group, init_process_group
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.distributed import DistributedSampler
-from utils.common_utils import configure_logger, display_dist_info
+from utils.common_utils import configure_logger, display_dist_info, init_env
 from utils.data_utils import ToyDataset, prepare_dataloader
 
 # def ddp_setup():
 #     init_process_group(backend="nccl")
 #     torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
-
-
-def init_env(cfg: InitEnvArgs) -> None:
-    """Initialize environment variables."""
-    cfg: Dict[str, str] = asdict(cfg)
-
-    for key, value in cfg.items():
-        upper_key = key.upper()
-        os.environ[upper_key] = value
 
 
 def init_process(
