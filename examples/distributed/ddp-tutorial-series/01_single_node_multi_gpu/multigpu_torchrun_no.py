@@ -13,7 +13,8 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.distributed import DistributedSampler
 from utils.common_utils import configure_logger, display_dist_info
-from utils.data_utils import ToyDataset
+from utils.data_utils import ToyDataset, prepare_dataloader
+from config.base import DataLoaderConfig, DistributedSamplerConfig
 
 
 def init_env(cfg: InitEnvArgs) -> None:
@@ -111,20 +112,10 @@ class Trainer:
 
 
 def load_train_objs():
-    train_set = MyTrainDataset(2048)  # load your dataset
+    train_set = ToyDataset(num_samples=2048, num_dimensions=20, target_dimensions=1)
     model = torch.nn.Linear(20, 1)  # load your model
     optimizer = torch.optim.SGD(model.parameters(), lr=1e-3)
     return train_set, model, optimizer
-
-
-def prepare_dataloader(dataset: Dataset, batch_size: int):
-    return DataLoader(
-        dataset,
-        batch_size=batch_size,
-        pin_memory=True,
-        shuffle=False,  # impt
-        sampler=DistributedSampler(dataset),  # impt
-    )
 
 
 def main(
@@ -136,11 +127,31 @@ def main(
     batch_size: int,
 ):
     init_env(cfg=InitEnvArgs())
+
     cfg = InitProcessGroupArgs(rank=rank, world_size=world_size)
+
     logger = configure_logger(rank=rank)
+
     init_process(cfg, node_rank, logger)
+
     dataset, model, optimizer = load_train_objs()
-    train_data = prepare_dataloader(dataset, batch_size)
+    distributed_sampler_config = DistributedSamplerConfig(
+        num_replicas=world_size,
+        rank=rank,
+        shuffle=True,
+        seed=0,
+        drop_last=True,
+    )
+    distributed_sampler = DistributedSampler(dataset=dataset,**asdict(distributed_sampler_config))
+    dataloader_config = DataLoaderConfig(
+        batch_size=batch_size,
+        num_workers=0,
+        pin_memory=True,
+        shuffle=False,
+        sampler=distributed_sampler,
+    )
+    train_data = prepare_dataloader(dataset, **asdict(dataloader_config))
+
     trainer = Trainer(model, train_data, optimizer, rank, save_every, logger)
     trainer.train(total_epochs)
     destroy_process_group()

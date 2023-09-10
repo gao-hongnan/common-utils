@@ -1,7 +1,9 @@
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 
 import torch
 from typing import Tuple
+from config.base import DataLoaderConfig, DistributedSamplerConfig
+from dataclasses import asdict
 
 
 class ToyDataset(Dataset):
@@ -24,3 +26,7 @@ class ToyDataset(Dataset):
         X = self.X[index]
         y = self.y[index]
         return X, y
+
+
+def prepare_dataloader(dataset: Dataset, cfg: DataLoaderConfig) -> DataLoader:
+    return DataLoader(dataset, **asdict(cfg))

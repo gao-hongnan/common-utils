@@ -1,9 +1,65 @@
 from dataclasses import dataclass, field, fields
-from typing import Literal
+from typing import Literal, Iterable, Union
 import socket
 
 import torch
 import torch.distributed as dist
+from torch.utils.data import Sampler
+
+
+@dataclass(init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=False)
+class DataLoaderConfig:
+    """Configuration for data loader."""
+
+    batch_size: int = field(
+        default=32, metadata={"help": "Number of samples per batch."}
+    )
+    num_workers: int = field(
+        default=0, metadata={"help": "Number of subprocesses to use for data loading."}
+    )
+    pin_memory: bool = field(
+        default=True,
+        metadata={
+            "help": "Whether to copy tensors into CUDA pinned memory. Set it to True if using GPU."
+        },
+    )
+    shuffle: bool = field(
+        default=False,
+        metadata={
+            "help": "Whether to shuffle the data. Set it to False if using DistributedSampler."
+        },
+    )
+
+    sampler: Union[Sampler, Iterable, None] = field(
+        default=None, metadata={"help": "Sampler."}
+    )
+
+
+@dataclass(init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=False)
+class DistributedSamplerConfig:
+    """Configuration for distributed sampler."""
+
+    num_replicas: int
+    rank: int
+
+    shuffle: bool = field(
+        default=False,
+        metadata={
+            "help": "Whether to shuffle the data. Set it to False if using DistributedSampler."
+        },
+    )
+    seed: int = field(
+        default=0,
+        metadata={
+            "help": "Random seed used to shuffle the data. Set it to 0 if using DistributedSampler."
+        },
+    )
+    drop_last: bool = field(
+        default=False,
+        metadata={
+            "help": "Whether to drop the last incomplete batch of data. Set it to False if using DistributedSampler."
+        },
+    )
 
 
 @dataclass(init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=False)
@@ -54,11 +110,13 @@ class DistributedInfo:
 
     node_rank: int = field(default=0, metadata={"help": "Rank of the node."})
 
-    is_dist_avail_and_initialized: bool = field(
+    is_dist_available: bool = field(
         default_factory=dist.is_available,
-        metadata={
-            "help": "Whether the distributed package is available and initialized."
-        },
+        metadata={"help": "Whether the distributed package is initialized."},
+    )
+    is_dist_initialized: bool = field(
+        default_factory=dist.is_initialized,
+        metadata={"help": "Whether the distributed package is initialized."},
     )
     global_rank: int = field(
         default_factory=dist.get_rank,
