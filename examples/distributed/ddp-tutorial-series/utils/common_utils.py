@@ -100,3 +100,25 @@ def configure_logger(rank: int, print_to_console: bool = False) -> logging.Logge
         handlers=handlers,
     )
     return logging.getLogger(f"Process-{rank}")
+
+
+def calculate_global_rank(
+    local_rank: int, node_rank: int, num_gpus_per_node: int
+) -> int:
+    """Calculate the global rank of a process.
+
+    Parameters
+    ----------
+    local_rank : int
+        The rank of the process on the current node.
+    node_rank : int
+        The rank of the node on which the process is running.
+    num_gpus_per_node : int
+        The number of GPUs available on the current node.
+
+    Returns
+    -------
+    int
+        The global rank of the process.
+    """
+    return local_rank + node_rank * num_gpus_per_node

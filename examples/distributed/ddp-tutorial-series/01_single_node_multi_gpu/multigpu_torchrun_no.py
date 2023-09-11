@@ -1,4 +1,21 @@
-"""python 01_single_node_multi_gpu/multigpu_torchrun_no.py 50 10 --node_rank 0"""
+"""
+export PYTHONPATH=$PYTHONPATH:$(pwd) && \
+export MASTER_ADDR=$(hostname -i) && \
+export MASTER_PORT=$(comm -23 <(seq 1 65535 | sort) <(ss -Htan | awk '{print $4}' | cut -d':' -f2 | sort -u) | shuf | head -n 1) && \
+python 01_single_node_multi_gpu/multigpu_torchrun_no.py \
+    --node_rank 0 \
+    --num_nodes 1 \
+    --num_gpus_per_node 4 \
+    --world_size 4 \
+    --backend "nccl" \
+    --init_method "env://" \
+    --master_addr $MASTER_ADDR \
+    --master_port $MASTER_PORT \
+    --total_epochs 50 \
+    --save_every 10 \
+    --batch_size 32
+"""
+import argparse
 import logging
 from dataclasses import asdict
 from typing import Optional
@@ -10,6 +27,7 @@ from torch.distributed import destroy_process_group
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
+from config.base import DistributedInfo, InitEnvArgs, InitProcessGroupArgs
 
 from config.base import (
     DataLoaderConfig,
@@ -19,7 +37,7 @@ from config.base import (
 )
 from core._init import init_env, init_process
 from core._seed import seed_all
-from utils.common_utils import configure_logger
+from utils.common_utils import configure_logger, calculate_global_rank
 from utils.data_utils import ToyDataset, prepare_dataloader
 
 
@@ -72,10 +90,11 @@ class Trainer:
         avg_loss = total_loss / len(
             self.train_data
         )  # Calculate average loss for the epoch
-        print(f"[GPU{self.global_rank}] Epoch {epoch} | Average Loss: {avg_loss:.8f}")
+        print(f"[GPU{self.gpu_id}] Epoch {epoch} | Average Loss: {avg_loss:.8f}")
         self.logger.info(
-            f"[GPU{self.global_rank}] Epoch {epoch} | Average Loss: {avg_loss:.8f}"
+            f"[GPU{self.gpu_id}] Epoch {epoch} | Average Loss: {avg_loss:.8f}"
         )
+
 
     def _save_checkpoint(self, epoch):
         ckp = self.model.module.state_dict()  # impt
@@ -99,29 +118,34 @@ def load_train_objs():
     return train_set, model, optimizer
 
 
-def main(
-    rank: int,
-    world_size: int,
-    node_rank: int,
-    save_every: int,
-    total_epochs: int,
-    batch_size: int,
-):
+def main(local_rank: int, args: argparse.Namespace, init_env_args: InitEnvArgs) -> None:
     # NOTE: seeding must be done inside the process, not outside for ddp.
     seed_all(0, seed_torch=True)
 
-    init_env(cfg=InitEnvArgs())
+    global_rank = calculate_global_rank(
+        local_rank=local_rank,
+        node_rank=args.node_rank,
+        num_gpus_per_node=args.num_gpus_per_node,
+    )
 
-    cfg = InitProcessGroupArgs(rank=rank, world_size=world_size)
+    logger = configure_logger(rank=global_rank)  # unique rank across all nodes
 
-    logger = configure_logger(rank=rank)
+    init_env(init_env_args)
 
-    init_process(cfg, node_rank, logger)
+    init_process_group_args = InitProcessGroupArgs(
+        rank=global_rank,  # not local_rank
+        world_size=args.world_size,
+        backend=args.backend,
+        init_method=args.init_method,
+    )
+    dist_info: DistributedInfo = init_process(
+        args=args, init_process_group_args=init_process_group_args, logger=logger
+    )
 
     dataset, model, optimizer = load_train_objs()
     distributed_sampler_config = DistributedSamplerConfig(
-        num_replicas=world_size,
-        rank=rank,
+        num_replicas=args.world_size,
+        rank=global_rank,  # this should be global rank
         shuffle=True,
         seed=0,
         drop_last=True,
@@ -130,7 +154,7 @@ def main(
         dataset=dataset, **asdict(distributed_sampler_config)
     )
     dataloader_config = DataLoaderConfig(
-        batch_size=batch_size,
+        batch_size=args.batch_size,
         num_workers=0,
         pin_memory=True,
         shuffle=False,
@@ -138,42 +162,91 @@ def main(
     )
     train_data = prepare_dataloader(dataset, cfg=dataloader_config)
 
-    trainer = Trainer(model, train_data, optimizer, rank, save_every, logger)
-    trainer.train(total_epochs)
+    # here local rank because "we are splitting trainer across gpus"
+    trainer = Trainer(model, train_data, optimizer, local_rank, args.save_every, logger)
+    trainer.train(args.total_epochs)
     destroy_process_group()
 
 
-if __name__ == "__main__":
-    import argparse
+def parse_args() -> argparse.Namespace:
+    """
+    Parses the input arguments for the distributed training job.
 
+    Returns
+    -------
+    argparse.Namespace: Parsed arguments.
+    """
+    # TODO: use hydra to parse arguments
     parser = argparse.ArgumentParser(description="simple distributed training job")
+
     parser.add_argument(
-        "total_epochs", type=int, help="Total epochs to train the model"
+        "--node_rank", default=-1, type=int, help="Node rank for multi-node training"
     )
-    parser.add_argument("save_every", type=int, help="How often to save a snapshot")
+    parser.add_argument("--num_nodes", default=1, type=int, help="Number of nodes")
+    parser.add_argument(
+        "--num_gpus_per_node", default=4, type=int, help="Number of GPUs"
+    )
+    # FIXME: do some assert check to ensure num gpus per node is indeed the same programatically
+
+    parser.add_argument(
+        "--world_size", default=-1, type=int, help="Total number of GPUs"
+    )
+
+    # InitProcessGroupArgs
+    # NOTE: rank and world_size can be inferred from node_rank and world_size,
+    # so there is no need to specify them. Furthermore, it is difficult to
+    # pre-define rank.
+    parser.add_argument("--backend", default="nccl", type=str, help="Backend to use")
+    parser.add_argument("--init_method", default="env://", type=str, help="Init method")
+
+    # InitEnvArgs
+    parser.add_argument(
+        "--master_addr",
+        default="localhost",
+        type=str,
+        help="Master address for distributed job. See InitEnvArgs for more details.",
+    )
+    parser.add_argument(
+        "--master_port",
+        default="12356",
+        type=str,
+        help="Master port for distributed job. See InitEnvArgs for more details.",
+    )
+
+    # Trainer
+    parser.add_argument(
+        "--total_epochs", default=50, type=int, help="Total epochs to train the model"
+    )
+    parser.add_argument(
+        "--save_every", default=10, type=int, help="How often to save a snapshot"
+    )
     parser.add_argument(
         "--batch_size",
         default=32,
         type=int,
         help="Input batch size on each device (default: 32)",
     )
-    parser.add_argument(
-        "--node_rank", default=0, type=int, help="Node rank for multi-node training"
-    )
+    return parser.parse_args()
 
-    args = parser.parse_args()
+
+if __name__ == "__main__":
+    args = parse_args()
+    # TODO: technically here we use hydra to parse to dataclass or pydantic, but
+    # argparse is used for simplicity.
+    init_env_args = InitEnvArgs(
+        master_addr=args.master_addr, master_port=args.master_port
+    )
 
     # [GPU0] Epoch 0 | Batchsize: 32 | Steps: 16 because 32x16x4 gpus  = 2048 total data
     # impt below
-    world_size = torch.cuda.device_count()
+    # world_size = torch.cuda.device_count()
     mp.spawn(
         main,
-        args=(
-            world_size,
-            args.node_rank,
-            args.save_every,
-            args.total_epochs,
-            args.batch_size,
-        ),
-        nprocs=world_size,
+        # see args=(fn, i, args, error_queue) in start_processes where i is the
+        # local rank derived from nprocs
+        args=(args, init_env_args),
+        nprocs=args.num_gpus_per_node,
+        join=True,
+        daemon=False,
+        start_method="spawn",
     )

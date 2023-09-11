@@ -40,9 +40,12 @@ Assume you have 2 nodes:
 
 On Node 0:
 
-export PYTHONPATH=$PYTHONPATH:$(pwd) && \
 export MASTER_ADDR=$(hostname -i) && \
-export MASTER_PORT=$(comm -23 <(seq 1 65535 | sort) <(ss -Htan | awk '{print $4}' | cut -d':' -f2 | sort -u) | shuf | head -n 1) && \
+export MASTER_PORT=$(comm -23 <(seq 1 65535 | sort) <(ss -Htan | awk '{print $4}' | cut -d':' -f2 | sort -u) | shuf | head -n 1)
+echo $MASTER_ADDR
+echo $MASTER_PORT
+
+export PYTHONPATH=$PYTHONPATH:$(pwd) && \
 export NODE_RANK=0 && \
 export NUM_NODES=2 && \
 export NUM_GPUS_PER_NODE=2 && \
@@ -60,8 +63,8 @@ python basic.py \
 On Node 1:
 
 export PYTHONPATH=$PYTHONPATH:$(pwd) && \
-export MASTER_ADDR=$(hostname -i) && \
-export MASTER_PORT=$(comm -23 <(seq 1 65535 | sort) <(ss -Htan | awk '{print $4}' | cut -d':' -f2 | sort -u) | shuf | head -n 1) && \
+export MASTER_ADDR=THE_IP_ADDRESS_DEFINED_IN_NODE_0 && \
+export MASTER_PORT=THE_MASTER_PORT_DEFINED_IN_NODE_0 && \
 export NODE_RANK=1 && \
 export NUM_NODES=2 && \
 export NUM_GPUS_PER_NODE=2 && \
@@ -83,14 +86,19 @@ import torch.multiprocessing as mp
 
 from config.base import DistributedInfo, InitEnvArgs, InitProcessGroupArgs
 from core._init import init_env, init_process
-from utils.common_utils import configure_logger
+from utils.common_utils import calculate_global_rank, configure_logger
 
 
 def main(local_rank: int, args: argparse.Namespace, init_env_args: InitEnvArgs) -> None:
     """Main driver function."""
     assert args.world_size == args.num_nodes * args.num_gpus_per_node
 
-    global_rank = local_rank + args.node_rank * args.num_gpus_per_node
+    global_rank = calculate_global_rank(
+        local_rank=local_rank,
+        node_rank=args.node_rank,
+        num_gpus_per_node=args.num_gpus_per_node,
+    )
+
     logger = configure_logger(rank=global_rank)  # unique rank across all nodes
 
     logger.info(
@@ -120,7 +128,12 @@ def main_without_world_size_in_init_process(
     """Main driver function."""
     assert args.world_size == args.num_nodes * args.num_gpus_per_node
 
-    global_rank = local_rank + args.node_rank * args.num_gpus_per_node
+    global_rank = calculate_global_rank(
+        local_rank=local_rank,
+        node_rank=args.node_rank,
+        num_gpus_per_node=args.num_gpus_per_node,
+    )
+
     logger = configure_logger(rank=global_rank)  # unique rank across all nodes
 
     logger.info(
