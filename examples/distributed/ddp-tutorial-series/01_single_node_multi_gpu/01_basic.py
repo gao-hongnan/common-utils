@@ -38,16 +38,20 @@ from utils.common_utils import configure_logger, display_dist_info, init_env
 
 
 def init_process(
-    cfg: InitProcessGroupArgs,
-    node_rank: int,
+    args: argparse.Namespace,
+    init_process_group_args: InitProcessGroupArgs,
     logger: logging.Logger,
     func: Optional[Callable] = None,
 ) -> DistributedInfo:
     """Initialize the distributed environment via init_process_group."""
 
-    dist.init_process_group(**asdict(cfg))
+    dist.init_process_group(**asdict(init_process_group_args))
 
-    dist_info = DistributedInfo(node_rank=node_rank)
+    dist_info = DistributedInfo(
+        node_rank=args.node_rank,
+        num_nodes=args.num_nodes,
+        num_gpus_per_node=args.num_gpus_per_node,
+    )
 
     logger.info(
         f"Initialized process group: Rank {dist_info.global_rank} "
@@ -59,7 +63,7 @@ def init_process(
     display_dist_info(dist_info=dist_info, format="table", logger=logger)
 
     if func is not None:
-        func(cfg.rank, cfg.world_size)
+        func(init_process_group_args.rank, init_process_group_args.world_size)
     return dist_info
 
 
@@ -83,7 +87,7 @@ def main(local_rank: int, args: argparse.Namespace, init_env_args: InitEnvArgs) 
     )
     logger.info(f"Process group arguments: {str(init_process_group_args)}")
     dist_info: DistributedInfo = init_process(
-        init_process_group_args, args.node_rank, logger=logger
+        args=args, init_process_group_args=init_process_group_args, logger=logger
     )
     torch.cuda.set_device(local_rank)
 
@@ -113,7 +117,7 @@ def main_without_world_size_in_init_process(
     )
     logger.info(f"Process group arguments: {str(init_process_group_args)}")
     dist_info: DistributedInfo = init_process(
-        init_process_group_args, args.node_rank, logger=logger
+        args=args, init_process_group_args=init_process_group_args, logger=logger
     )
     torch.cuda.set_device(local_rank)
 
@@ -132,6 +136,9 @@ def parse_args() -> argparse.Namespace:
     # TODO: use hydra to parse arguments
     parser = argparse.ArgumentParser(description="simple distributed training job")
 
+    parser.add_argument(
+        "--node_rank", default=-1, type=int, help="Node rank for multi-node training"
+    )
     parser.add_argument("--num_nodes", default=1, type=int, help="Number of nodes")
     parser.add_argument(
         "--num_gpus_per_node", default=4, type=int, help="Number of GPUs"
@@ -140,9 +147,6 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument(
         "--world_size", default=-1, type=int, help="Total number of GPUs"
-    )
-    parser.add_argument(
-        "--node_rank", default=-1, type=int, help="Node rank for multi-node training"
     )
 
     # InitProcessGroupArgs

@@ -126,7 +126,7 @@ class DistributedInfo:
 
     node_rank: int = field(default=MISSING, metadata={"help": "Rank of the node."})
     num_nodes: int = field(default=MISSING, metadata={"help": "Number of nodes."})
-    num_processes_per_node: int = field(
+    num_gpus_per_node: int = field(
         default=MISSING,
         metadata={
             "help": "Number of processes per node."
