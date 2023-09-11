@@ -1,6 +1,6 @@
 # Single Node Multi GPU
 
-## 01_basic (no_world_size_in_init_process true vs false)
+## basic (no_world_size_in_init_process true vs false)
 
 We pry open the basics without using `torchrun` or `torch.distributed.launch`
 and on a single node with multiple GPUs.

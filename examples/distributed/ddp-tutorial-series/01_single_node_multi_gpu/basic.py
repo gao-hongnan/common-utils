@@ -1,9 +1,13 @@
 """
 qsub -I -l select=1:ngpus=4 -P <project_name> -l walltime=24:00:00 -q <queue_name>
 module load cuda/<cuda_version> or module load cuda for latest version
-cd examples/distributed/ddp-tutorial-series && \
+
+cd examples/distributed/ddp-tutorial-series
+
 export PYTHONPATH=$PYTHONPATH:$(pwd) && \
-python 01_single_node_multi_gpu/01_basic.py \
+export MASTER_ADDR=$(hostname -i) && \
+export MASTER_PORT=$(comm -23 <(seq 1 65535 | sort) <(ss -Htan | awk '{print $4}' | cut -d':' -f2 | sort -u) | shuf | head -n 1) && \
+python 01_single_node_multi_gpu/basic.py \
     --node_rank 0 \
     --num_nodes 1 \
     --num_gpus_per_node 4 \
@@ -11,18 +15,22 @@ python 01_single_node_multi_gpu/01_basic.py \
     --backend "nccl" \
     --init_method "env://" \
     --master_addr "localhost" \
-    --master_port "12356"
+    --master_port $MASTER_PORT
 
 and compare with:
-python 01_single_node_multi_gpu/01_basic.py \
+
+export PYTHONPATH=$PYTHONPATH:$(pwd) && \
+export MASTER_ADDR=$(hostname -i) && \
+export MASTER_PORT=$(comm -23 <(seq 1 65535 | sort) <(ss -Htan | awk '{print $4}' | cut -d':' -f2 | sort -u) | shuf | head -n 1) && \
+python 01_single_node_multi_gpu/basic.py \
+    --node_rank 0 \
     --num_nodes 1 \
     --num_gpus_per_node 4 \
     --world_size 4 \
-    --node_rank 0 \
     --backend "nccl" \
     --init_method "env://" \
     --master_addr "localhost" \
-    --master_port "12356" \
+    --master_port $MASTER_PORT \
     --no_world_size_in_init_process
 """
 import argparse
