@@ -1,9 +1,10 @@
-from torch.utils.data import Dataset, DataLoader
+from dataclasses import asdict
+from typing import Tuple
 
 import torch
-from typing import Tuple
+from torch.utils.data import DataLoader, Dataset
+
 from config.base import DataLoaderConfig, DistributedSamplerConfig
-from dataclasses import asdict
 
 
 class ToyDataset(Dataset):

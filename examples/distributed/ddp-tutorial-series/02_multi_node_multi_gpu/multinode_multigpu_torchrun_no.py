@@ -44,6 +44,11 @@ import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
 import torch.nn.functional as F
+from torch.distributed import destroy_process_group, init_process_group
+from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.utils.data import DataLoader, Dataset
+from torch.utils.data.distributed import DistributedSampler
+
 from config.base import (
     DataLoaderConfig,
     DistributedInfo,
@@ -51,10 +56,6 @@ from config.base import (
     InitEnvArgs,
     InitProcessGroupArgs,
 )
-from torch.distributed import destroy_process_group, init_process_group
-from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.utils.data import DataLoader, Dataset
-from torch.utils.data.distributed import DistributedSampler
 from utils.common_utils import configure_logger, display_dist_info, init_env
 from utils.data_utils import ToyDataset, prepare_dataloader
 

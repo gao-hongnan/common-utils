@@ -77,45 +77,13 @@ python basic.py \
     --master_port $MASTER_PORT
 """
 import argparse
-import logging
-from dataclasses import asdict
-from typing import Callable, Optional
 
 import torch
-import torch.distributed as dist
 import torch.multiprocessing as mp
+
 from config.base import DistributedInfo, InitEnvArgs, InitProcessGroupArgs
-from utils.common_utils import configure_logger, display_dist_info, init_env
-
-
-def init_process(
-    args: argparse.Namespace,
-    init_process_group_args: InitProcessGroupArgs,
-    logger: logging.Logger,
-    func: Optional[Callable] = None,
-) -> DistributedInfo:
-    """Initialize the distributed environment via init_process_group."""
-
-    dist.init_process_group(**asdict(init_process_group_args))
-
-    dist_info = DistributedInfo(
-        node_rank=args.node_rank,
-        num_nodes=args.num_nodes,
-        num_gpus_per_node=args.num_gpus_per_node,
-    )
-
-    logger.info(
-        f"Initialized process group: Rank {dist_info.global_rank} "
-        f"out of {dist_info.world_size}."
-    )
-
-    logger.info(f"Distributed info: {dist_info}")
-
-    display_dist_info(dist_info=dist_info, format="table", logger=logger)
-
-    if func is not None:
-        func(init_process_group_args.rank, init_process_group_args.world_size)
-    return dist_info
+from core._init import init_env, init_process
+from utils.common_utils import configure_logger
 
 
 def main(local_rank: int, args: argparse.Namespace, init_env_args: InitEnvArgs) -> None:

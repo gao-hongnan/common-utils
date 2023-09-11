@@ -1,47 +1,26 @@
 """python 01_single_node_multi_gpu/multigpu_torchrun_no.py 50 10 --node_rank 0"""
 import logging
-import os
 from dataclasses import asdict
-from typing import Callable, Dict, Optional, Tuple
+from typing import Optional
 
 import torch
-import torch.distributed as dist
 import torch.multiprocessing as mp
 import torch.nn.functional as F
-from config.base import DistributedInfo, InitEnvArgs, InitProcessGroupArgs
 from torch.distributed import destroy_process_group
 from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
+
+from config.base import (
+    DataLoaderConfig,
+    DistributedSamplerConfig,
+    InitEnvArgs,
+    InitProcessGroupArgs,
+)
+from core._init import init_env, init_process
+from core._seed import seed_all
+from utils.common_utils import configure_logger
 from utils.data_utils import ToyDataset, prepare_dataloader
-from config.base import DataLoaderConfig, DistributedSamplerConfig
-from utils.common_utils import configure_logger, display_dist_info, init_env, seed_all
-
-
-def init_process(
-    cfg: InitProcessGroupArgs,
-    node_rank: int,
-    logger: logging.Logger,
-    func: Optional[Callable] = None,
-) -> DistributedInfo:
-    """Initialize the distributed environment via init_process_group."""
-
-    dist.init_process_group(**asdict(cfg))
-
-    dist_info = DistributedInfo(node_rank=node_rank)
-
-    logger.info(
-        f"Initialized process group: Rank {dist_info.global_rank} "
-        f"out of {dist_info.world_size}."
-    )
-
-    logger.info(f"Distributed info: {dist_info}")
-
-    display_dist_info(dist_info=dist_info, format="table", logger=logger)
-
-    if func is not None:
-        func(cfg.rank, cfg.world_size)
-    return dist_info
 
 
 class Trainer:

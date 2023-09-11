@@ -1,28 +1,13 @@
 import logging
-import os
 import socket
 from dataclasses import asdict
 from typing import Dict, Optional, Union
 
 import torch.distributed as dist
-from config.base import DistributedInfo, InitEnvArgs
 from rich.logging import RichHandler
 from tabulate import tabulate
-import random
-import numpy as np
-import torch
 
-
-def init_env(cfg: InitEnvArgs) -> None:
-    """Initialize environment variables."""
-    # use __dict__ to get all the attributes of the dataclass
-    # if use asdict may not fetch new assigned attributes
-    # after the dataclass is instantiated.
-    cfg: Dict[str, str] = {**cfg.__dict__}
-
-    for key, value in cfg.items():
-        upper_key = key.upper()
-        os.environ[upper_key] = value
+from config.base import DistributedInfo
 
 
 def get_dist_info(rank: int, world_size: int) -> Dict[str, Union[int, str, bool]]:
@@ -115,30 +100,3 @@ def configure_logger(rank: int, print_to_console: bool = False) -> logging.Logge
         handlers=handlers,
     )
     return logging.getLogger(f"Process-{rank}")
-
-
-def seed_all(seed: Optional[int] = 1992, seed_torch: bool = True) -> int:
-    """
-    Seed all random number generators.
-
-    Parameters
-    ----------
-    seed : int, optional
-        Seed number to be used, by default 1992.
-    seed_torch : bool, optional
-        Whether to seed PyTorch or not, by default True.
-    """
-    # fmt: off
-    os.environ["PYTHONHASHSEED"] = str(seed)        # set PYTHONHASHSEED env var at fixed value
-    np.random.seed(seed)                            # numpy pseudo-random generator
-    random.seed(seed)                               # python's built-in pseudo-random generator
-
-    if seed_torch:
-        torch.manual_seed(seed)
-        torch.cuda.manual_seed_all(seed)
-        torch.cuda.manual_seed(seed)                # pytorch (both CPU and CUDA)
-        torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = False
-        torch.backends.cudnn.enabled = False
-    # fmt: on
-    return seed
