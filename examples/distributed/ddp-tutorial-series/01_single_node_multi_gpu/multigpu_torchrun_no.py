@@ -27,17 +27,13 @@ from torch.distributed import destroy_process_group
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
-from config.base import DistributedInfo, InitEnvArgs, InitProcessGroupArgs
 
-from config.base import (
-    DataLoaderConfig,
-    DistributedSamplerConfig,
-    InitEnvArgs,
-    InitProcessGroupArgs,
-)
+from config.base import (DataLoaderConfig, DistributedInfo,
+                         DistributedSamplerConfig, InitEnvArgs,
+                         InitProcessGroupArgs)
 from core._init import init_env, init_process
 from core._seed import seed_all
-from utils.common_utils import configure_logger, calculate_global_rank
+from utils.common_utils import calculate_global_rank, configure_logger
 from utils.data_utils import ToyDataset, prepare_dataloader
 
 
@@ -94,7 +90,6 @@ class Trainer:
         self.logger.info(
             f"[GPU{self.gpu_id}] Epoch {epoch} | Average Loss: {avg_loss:.8f}"
         )
-
 
     def _save_checkpoint(self, epoch):
         ckp = self.model.module.state_dict()  # impt
@@ -242,8 +237,8 @@ if __name__ == "__main__":
     # world_size = torch.cuda.device_count()
     mp.spawn(
         main,
-        # see args=(fn, i, args, error_queue) in start_processes where i is the
-        # local rank derived from nprocs
+        # see args=(fn, i, args, error_queue) in start_processes
+        # where i is the local rank which is derived from nprocs
         args=(args, init_env_args),
         nprocs=args.num_gpus_per_node,
         join=True,

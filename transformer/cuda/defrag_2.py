@@ -1,8 +1,8 @@
-import torch
 import os
-import torch
 from typing import Dict, Optional
+
 import pandas as pd
+import torch
 
 
 def tensor_with_vram(vram_MB, dtype=torch.float32, device="cuda"):

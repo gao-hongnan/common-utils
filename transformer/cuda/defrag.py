@@ -1,16 +1,15 @@
-import torch
-import random
-
+import gc
 import os
+import random
+from enum import IntEnum
+from typing import Dict, List, Optional, Union
+
+import numpy as np
+import pandas as pd
+import torch
 import torch.nn as nn
 import torch.optim as optim
-from typing import Dict, Optional, Union, List
-import pandas as pd
-import numpy as np
-import gc
 from rich.pretty import pprint
-
-from enum import IntEnum
 
 
 class MemoryUnits(IntEnum):

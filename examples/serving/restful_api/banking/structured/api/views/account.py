@@ -3,10 +3,10 @@ from typing import Dict, List
 from api.database.models.account import Account
 from api.database.session import get_db
 from api.schemas.account import (
-    AccountCreateRequest,
-    AccountUpdateRequest,
     AccountCreateOrUpdateResponse,
+    AccountCreateRequest,
     AccountResponse,
+    AccountUpdateRequest,
 )
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session

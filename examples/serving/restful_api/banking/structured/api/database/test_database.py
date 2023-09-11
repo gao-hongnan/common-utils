@@ -1,16 +1,11 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
-from faker import Faker
-from sqlalchemy import create_engine
-
-from sqlalchemy.orm import sessionmaker
-from rich.pretty import pprint
 from api.conf.base import SQLALCHEMY_DATABASE_URL
-from api.database.session import SessionLocal
 from api.database.models.account import Account
 from api.database.models.transaction import Transaction
-
+from api.database.session import SessionLocal
+from faker import Faker
+from rich.pretty import pprint
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 session = SessionLocal()
 

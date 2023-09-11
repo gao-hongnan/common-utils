@@ -218,8 +218,8 @@ if __name__ == "__main__":
     if not args.no_world_size_in_init_process:
         mp.spawn(
             main,
-            # see args=(fn, i, args, error_queue) in start_processes where i is the
-            # local rank derived from nprocs
+            # see args=(fn, i, args, error_queue) in start_processes
+            # where i is the local rank which is derived from nprocs
             args=(args, init_env_args),
             nprocs=args.num_gpus_per_node,
             join=True,

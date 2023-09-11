@@ -1,6 +1,6 @@
 import argparse
 import math
-from typing import Union, List, Optional
+from typing import List, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np

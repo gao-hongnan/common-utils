@@ -1,12 +1,10 @@
+from typing import Tuple
+
+import matplotlib.pyplot as plt
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import matplotlib.pyplot as plt
-import numpy as np
-
-import numpy as np
-import torch
-from typing import Tuple
 
 
 def generate_toy_data(seed: int, n_data: int) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -57,10 +55,11 @@ plt.colorbar(label='Label')
 plt.grid(True)
 plt.show()
 
+import matplotlib.pyplot as plt
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim.lr_scheduler import CosineAnnealingLR
-import matplotlib.pyplot as plt
+
 
 class SimpleModel(nn.Module):
     """A simple linear model for binary classification."""
@@ -124,6 +123,7 @@ plt.title('Training Loss')
 plt.show()
 
 from matplotlib import cm
+
 
 def plot_loss_contour(model: nn.Module, x_data: torch.Tensor, y_data: torch.Tensor,
                       xlim: Tuple[float, float], ylim: Tuple[float, float], n_points: int = 100):

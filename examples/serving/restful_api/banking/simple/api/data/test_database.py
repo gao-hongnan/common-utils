@@ -1,5 +1,3 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 import os
 import random
 from pathlib import Path
@@ -8,10 +6,10 @@ from api.models import Base
 from api.models.account import Account
 from api.models.transaction import Transaction
 from faker import Faker
+from rich.pretty import pprint
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
-from rich.pretty import pprint
 
 # Get the directory of the current script
 CURRENT_DIR = Path(os.path.dirname(os.path.abspath(__file__)))

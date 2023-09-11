@@ -10,7 +10,6 @@ import streamlit as st
 from sklearn.base import BaseEstimator
 from sklearn.preprocessing import LabelEncoder
 
-
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
 

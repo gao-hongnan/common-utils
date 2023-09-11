@@ -1,7 +1,7 @@
 import subprocess
 from typing import List, Optional, Tuple
 
-from common_utils.cloud.aws.base import AWSCommandBuilder, AWSManagerBase, LOGGER
+from common_utils.cloud.aws.base import LOGGER, AWSCommandBuilder, AWSManagerBase
 
 
 class EC2InstanceManager(AWSManagerBase):

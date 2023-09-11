@@ -25,6 +25,7 @@ from faker import Faker
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
+
 from common_utils.core.common import seed_all
 
 seed_all(42, seed_torch=False)
