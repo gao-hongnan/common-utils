@@ -4,17 +4,19 @@ module load cuda/<cuda_version> or module load cuda for latest version
 
 cd examples/distributed/ddp-tutorial-series
 
+## Single Node Multi GPU
+
 export PYTHONPATH=$PYTHONPATH:$(pwd) && \
 export MASTER_ADDR=$(hostname -i) && \
 export MASTER_PORT=$(comm -23 <(seq 1 65535 | sort) <(ss -Htan | awk '{print $4}' | cut -d':' -f2 | sort -u) | shuf | head -n 1) && \
-python 01_single_node_multi_gpu/basic.py \
+python basic.py \
     --node_rank 0 \
     --num_nodes 1 \
     --num_gpus_per_node 4 \
     --world_size 4 \
     --backend "nccl" \
     --init_method "env://" \
-    --master_addr "localhost" \
+    --master_addr $MASTER_ADDR \
     --master_port $MASTER_PORT
 
 and compare with:
@@ -22,16 +24,57 @@ and compare with:
 export PYTHONPATH=$PYTHONPATH:$(pwd) && \
 export MASTER_ADDR=$(hostname -i) && \
 export MASTER_PORT=$(comm -23 <(seq 1 65535 | sort) <(ss -Htan | awk '{print $4}' | cut -d':' -f2 | sort -u) | shuf | head -n 1) && \
-python 01_single_node_multi_gpu/basic.py \
+python basic.py \
     --node_rank 0 \
     --num_nodes 1 \
     --num_gpus_per_node 4 \
     --world_size 4 \
     --backend "nccl" \
     --init_method "env://" \
-    --master_addr "localhost" \
+    --master_addr $MASTER_ADDR \
     --master_port $MASTER_PORT \
     --no_world_size_in_init_process
+
+## Multi Node Multi GPU
+Assume you have 2 nodes:
+
+On Node 0:
+
+export PYTHONPATH=$PYTHONPATH:$(pwd) && \
+export MASTER_ADDR=$(hostname -i) && \
+export MASTER_PORT=$(comm -23 <(seq 1 65535 | sort) <(ss -Htan | awk '{print $4}' | cut -d':' -f2 | sort -u) | shuf | head -n 1) && \
+export NODE_RANK=0 && \
+export NUM_NODES=2 && \
+export NUM_GPUS_PER_NODE=2 && \
+export WORLD_SIZE=4 && \
+python basic.py \
+    --node_rank $NODE_RANK \
+    --num_nodes $NUM_NODES \
+    --num_gpus_per_node $NUM_GPUS_PER_NODE \
+    --world_size $WORLD_SIZE \
+    --backend "nccl" \
+    --init_method "env://" \
+    --master_addr $MASTER_ADDR \
+    --master_port $MASTER_PORT
+
+On Node 1:
+
+export PYTHONPATH=$PYTHONPATH:$(pwd) && \
+export MASTER_ADDR=$(hostname -i) && \
+export MASTER_PORT=$(comm -23 <(seq 1 65535 | sort) <(ss -Htan | awk '{print $4}' | cut -d':' -f2 | sort -u) | shuf | head -n 1) && \
+export NODE_RANK=1 && \
+export NUM_NODES=2 && \
+export NUM_GPUS_PER_NODE=2 && \
+export WORLD_SIZE=4 && \
+python basic.py \
+    --node_rank $NODE_RANK \
+    --num_nodes $NUM_NODES \
+    --num_gpus_per_node $NUM_GPUS_PER_NODE \
+    --world_size $WORLD_SIZE \
+    --backend "nccl" \
+    --init_method "env://" \
+    --master_addr $MASTER_ADDR \
+    --master_port $MASTER_PORT
 """
 import argparse
 import logging
