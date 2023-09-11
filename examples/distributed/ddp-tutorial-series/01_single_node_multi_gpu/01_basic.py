@@ -4,10 +4,10 @@ module load cuda/<cuda_version> or module load cuda for latest version
 cd examples/distributed/ddp-tutorial-series && \
 export PYTHONPATH=$PYTHONPATH:$(pwd) && \
 python 01_single_node_multi_gpu/01_basic.py \
+    --node_rank 0 \
     --num_nodes 1 \
     --num_gpus_per_node 4 \
     --world_size 4 \
-    --node_rank 0 \
     --backend "nccl" \
     --init_method "env://" \
     --master_addr "localhost" \

@@ -181,8 +181,8 @@ class DistributedInfo:
         # FIXME: local rank won't work if 1 process spans across multiple gpus.
         # FIXME: if for whatever reason num_gpus_in_curr_node_rank is not the
         # same as num_processes_per_node, then local_rank will be wrong.
-        if self.num_processes_per_node != self.num_gpus_in_curr_node_rank:
-            self.local_rank = self.global_rank % self.num_processes_per_node
+        if self.num_gpus_per_node != self.num_gpus_in_curr_node_rank:
+            self.local_rank = self.global_rank % self.num_gpus_per_node
         else:
             self.local_rank = self.global_rank % self.num_gpus_in_curr_node_rank
 
