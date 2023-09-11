@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field, fields, MISSING
 from typing import Literal, Iterable, Union
 import socket
 
@@ -124,7 +124,21 @@ class InitProcessGroupArgs:
 class DistributedInfo:
     """Information about the distributed environment."""
 
-    node_rank: int = field(default=0, metadata={"help": "Rank of the node."})
+    node_rank: int = field(default=MISSING, metadata={"help": "Rank of the node."})
+    num_nodes: int = field(default=MISSING, metadata={"help": "Number of nodes."})
+    num_processes_per_node: int = field(
+        default=MISSING,
+        metadata={
+            "help": "Number of processes per node."
+            "Usually this is the number of GPUs per node."
+            "Typically, each node has the same number of GPUs."
+        },
+    )
+
+    num_gpus_in_curr_node_rank: int = field(
+        default_factory=torch.cuda.device_count,
+        metadata={"help": "Number of GPUs available on the current node."},
+    )
 
     is_dist_available: bool = field(
         default_factory=dist.is_available,
@@ -137,7 +151,9 @@ class DistributedInfo:
     global_rank: int = field(
         default_factory=dist.get_rank,
         metadata={
-            "help": "Global rank of the process in the distributed setup, can also be calculated via node_rank * num_gpus_in_curr_node_rank + local_rank where node_rank index starts from 0."
+            "help": "Global rank of the process in the distributed setup, "
+            " can also be calculated via node_rank * num_gpus_in_curr_node_rank + local_rank "
+            "where node_rank index starts from 0."
         },
     )
     world_size: int = field(
@@ -146,10 +162,7 @@ class DistributedInfo:
             "help": "Total number of processes participating in the distributed setup."
         },
     )
-    num_gpus_in_curr_node_rank: int = field(
-        default_factory=torch.cuda.device_count,
-        metadata={"help": "Number of GPUs available on the current node."},
-    )
+
     local_rank: int = field(
         init=False,
         metadata={
@@ -166,7 +179,13 @@ class DistributedInfo:
 
     def __post_init__(self) -> None:
         # FIXME: local rank won't work if 1 process spans across multiple gpus.
-        self.local_rank = self.global_rank % self.num_gpus_in_curr_node_rank
+        # FIXME: if for whatever reason num_gpus_in_curr_node_rank is not the
+        # same as num_processes_per_node, then local_rank will be wrong.
+        if self.num_processes_per_node != self.num_gpus_in_curr_node_rank:
+            self.local_rank = self.global_rank % self.num_processes_per_node
+        else:
+            self.local_rank = self.global_rank % self.num_gpus_in_curr_node_rank
+
         self.device = torch.device(f"cuda:{self.local_rank}")
 
     @property

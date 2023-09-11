@@ -165,7 +165,6 @@ def main(
 
 
 if __name__ == "__main__":
-
     import argparse
 
     parser = argparse.ArgumentParser(description="simple distributed training job")

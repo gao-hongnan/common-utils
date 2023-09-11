@@ -1,3 +1,40 @@
+"""
+1. hostname to get current node name.
+2. hostname -i to get current node ip. set this to MASTER_ADDR.
+3. MASTER_PORT=$(comm -23 <(seq 49152 65535 | sort) <(ss -Htan | awk '{print $4}' | cut -d':' -f2 | sort -u) | shuf | head -n 1)
+2. cat $PBS_NODEFILE to get all nodes.
+3. ssh into the other nodes that are not the master node (step 1.)
+
+abstract
+torchrun \
+--nproc_per_node=$NUM_GPUS_PER_NODE \
+--nnodes=$NUM_NODES \
+--node_rank=$NODE_RANK \
+--rdzv_id=$JOB_ID \
+--rdzv_backend=c10d \
+--rdzv_endpoint=$MASTER_ADDR:$MASTER_PORT \
+--max_restarts=3 \
+
+torchrun \
+--nproc_per_node=2 \
+--nnodes=2 \
+--node_rank=0 \
+--rdzv_id=123 \
+--rdzv_backend=c10d \
+--rdzv_endpoint=10.168.0.30:12356 \
+--max_restarts=3 \
+multinode.py 50 10
+
+torchrun \
+--nproc_per_node=2 \
+--nnodes=2 \
+--node_rank=1 \
+--rdzv_id=123 \
+--rdzv_backend=c10d \
+--rdzv_endpoint=10.168.0.30:12356 \
+--max_restarts=3 \
+multinode.py 50 10
+"""
 import logging
 import os
 from dataclasses import asdict

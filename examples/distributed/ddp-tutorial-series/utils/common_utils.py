@@ -12,6 +12,7 @@ import random
 import numpy as np
 import torch
 
+
 def init_env(cfg: InitEnvArgs) -> None:
     """Initialize environment variables."""
     # use __dict__ to get all the attributes of the dataclass
@@ -114,6 +115,7 @@ def configure_logger(rank: int, print_to_console: bool = False) -> logging.Logge
         handlers=handlers,
     )
     return logging.getLogger(f"Process-{rank}")
+
 
 def seed_all(seed: Optional[int] = 1992, seed_torch: bool = True) -> int:
     """
