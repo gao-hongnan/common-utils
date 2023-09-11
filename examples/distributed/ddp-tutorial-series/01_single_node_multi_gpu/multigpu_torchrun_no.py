@@ -28,9 +28,13 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 
-from config.base import (DataLoaderConfig, DistributedInfo,
-                         DistributedSamplerConfig, InitEnvArgs,
-                         InitProcessGroupArgs)
+from config.base import (
+    DataLoaderConfig,
+    DistributedInfo,
+    DistributedSamplerConfig,
+    InitEnvArgs,
+    InitProcessGroupArgs,
+)
 from core._init import init_env, init_process
 from core._seed import seed_all
 from utils.common_utils import calculate_global_rank, configure_logger

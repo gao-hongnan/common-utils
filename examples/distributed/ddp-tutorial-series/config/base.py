@@ -8,6 +8,24 @@ from torch.utils.data import Sampler
 
 
 @dataclass(init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=False)
+class TrainerConfig:
+    """Configuration for trainer."""
+
+    max_epochs: int = field(
+        default=100, metadata={"help": "Number of epochs to train for."}
+    )
+    save_checkpoint_interval: int = field(
+        default=10, metadata={"help": "Save checkpoint every n epochs."}
+    )
+    batch_size: int = field(
+        default=32, metadata={"help": "Number of samples per batch."}
+    )
+    snapshot_path: str = field(
+        default=".", metadata={"help": "Path to save checkpoints."}
+    )
+
+
+@dataclass(init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=False)
 class DataLoaderConfig:
     """Configuration for data loader."""
 
@@ -30,6 +48,10 @@ class DataLoaderConfig:
         },
     )
 
+    drop_last: bool = field(
+        default=False, metadata={"help": "Drop the last incomplete batch."}
+    )
+
     sampler: Union[Sampler, Iterable, None] = field(
         default=None, metadata={"help": "Sampler."}
     )
@@ -39,8 +61,12 @@ class DataLoaderConfig:
 class DistributedSamplerConfig:
     """Configuration for distributed sampler."""
 
-    num_replicas: int
     rank: int
+
+    num_replicas: int = field(
+        default=MISSING,
+        metadata={"help": "Number of replicas which " "is the world_size."},
+    )
 
     shuffle: bool = field(
         default=False,

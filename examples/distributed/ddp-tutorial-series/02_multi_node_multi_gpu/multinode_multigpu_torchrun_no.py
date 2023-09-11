@@ -51,10 +51,15 @@ from torch.distributed import destroy_process_group
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
-
-from config.base import (DataLoaderConfig, DistributedInfo,
-                         DistributedSamplerConfig, InitEnvArgs,
-                         InitProcessGroupArgs)
+import functools
+from config.base import (
+    DataLoaderConfig,
+    DistributedInfo,
+    DistributedSamplerConfig,
+    InitEnvArgs,
+    InitProcessGroupArgs,
+    TrainerConfig,
+)
 from core._init import init_env, init_process
 from core._seed import seed_all
 from utils.common_utils import calculate_global_rank, configure_logger
@@ -71,7 +76,7 @@ class Trainer:
         model: torch.nn.Module,
         train_loader: DataLoader,
         optimizer: torch.optim.Optimizer,
-        args: argparse.Namespace,
+        trainer_config: TrainerConfig,
         dist_info: DistributedInfo,
         logger: Optional[logging.Logger] = None,
     ) -> None:
@@ -157,56 +162,63 @@ def load_train_objs():
 
 
 def main(
-    rank: int,
-    world_size: int,
-    node_rank: int,
-    nproc_per_node: int,
-    save_every: int,
-    total_epochs: int,
-    batch_size: int,
-    snapshot_path: str = "snapshot.pt",
-):
-    init_env(cfg=InitEnvArgs())
+    local_rank: int,
+    args: argparse.Namespace,
+    init_env_args: InitEnvArgs,
+    partial_dataloader_config: DataLoaderConfig,
+    partial_distributed_sampler_config: DistributedSamplerConfig,
+    trainer_config: TrainerConfig,
+) -> None:
+    assert args.world_size == args.num_nodes * args.num_gpus_per_node
 
-    cfg = InitProcessGroupArgs(rank=rank, world_size=world_size)
+    seed_all(seed=args.seed, seed_torch=True)
 
-    logger = configure_logger(rank=rank)
+    global_rank = calculate_global_rank(
+        local_rank=local_rank,
+        node_rank=args.node_rank,
+        num_gpus_per_node=args.num_gpus_per_node,
+    )
 
-    init_process(cfg, node_rank, logger)
+    logger = configure_logger(rank=global_rank)  # unique rank across all nodes
+
+    logger.info(
+        f"Initializing the following Environment variables: {str(init_env_args)}"
+    )
+    init_env(init_env_args)
+
+    init_process_group_args = InitProcessGroupArgs(
+        rank=global_rank,  # not local_rank
+        world_size=args.world_size,
+        backend=args.backend,
+        init_method=args.init_method,
+    )
+    logger.info(f"Process group arguments: {str(init_process_group_args)}")
+    dist_info: DistributedInfo = init_process(
+        args=args, init_process_group_args=init_process_group_args, logger=logger
+    )
+    logger.info(f"Distributed info: {str(dist_info)}")
+    torch.cuda.set_device(local_rank)
 
     train_dataset, model, optimizer = load_train_objs()
-    distributed_sampler_config = DistributedSamplerConfig(
-        num_replicas=world_size,
-        rank=rank,
-        shuffle=True,
-        seed=0,
-        drop_last=True,
-    )
+    distributed_sampler_config = partial_distributed_sampler_config(rank=global_rank)
     distributed_sampler = DistributedSampler(
         dataset=train_dataset, **asdict(distributed_sampler_config)
     )
-    dataloader_config = DataLoaderConfig(
-        batch_size=batch_size,
-        num_workers=0,
-        pin_memory=True,
-        shuffle=False,
-        sampler=distributed_sampler,
-    )
+
+    dataloader_config = partial_dataloader_config(sampler=distributed_sampler)
     train_loader = prepare_dataloader(train_dataset, cfg=dataloader_config)
 
-    global_rank = node_rank * nproc_per_node + rank
-    logger = configure_logger(rank=rank)
+    logger = configure_logger(rank=global_rank)  # unique rank across all nodes
+
     trainer = Trainer(
         model,
         train_loader,
         optimizer,
-        save_every,
-        snapshot_path,
-        logger,
-        local_rank=rank,
-        global_rank=global_rank,
+        trainer_config=trainer_config,
+        dist_info=dist_info,
+        logger=logger,
     )
-    trainer.train(total_epochs)
+    trainer.train(max_epochs=trainer_config.max_epochs)
     destroy_process_group()
 
 
@@ -255,12 +267,33 @@ def parse_args() -> argparse.Namespace:
         help="Master port for distributed job. See InitEnvArgs for more details.",
     )
 
-    # Trainer
+    # Seed
+    parser.add_argument("--seed", default=0, type=int, help="Seed for reproducibility")
+
+    # DataLoader
+    parser.add_argument("--num_workers", default=0, type=int, help="Number of workers")
+    parser.add_argument("--pin_memory", default=True, type=bool, help="Pin memory")
+    parser.add_argument("--shuffle", default=False, type=bool, help="Shuffle")
     parser.add_argument(
-        "--total_epochs", default=50, type=int, help="Total epochs to train the model"
+        "--drop_last", default=False, type=bool, help="Drop last batch if incomplete"
+    )
+
+    # DistributedSampler
+    parser.add_argument("--sampler_shuffle", default=True, type=bool, help="Shuffle")
+    parser.add_argument(
+        "--sampler_drop_last", default=True, type=bool, help="Drop last"
+    )
+
+    # Trainer
+
+    parser.add_argument(
+        "--max_epochs", default=50, type=int, help="Total epochs to train the model"
     )
     parser.add_argument(
-        "--save_every", default=10, type=int, help="How often to save a snapshot"
+        "--save_checkpoint_interval",
+        default=10,
+        type=int,
+        help="How often to save a snapshot",
     )
     parser.add_argument(
         "--batch_size",
@@ -278,15 +311,43 @@ if __name__ == "__main__":
     args = parse_args()
     # TODO: technically here we use hydra to parse to dataclass or pydantic, but
     # argparse is used for simplicity.
-    init_env_args = InitEnvArgs(
+    init_env_args: InitEnvArgs = InitEnvArgs(
         master_addr=args.master_addr, master_port=args.master_port
+    )
+    partial_dataloader_config: DataLoaderConfig = functools.partial(
+        DataLoaderConfig,
+        batch_size=args.batch_size,
+        num_workers=args.num_workers,
+        pin_memory=args.pin_memory,
+        shuffle=args.shuffle,
+        drop_last=args.drop_last,
+    )
+    partial_distributed_sampler_config: DistributedSamplerConfig = functools.partial(
+        DistributedSamplerConfig,
+        num_replicas=args.world_size,
+        shuffle=args.sampler_shuffle,
+        seed=args.seed,
+        drop_last=args.sampler_drop_last,
+    )
+
+    trainer_config: TrainerConfig = TrainerConfig(
+        max_epochs=args.max_epochs,
+        save_checkpoint_interval=args.save_checkpoint_interval,
+        batch_size=args.batch_size,
+        snapshot_path=args.snapshot_path,
     )
 
     mp.spawn(
         main,
         # see args=(fn, i, args, error_queue) in start_processes
         # where i is the local rank which is derived from nprocs
-        args=(args, init_env_args),
+        args=(
+            args,
+            init_env_args,
+            partial_dataloader_config,
+            partial_distributed_sampler_config,
+            trainer_config,
+        ),
         nprocs=args.num_gpus_per_node,
         join=True,
         daemon=False,
