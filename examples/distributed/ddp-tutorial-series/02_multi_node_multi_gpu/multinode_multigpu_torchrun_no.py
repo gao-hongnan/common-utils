@@ -63,6 +63,58 @@ python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
     --batch_size 32 \
     --snapshot_path "snapshot.pt"
 
+# On Node 0 Resume:
+
+export PYTHONPATH=$PYTHONPATH:$(pwd) && \
+export NODE_RANK=0 && \
+export NUM_NODES=2 && \
+export NUM_GPUS_PER_NODE=2 && \
+export WORLD_SIZE=4 && \
+python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
+    --node_rank $NODE_RANK \
+    --num_nodes $NUM_NODES \
+    --num_gpus_per_node $NUM_GPUS_PER_NODE \
+    --world_size $WORLD_SIZE \
+    --backend "nccl" \
+    --init_method "env://" \
+    --master_addr $MASTER_ADDR \
+    --master_port $MASTER_PORT \
+    --seed 0 \
+    --num_workers 0 \
+    --pin_memory \
+    --sampler_shuffle \
+    --max_epochs 50 \
+    --save_checkpoint_interval 10 \
+    --batch_size 32 \
+    --snapshot_path "snapshot.pt" \
+    --load_path "/common-utils/examples/distributed/ddp-tutorial-series/snapshot.pt"
+
+# On Node 1 Resume:
+
+export PYTHONPATH=$PYTHONPATH:$(pwd) && \
+export NODE_RANK=1 && \
+export NUM_NODES=2 && \
+export NUM_GPUS_PER_NODE=2 && \
+export WORLD_SIZE=4 && \
+python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
+    --node_rank $NODE_RANK \
+    --num_nodes $NUM_NODES \
+    --num_gpus_per_node $NUM_GPUS_PER_NODE \
+    --world_size $WORLD_SIZE \
+    --backend "nccl" \
+    --init_method "env://" \
+    --master_addr 10.168.0.3 \
+    --master_port 34397 \
+    --seed 0 \
+    --num_workers 0 \
+    --pin_memory \
+    --sampler_shuffle \
+    --max_epochs 50 \
+    --save_checkpoint_interval 10 \
+    --batch_size 32 \
+    --snapshot_path "snapshot.pt" \
+    --load_path "/common-utils/examples/distributed/ddp-tutorial-series/snapshot.pt"
+
 abstract
 torchrun \
 --nproc_per_node=$NUM_GPUS_PER_NODE \
@@ -136,6 +188,7 @@ class Trainer:
         "dist_info",
         "logger",
         "epochs_run",
+        "save_path",
     ]
     local_rank: int
     global_rank: int
@@ -146,6 +199,7 @@ class Trainer:
     dist_info: DistributedInfo
     logger: Optional[logging.Logger]
     epochs_run: int
+    save_path: str
 
     def __init__(
         self,
@@ -168,21 +222,44 @@ class Trainer:
         self.logger = logger
 
         self.epochs_run = 0
+        self.save_path = os.path.join(
+            self.trainer_config.run_id, self.trainer_config.snapshot_path
+        )
 
         if trainer_config.load_path is not None and os.path.exists(
             trainer_config.load_path
         ):
+            # NOTE: in DDP you would need to load the snapshot
+            # on every local rank, not just rank 0.
             logger.info(f"Loading snapshot from {trainer_config.load_path}")
             map_location = f"cuda:{self.local_rank}"
             self._load_snapshot(trainer_config.load_path, map_location=map_location)
 
         # NOTE: only load model to DDP after loading snapshot
-        # NOTE: this is because ???
+        # TODO: this is because in _load_snapshot we need to load the model
+        # state dict, which is not DDP. Alternatively, we can load
+        # snapshot["MODEL_STATE"].module in sync with the save of the snapshot.
         self.model = DDP(self.model, device_ids=[self.local_rank])
+
+    def _save_snapshot(self, epoch: int) -> None:
+        snapshot = {
+            "MODEL_STATE": self.model.module.state_dict(),
+            "OPTIMIZER_STATE": self.optimizer.state_dict(),
+            "EPOCHS_RUN": epoch,
+        }
+        torch.save(snapshot, self.save_path)
+
+        print(
+            f"Epoch {epoch} | Training snapshot saved at {self.trainer_config.snapshot_path}"
+        )
+        self.logger.info(
+            f"Epoch {epoch} | Training snapshot saved at {self.trainer_config.snapshot_path}"
+        )
 
     def _load_snapshot(self, snapshot_path: str, map_location: str) -> None:
         snapshot = torch.load(snapshot_path, map_location=map_location)
         self.model.load_state_dict(snapshot["MODEL_STATE"])
+        self.optimizer.load_state_dict(snapshot["OPTIMIZER_STATE"])
         self.epochs_run = snapshot["EPOCHS_RUN"]
         self.logger.info(f"Resuming training from snapshot at Epoch {self.epochs_run}")
 
@@ -222,17 +299,6 @@ class Trainer:
                 f"Batchsize: {batch_size} | Steps: {len(self.train_loader)} | "
                 f"Average Loss: {avg_loss:.4f}"
             )
-        )
-
-    def _save_snapshot(self, epoch: int) -> None:
-        snapshot = {
-            "MODEL_STATE": self.model.module.state_dict(),
-            "OPTIMIZER_STATE": self.optimizer.state_dict(),
-            "EPOCHS_RUN": epoch,
-        }
-        torch.save(snapshot, self.trainer_config.snapshot_path)
-        print(
-            f"Epoch {epoch} | Training snapshot saved at {self.trainer_config.snapshot_path}"
         )
 
     def train(self, max_epochs: int) -> None:

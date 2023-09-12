@@ -1,5 +1,37 @@
 # Multi Node Multi GPU
 
+## Loading Checkpoints in DDP
+
+**Background Context**:
+Distributed Data Parallel (DDP) in PyTorch works by creating multiple processes, with each process handling a subset of the data on one device (usually a GPU). Each process has its own model replica. For consistent results, it's crucial that all model replicas start with the same weights, whether they are initialized randomly or loaded from a checkpoint.
+
+**Step-by-step Thinking**:
+1. **Model Initialization in DDP**:
+
+   When using DDP, the typical process is to initialize the model in each process and then either:
+   - Broadcast the weights from one process (usually the one with rank 0) to all other processes, or
+   - Load a checkpoint in each process independently.
+
+2. **Loading Checkpoints**:
+
+   If you're loading a checkpoint:
+   - You need to ensure that each process loads the checkpoint independently. This is because each process has its own model replica and operates somewhat autonomously in DDP.
+   - You might think that loading a checkpoint on one GPU and then broadcasting the weights to others might work (and technically, it would). However, loading the checkpoint independently on each GPU can be more efficient and simpler.
+
+```
+
+        if trainer_config.load_path is not None and os.path.exists(
+            trainer_config.load_path
+        ):
+            # NOTE: in DDP you would need to load the snapshot
+            # on every local rank, not just rank 0.
+            logger.info(f"Loading snapshot from {trainer_config.load_path}")
+            map_location = f"cuda:{self.local_rank}"
+            self._load_snapshot(trainer_config.load_path, map_location=map_location)
+```
+
+In DDP, each process should load the snapshot for its own model replica. The reason is, as mentioned, each process in DDP handles a separate model replica, and for consistent results across processes, all replicas need to start with the same weights. By loading the snapshot on every local rank, you ensure each model replica starts with identical weights.
+
 ## Rendezvous vs Master?
 
 The `master_addr` and `master_port` are indeed used in distributed training for specifying where the initial communication (rendezvous) happens. This is especially true for the `static` rendezvous backend in PyTorch's distributed training.

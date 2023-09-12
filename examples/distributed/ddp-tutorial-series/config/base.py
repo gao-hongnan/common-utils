@@ -6,6 +6,7 @@ import torch
 import torch.distributed as dist
 from torch.utils.data import Sampler
 import os
+import datetime
 
 __all__ = [
     "TrainerConfig",
@@ -21,6 +22,10 @@ __all__ = [
 class TrainerConfig:
     """Configuration for trainer."""
 
+    run_id: str = field(
+        default_factory=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
+        metadata={"help": "Unique ID for the run as YYYY-MM-DD HH:MM:SS.ssssss."},
+    )
     max_epochs: int = field(
         default=100, metadata={"help": "Number of epochs to train for."}
     )
