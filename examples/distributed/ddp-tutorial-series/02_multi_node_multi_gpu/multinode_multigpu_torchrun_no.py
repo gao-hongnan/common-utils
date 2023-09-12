@@ -168,6 +168,8 @@ class Trainer:
 
         self.logger = logger
 
+        self.epochs_run = 0
+
         if os.path.exists(trainer_config.snapshot_path):
             print("Loading snapshot")
             self._load_snapshot(trainer_config.snapshot_path)
