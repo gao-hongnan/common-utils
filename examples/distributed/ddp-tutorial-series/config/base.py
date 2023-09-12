@@ -5,6 +5,16 @@ from typing import Iterable, Literal, Union
 import torch
 import torch.distributed as dist
 from torch.utils.data import Sampler
+import os
+
+__all__ = [
+    "TrainerConfig",
+    "DataLoaderConfig",
+    "DistributedSamplerConfig",
+    "InitEnvArgs",
+    "InitProcessGroupArgs",
+    "DistributedInfo",
+]
 
 
 @dataclass(init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=False)
@@ -211,6 +221,19 @@ class DistributedInfo:
             self.local_rank = self.global_rank % self.num_gpus_per_node
         else:
             self.local_rank = self.global_rank % self.num_gpus_in_curr_node_rank
+
+        if (
+            "LOCAL_RANK" in os.environ
+            and int(os.environ["LOCAL_RANK"]) != self.local_rank
+        ):
+            raise ValueError(
+                f"LOCAL_RANK in os.environ is {os.environ['LOCAL_RANK']} but local_rank is {self.local_rank}"
+            )
+
+        if "RANK" in os.environ and int(os.environ["RANK"]) != self.global_rank:
+            raise ValueError(
+                f"RANK in os.environ is {os.environ['RANK']} but global_rank is {self.global_rank}"
+            )
 
         self.device = torch.device(f"cuda:{self.local_rank}")
 

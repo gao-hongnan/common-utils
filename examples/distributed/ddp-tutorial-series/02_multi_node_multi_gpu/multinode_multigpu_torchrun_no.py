@@ -8,6 +8,58 @@ since it saves on the local rank of each node.
 2. cat $PBS_NODEFILE to get all nodes.
 3. ssh into the other nodes that are not the master node (step 1.)
 
+# On Node 0:
+
+export MASTER_ADDR=$(hostname -i) && \
+export MASTER_PORT=$(comm -23 <(seq 1 65535 | sort) <(ss -Htan | awk '{print $4}' | cut -d':' -f2 | sort -u) | shuf | head -n 1)
+echo $MASTER_ADDR
+echo $MASTER_PORT
+
+export PYTHONPATH=$PYTHONPATH:$(pwd) && \
+export NODE_RANK=0 && \
+export NUM_NODES=2 && \
+export NUM_GPUS_PER_NODE=2 && \
+export WORLD_SIZE=4 && \
+python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
+    --node_rank $NODE_RANK \
+    --num_nodes $NUM_NODES \
+    --num_gpus_per_node $NUM_GPUS_PER_NODE \
+    --world_size $WORLD_SIZE \
+    --backend "nccl" \
+    --init_method "env://" \
+    --master_addr $MASTER_ADDR \
+    --master_port $MASTER_PORT \
+    --seed 0 \
+    --num_workers 0 \
+    --pin_memory True \
+    --shuffle False \
+    --drop_last False \
+    --sampler_shuffle True \
+    --sampler_drop_last True \
+    --max_epochs 50 \
+    --save_checkpoint_interval 10 \
+    --batch_size 32 \
+    --snapshot_path "snapshot.pt"
+
+# On Node 1:
+
+export PYTHONPATH=$PYTHONPATH:$(pwd) && \
+export MASTER_ADDR=THE_IP_ADDRESS_DEFINED_IN_NODE_0 && \
+export MASTER_PORT=THE_MASTER_PORT_DEFINED_IN_NODE_0 && \
+export NODE_RANK=1 && \
+export NUM_NODES=2 && \
+export NUM_GPUS_PER_NODE=2 && \
+export WORLD_SIZE=4 && \
+python basic.py \
+    --node_rank $NODE_RANK \
+    --num_nodes $NUM_NODES \
+    --num_gpus_per_node $NUM_GPUS_PER_NODE \
+    --world_size $WORLD_SIZE \
+    --backend "nccl" \
+    --init_method "env://" \
+    --master_addr $MASTER_ADDR \
+    --master_port $MASTER_PORT
+
 abstract
 torchrun \
 --nproc_per_node=$NUM_GPUS_PER_NODE \
@@ -39,6 +91,7 @@ torchrun \
 multinode.py 50 10
 """
 import argparse
+import functools
 import logging
 import os
 from dataclasses import asdict
@@ -47,11 +100,6 @@ from typing import Optional
 import torch
 import torch.multiprocessing as mp
 import torch.nn.functional as F
-from torch.distributed import destroy_process_group
-from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.utils.data import DataLoader
-from torch.utils.data.distributed import DistributedSampler
-import functools
 from config.base import (
     DataLoaderConfig,
     DistributedInfo,
@@ -62,6 +110,10 @@ from config.base import (
 )
 from core._init import init_env, init_process
 from core._seed import seed_all
+from torch.distributed import destroy_process_group
+from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.utils.data import DataLoader
+from torch.utils.data.distributed import DistributedSampler
 from utils.common_utils import calculate_global_rank, configure_logger
 from utils.data_utils import ToyDataset, prepare_dataloader
 
@@ -71,30 +123,47 @@ from utils.data_utils import ToyDataset, prepare_dataloader
 
 
 class Trainer:
+    __slots__ = [
+        "local_rank",
+        "global_rank",
+        "model",
+        "optimizer",
+        "train_loader",
+        "dist_info",
+        "logger",
+        "epochs_run",
+    ]
+    local_rank: int
+    global_rank: int
+    model: torch.nn.Module
+    optimizer: torch.optim.Optimizer
+    train_loader: DataLoader
+    dist_info: DistributedInfo
+    logger: Optional[logging.Logger]
+    epochs_run: int
+
     def __init__(
         self,
         model: torch.nn.Module,
-        train_loader: DataLoader,
         optimizer: torch.optim.Optimizer,
+        train_loader: DataLoader,
         trainer_config: TrainerConfig,
         dist_info: DistributedInfo,
         logger: Optional[logging.Logger] = None,
     ) -> None:
-        # self.local_rank = int(os.environ["LOCAL_RANK"])
-        # self.global_rank = int(os.environ["RANK"])
-        self.local_rank = local_rank
-        self.global_rank = global_rank
-        self.model = model.to(self.local_rank)
+        self.local_rank = dist_info.local_rank  # int(os.environ["LOCAL_RANK"])
+        self.global_rank = dist_info.global_rank
+
         self.train_loader = train_loader
         self.optimizer = optimizer
-        self.save_every = save_every
-        self.logger = logger
-        self.epochs_run = 0
-        self.snapshot_path = snapshot_path
-        if os.path.exists(snapshot_path):
-            print("Loading snapshot")
-            self._load_snapshot(snapshot_path)
 
+        self.logger = logger
+
+        if os.path.exists(trainer_config.snapshot_path):
+            print("Loading snapshot")
+            self._load_snapshot(trainer_config.snapshot_path)
+
+        self.model = model.to(self.local_rank)
         self.model = DDP(self.model, device_ids=[self.local_rank])
 
     def _load_snapshot(self, snapshot_path):
@@ -104,22 +173,17 @@ class Trainer:
         self.epochs_run = snapshot["EPOCHS_RUN"]
         print(f"Resuming training from snapshot at Epoch {self.epochs_run}")
 
-    def _run_batch(self, source, targets):
+    def _run_batch(self, source: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         self.optimizer.zero_grad()
         output = self.model(source)
-        loss = F.cross_entropy(output, targets)
+        loss = F.mse_loss(output, targets)
         loss.backward()
         self.optimizer.step()
         return loss
 
-    def _run_epoch(self, epoch):
-        b_sz = len(next(iter(self.train_loader))[0])
-        print(
-            f"[GPU{self.global_rank}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_loader)}"
-        )
-        self.logger.info(
-            f"[GPU{self.global_rank}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_loader)}"
-        )
+    def _run_epoch(self, epoch: int) -> None:
+        batch_size = len(next(iter(self.train_loader))[0])
+
         self.train_loader.sampler.set_epoch(epoch)
 
         total_loss = 0.0  # Initialize total loss for the epoch
@@ -129,24 +193,34 @@ class Trainer:
             batch_loss = self._run_batch(source, targets)
             total_loss += batch_loss
 
-        avg_loss = total_loss / len(
-            self.train_loader
-        )  # Calculate average loss for the epoch
-        print(f"[GPU{self.global_rank}] Epoch {epoch} | Average Loss: {avg_loss:.4f}")
+        # Calculate average loss for the epoch
+        avg_loss = total_loss / len(self.train_loader)
+
+        print(
+            (
+                f"[GPU{self.global_rank}] Epoch {epoch} | "
+                f"Batchsize: {batch_size} | Steps: {len(self.train_loader)} | "
+                f"Average Loss: {avg_loss:.4f}"
+            )
+        )
         self.logger.info(
-            f"[GPU{self.global_rank}] Epoch {epoch} | Average Loss: {avg_loss:.4f}"
+            (
+                f"[GPU{self.global_rank}] Epoch {epoch} | "
+                f"Batchsize: {batch_size} | Steps: {len(self.train_loader)} | "
+                f"Average Loss: {avg_loss:.4f}"
+            )
         )
 
-    def _save_snapshot(self, epoch):
+    def _save_snapshot(self, epoch: int) -> None:
         snapshot = {
             "MODEL_STATE": self.model.module.state_dict(),
             "OPTIMIZER_STATE": self.optimizer.state_dict(),
             "EPOCHS_RUN": epoch,
         }
-        torch.save(snapshot, self.snapshot_path)
+        torch.save(snapshot, self.trainer_config.snapshot_path)
         print(f"Epoch {epoch} | Training snapshot saved at {self.snapshot_path}")
 
-    def train(self, max_epochs: int):
+    def train(self, max_epochs: int) -> None:
         for epoch in range(self.epochs_run, max_epochs):
             self._run_epoch(epoch)
             # save monolithic snapshot on global rank 0
@@ -211,9 +285,9 @@ def main(
     logger = configure_logger(rank=global_rank)  # unique rank across all nodes
 
     trainer = Trainer(
-        model,
-        train_loader,
-        optimizer,
+        model=model,
+        optimizer=optimizer,
+        train_loader=train_loader,
         trainer_config=trainer_config,
         dist_info=dist_info,
         logger=logger,
