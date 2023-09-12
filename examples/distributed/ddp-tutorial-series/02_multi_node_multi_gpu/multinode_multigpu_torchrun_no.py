@@ -229,13 +229,13 @@ class Trainer:
             "EPOCHS_RUN": epoch,
         }
         torch.save(snapshot, self.trainer_config.snapshot_path)
-        print(f"Epoch {epoch} | Training snapshot saved at {self.snapshot_path}")
+        print(f"Epoch {epoch} | Training snapshot saved at {self.trainer_config.snapshot_path}")
 
     def train(self, max_epochs: int) -> None:
         for epoch in range(self.epochs_run, max_epochs):
             self._run_epoch(epoch)
             # save monolithic snapshot on global rank 0
-            if self.global_rank == 0 and epoch % self.save_every == 0:
+            if self.global_rank == 0 and epoch % self.trainer_config.save_checkpoint_interval == 0:
                 self._save_snapshot(epoch)
 
 
