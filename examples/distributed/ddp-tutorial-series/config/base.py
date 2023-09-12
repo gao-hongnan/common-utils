@@ -23,7 +23,9 @@ class TrainerConfig:
     """Configuration for trainer."""
 
     run_id: str = field(
-        default_factory=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
+        default_factory=lambda: datetime.datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S.%f"
+        ),
         metadata={"help": "Unique ID for the run as YYYY-MM-DD HH:MM:SS.ssssss."},
     )
     max_epochs: int = field(
