@@ -355,17 +355,15 @@ def parse_args() -> argparse.Namespace:
 
     # DataLoader
     parser.add_argument("--num_workers", default=0, type=int, help="Number of workers")
-    parser.add_argument("--pin_memory", default=True, type=bool, help="Pin memory")
-    parser.add_argument("--shuffle", default=False, type=bool, help="Shuffle")
+    parser.add_argument("--pin_memory", action="store_true", help="Pin memory")
+    parser.add_argument("--shuffle", action="store_true", help="Shuffle")
     parser.add_argument(
-        "--drop_last", default=False, type=bool, help="Drop last batch if incomplete"
+        "--drop_last", action="store_true", help="Drop last batch if incomplete"
     )
 
     # DistributedSampler
-    parser.add_argument("--sampler_shuffle", default=True, type=bool, help="Shuffle")
-    parser.add_argument(
-        "--sampler_drop_last", default=True, type=bool, help="Drop last"
-    )
+    parser.add_argument("--sampler_shuffle", action="store_true", help="Shuffle")
+    parser.add_argument("--sampler_drop_last", action="store_true", help="Drop last")
 
     # Trainer
 
@@ -408,7 +406,7 @@ if __name__ == "__main__":
     partial_distributed_sampler_config: DistributedSamplerConfig = functools.partial(
         DistributedSamplerConfig,
         num_replicas=args.world_size,
-        # shuffle=args.sampler_shuffle, # sampler shuffle is exclusive with DataLoader
+        shuffle=args.sampler_shuffle,  # sampler shuffle is exclusive with DataLoader
         seed=args.seed,
         drop_last=args.sampler_drop_last,
     )

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-__all__ = ['Serializable']
+__all__ = ["Serializable"]
 
 
 class Serializable:
@@ -27,4 +27,3 @@ class Serializable:
         state (Dict[str, Any]): The state of the object, as previously
             returned by :meth:`.state_dict`.
         """
-
