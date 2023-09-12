@@ -175,16 +175,16 @@ class Trainer:
 
         self.epochs_run = 0
 
-        if os.path.exists(trainer_config.snapshot_path):
-            print("Loading snapshot")
-            self._load_snapshot(trainer_config.snapshot_path)
+        if os.path.exists(trainer_config.load_path):
+            logger.info(f"Loading snapshot from {trainer_config.load_path}")
+            map_location = f"cuda:{self.local_rank}"
+            self._load_snapshot(trainer_config.load_path, map_location=map_location)
 
-    def _load_snapshot(self, snapshot_path):
-        loc = f"cuda:{self.local_rank}"
-        snapshot = torch.load(snapshot_path, map_location=loc)
+    def _load_snapshot(self, snapshot_path: str, map_location: str) -> None:
+        snapshot = torch.load(snapshot_path, map_location=map_location)
         self.model.load_state_dict(snapshot["MODEL_STATE"])
         self.epochs_run = snapshot["EPOCHS_RUN"]
-        print(f"Resuming training from snapshot at Epoch {self.epochs_run}")
+        self.logger.info(f"Resuming training from snapshot at Epoch {self.epochs_run}")
 
     def _run_batch(self, source: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         self.optimizer.zero_grad()
@@ -394,6 +394,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--snapshot_path", default="snapshot.pt", type=str, help="Path to save snapshot"
     )
+    parser.add_argument("--load_path", default=None, type=str, help="Path to load")
     return parser.parse_args()
 
 

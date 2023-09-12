@@ -1,6 +1,6 @@
 import socket
 from dataclasses import MISSING, dataclass, field, fields
-from typing import Iterable, Literal, Union
+from typing import Iterable, Literal, Union, Optional
 
 import torch
 import torch.distributed as dist
@@ -32,6 +32,10 @@ class TrainerConfig:
     )
     snapshot_path: str = field(
         default=".", metadata={"help": "Path to save checkpoints."}
+    )
+    load_path: Optional[str] = field(
+        default=None,
+        metadata={"help": "Path to load, if None, then train from scratch."},
     )
 
 
