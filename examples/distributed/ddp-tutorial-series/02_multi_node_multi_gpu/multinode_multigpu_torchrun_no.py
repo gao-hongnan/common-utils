@@ -138,6 +138,7 @@ class Trainer:
         "model",
         "optimizer",
         "train_loader",
+        "trainer_config",
         "dist_info",
         "logger",
         "epochs_run",
@@ -147,6 +148,7 @@ class Trainer:
     model: torch.nn.Module
     optimizer: torch.optim.Optimizer
     train_loader: DataLoader
+    trainer_config: TrainerConfig
     dist_info: DistributedInfo
     logger: Optional[logging.Logger]
     epochs_run: int
@@ -163,9 +165,12 @@ class Trainer:
         self.local_rank = dist_info.local_rank  # int(os.environ["LOCAL_RANK"])
         self.global_rank = dist_info.global_rank
 
-        self.train_loader = train_loader
+        self.model = model.to(self.local_rank)
+        self.model = DDP(self.model, device_ids=[self.local_rank])
         self.optimizer = optimizer
-
+        self.train_loader = train_loader
+        self.trainer_config = trainer_config
+        self.dist_info = dist_info
         self.logger = logger
 
         self.epochs_run = 0
@@ -173,9 +178,6 @@ class Trainer:
         if os.path.exists(trainer_config.snapshot_path):
             print("Loading snapshot")
             self._load_snapshot(trainer_config.snapshot_path)
-
-        self.model = model.to(self.local_rank)
-        self.model = DDP(self.model, device_ids=[self.local_rank])
 
     def _load_snapshot(self, snapshot_path):
         loc = f"cuda:{self.local_rank}"
@@ -229,13 +231,18 @@ class Trainer:
             "EPOCHS_RUN": epoch,
         }
         torch.save(snapshot, self.trainer_config.snapshot_path)
-        print(f"Epoch {epoch} | Training snapshot saved at {self.trainer_config.snapshot_path}")
+        print(
+            f"Epoch {epoch} | Training snapshot saved at {self.trainer_config.snapshot_path}"
+        )
 
     def train(self, max_epochs: int) -> None:
         for epoch in range(self.epochs_run, max_epochs):
             self._run_epoch(epoch)
             # save monolithic snapshot on global rank 0
-            if self.global_rank == 0 and epoch % self.trainer_config.save_checkpoint_interval == 0:
+            if (
+                self.global_rank == 0
+                and epoch % self.trainer_config.save_checkpoint_interval == 0
+            ):
                 self._save_snapshot(epoch)
 
 
