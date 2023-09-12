@@ -44,13 +44,11 @@ python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
 # On Node 1:
 
 export PYTHONPATH=$PYTHONPATH:$(pwd) && \
-export MASTER_ADDR=THE_IP_ADDRESS_DEFINED_IN_NODE_0 && \
-export MASTER_PORT=THE_MASTER_PORT_DEFINED_IN_NODE_0 && \
 export NODE_RANK=1 && \
 export NUM_NODES=2 && \
 export NUM_GPUS_PER_NODE=2 && \
 export WORLD_SIZE=4 && \
-python basic.py \
+python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
     --node_rank $NODE_RANK \
     --num_nodes $NUM_NODES \
     --num_gpus_per_node $NUM_GPUS_PER_NODE \
@@ -58,7 +56,18 @@ python basic.py \
     --backend "nccl" \
     --init_method "env://" \
     --master_addr $MASTER_ADDR \
-    --master_port $MASTER_PORT
+    --master_port $MASTER_PORT \
+    --seed 0 \
+    --num_workers 0 \
+    --pin_memory True \
+    --shuffle False \
+    --drop_last False \
+    --sampler_shuffle True \
+    --sampler_drop_last True \
+    --max_epochs 50 \
+    --save_checkpoint_interval 10 \
+    --batch_size 32 \
+    --snapshot_path "snapshot.pt"
 
 abstract
 torchrun \
@@ -399,7 +408,7 @@ if __name__ == "__main__":
     partial_distributed_sampler_config: DistributedSamplerConfig = functools.partial(
         DistributedSamplerConfig,
         num_replicas=args.world_size,
-        shuffle=args.sampler_shuffle,
+        # shuffle=args.sampler_shuffle, # sampler shuffle is exclusive with DataLoader
         seed=args.seed,
         drop_last=args.sampler_drop_last,
     )

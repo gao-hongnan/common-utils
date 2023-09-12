@@ -78,12 +78,12 @@ class DistributedSamplerConfig:
         metadata={"help": "Number of replicas which " "is the world_size."},
     )
 
-    shuffle: bool = field(
-        default=False,
-        metadata={
-            "help": "Whether to shuffle the data. Set it to False if using DistributedSampler."
-        },
-    )
+    # shuffle: bool = field(
+    #     default=False,
+    #     metadata={
+    #         "help": "Whether to shuffle the data. Set it to False if using DistributedSampler."
+    #     },
+    # )
     seed: int = field(
         default=0,
         metadata={
