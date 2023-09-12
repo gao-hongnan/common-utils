@@ -211,7 +211,7 @@ class Trainer:
         logger: Optional[logging.Logger] = None,
     ) -> None:
         self.local_rank = dist_info.local_rank  # int(os.environ["LOCAL_RANK"])
-        self.global_rank = dist_info.global_rank
+        self.global_rank = dist_info.global_rank # int(os.environ["RANK"])
 
         self.model = model.to(self.local_rank)
 
@@ -225,7 +225,8 @@ class Trainer:
         self.save_path = os.path.join(
             self.trainer_config.run_id, self.trainer_config.snapshot_path
         )
-        os.makedirs(self.trainer_config.run_id, exist_ok=True)
+        if not os.path.exists(self.trainer_config.run_id) and self.global_rank == 0:
+            os.makedirs(self.trainer_config.run_id, exist_ok=True)
 
         if trainer_config.load_path is not None and os.path.exists(
             trainer_config.load_path
