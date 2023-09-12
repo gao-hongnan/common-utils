@@ -1,5 +1,10 @@
 # Multi Node Multi GPU
 
+## Seeding during Resumption
+
+See `reproducibility.py` in composer, might need to refer to
+https://discuss.pytorch.org/t/reproducibility-with-checkpoints/104344/7.
+
 ## Loading Checkpoints in DDP
 
 **Background Context**:
