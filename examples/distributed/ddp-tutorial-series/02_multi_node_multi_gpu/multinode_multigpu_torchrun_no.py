@@ -175,7 +175,9 @@ class Trainer:
 
         self.epochs_run = 0
 
-        if os.path.exists(trainer_config.load_path):
+        if trainer_config.load_path is not None and os.path.exists(
+            trainer_config.load_path
+        ):
             logger.info(f"Loading snapshot from {trainer_config.load_path}")
             map_location = f"cuda:{self.local_rank}"
             self._load_snapshot(trainer_config.load_path, map_location=map_location)
