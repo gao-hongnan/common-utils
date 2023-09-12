@@ -263,7 +263,7 @@ class Trainer:
         snapshot = torch.load(snapshot_path, map_location=map_location)
         self.model.load_state_dict(snapshot["MODEL_STATE"])
         self.optimizer.load_state_dict(snapshot["OPTIMIZER_STATE"])
-        torch.set_rng_state(snapshot["TORCH_RNG_STATE"])
+        # torch.set_rng_state(snapshot["TORCH_RNG_STATE"])
         self.epochs_run = snapshot["EPOCHS_RUN"]
         self.logger.info(f"Resuming training from snapshot at Epoch {self.epochs_run}")
 

@@ -24,8 +24,9 @@ def seed_all(seed: Optional[int] = 1992, seed_torch: bool = True) -> int:
 
     if seed_torch:
         torch.manual_seed(seed)
-        torch.cuda.manual_seed_all(seed)
-        torch.cuda.manual_seed(seed)                # pytorch (both CPU and CUDA)
+        # torch.manual_seed may call manual_seed_all but calling it again here
+        # to make sure it gets called at least once
+        torch.cuda.manual_seed_all(seed)            # pytorch (both CPU and CUDA)
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
         torch.backends.cudnn.enabled = False
