@@ -247,21 +247,23 @@ class Trainer:
         snapshot = {
             "MODEL_STATE": self.model.module.state_dict(),
             "OPTIMIZER_STATE": self.optimizer.state_dict(),
+            "TORCH_RNG_STATE": torch.get_rng_state(),
             "EPOCHS_RUN": epoch,
         }
         torch.save(snapshot, self.save_path)
 
         print(
-            f"Epoch {epoch} | Training snapshot saved at {self.trainer_config.snapshot_path}"
+            f"Epoch {epoch} | Training snapshot saved at {self.save_path}"
         )
         self.logger.info(
-            f"Epoch {epoch} | Training snapshot saved at {self.trainer_config.snapshot_path}"
+            f"Epoch {epoch} | Training snapshot saved at {self.save_path}"
         )
 
     def _load_snapshot(self, snapshot_path: str, map_location: str) -> None:
         snapshot = torch.load(snapshot_path, map_location=map_location)
         self.model.load_state_dict(snapshot["MODEL_STATE"])
         self.optimizer.load_state_dict(snapshot["OPTIMIZER_STATE"])
+        torch.set_rng_state(snapshot["TORCH_RNG_STATE"])
         self.epochs_run = snapshot["EPOCHS_RUN"]
         self.logger.info(f"Resuming training from snapshot at Epoch {self.epochs_run}")
 
