@@ -31,11 +31,8 @@ python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
     --master_port $MASTER_PORT \
     --seed 0 \
     --num_workers 0 \
-    --pin_memory True \
-    --shuffle False \
-    --drop_last False \
-    --sampler_shuffle True \
-    --sampler_drop_last True \
+    --pin_memory \
+    --sampler_shuffle \
     --max_epochs 50 \
     --save_checkpoint_interval 10 \
     --batch_size 32 \
@@ -55,15 +52,12 @@ python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
     --world_size $WORLD_SIZE \
     --backend "nccl" \
     --init_method "env://" \
-    --master_addr $MASTER_ADDR \
-    --master_port $MASTER_PORT \
+    --master_addr 10.168.0.3 \
+    --master_port 34397 \
     --seed 0 \
     --num_workers 0 \
-    --pin_memory True \
-    --shuffle False \
-    --drop_last False \
-    --sampler_shuffle True \
-    --sampler_drop_last True \
+    --pin_memory \
+    --sampler_shuffle \
     --max_epochs 50 \
     --save_checkpoint_interval 10 \
     --batch_size 32 \
@@ -166,7 +160,7 @@ class Trainer:
         self.global_rank = dist_info.global_rank
 
         self.model = model.to(self.local_rank)
-        self.model = DDP(self.model, device_ids=[self.local_rank])
+
         self.optimizer = optimizer
         self.train_loader = train_loader
         self.trainer_config = trainer_config
@@ -181,6 +175,10 @@ class Trainer:
             logger.info(f"Loading snapshot from {trainer_config.load_path}")
             map_location = f"cuda:{self.local_rank}"
             self._load_snapshot(trainer_config.load_path, map_location=map_location)
+
+        # NOTE: only load model to DDP after loading snapshot
+        # NOTE: this is because ???
+        self.model = DDP(self.model, device_ids=[self.local_rank])
 
     def _load_snapshot(self, snapshot_path: str, map_location: str) -> None:
         snapshot = torch.load(snapshot_path, map_location=map_location)
@@ -428,6 +426,7 @@ if __name__ == "__main__":
         save_checkpoint_interval=args.save_checkpoint_interval,
         batch_size=args.batch_size,
         snapshot_path=args.snapshot_path,
+        load_path=args.load_path,
     )
 
     mp.spawn(
