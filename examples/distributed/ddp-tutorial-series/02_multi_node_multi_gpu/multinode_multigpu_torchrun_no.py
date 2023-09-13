@@ -167,19 +167,14 @@ from torch.utils.data.distributed import DistributedSampler
 
 from config._criterion import build_criterion
 from config._optim import build_optimizer
-from config.base import (
-    CRITERION_NAME_TO_CONFIG_MAPPING,
-    OPTIMIZER_NAME_TO_CONFIG_MAPPING,
-    DataLoaderConfig,
-    DistributedInfo,
-    DistributedSamplerConfig,
-    InitEnvArgs,
-    InitProcessGroupArgs,
-    TrainerConfig,
-)
+from config.base import (CRITERION_NAME_TO_CONFIG_MAPPING,
+                         OPTIMIZER_NAME_TO_CONFIG_MAPPING, DataLoaderConfig,
+                         DistributedInfo, DistributedSamplerConfig,
+                         InitEnvArgs, InitProcessGroupArgs, TrainerConfig)
 from core._init import init_env, init_process
 from core._seed import seed_all
 from data.toy_dataset import ToyDataset, prepare_dataloader
+from models.toy_model import ToyModel
 from utils.common_utils import calculate_global_rank, configure_logger
 
 
@@ -324,9 +319,13 @@ class Trainer:
 
 
 def build_all(args: argparse.Namespace):
-    train_dataset = ToyDataset(num_samples=2048, num_dimensions=20, target_dimensions=1)
-    model = torch.nn.Linear(20, 1)  # load your model
-    criterion = torch.nn.MSELoss()  # load your criterion
+    train_dataset = ToyDataset(
+        num_samples=args.num_samples,
+        num_dimensions=args.num_dimensions,
+        target_dimensions=args.target_dimensions,
+    )
+    model = ToyModel(input_dim=args.input_dim, output_dim=args.output_dim)
+    criterion = torch.nn.MSELoss(reduction=args.reduction)
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr)
     return train_dataset, model, criterion, optimizer
 
@@ -334,8 +333,13 @@ def build_all(args: argparse.Namespace):
 def build_all_elegant(args: argparse.Namespace):
     """A more elegant way of building the model, criterion, optimizer, and dataset
     by using design pattern"""
-    train_dataset = ToyDataset(num_samples=2048, num_dimensions=20, target_dimensions=1)
-    model = torch.nn.Linear(20, 1)  # load your model
+    train_dataset = ToyDataset(
+        num_samples=args.num_samples,
+        num_dimensions=args.num_dimensions,
+        target_dimensions=args.target_dimensions,
+    )
+
+    model = ToyModel(input_dim=args.input_dim, output_dim=args.output_dim)
 
     criterion_config = CRITERION_NAME_TO_CONFIG_MAPPING[args.criterion_name](
         name=args.criterion_name, reduction=args.reduction
@@ -464,6 +468,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", default=0, type=int, help="Seed for reproducibility")
 
     # Dataset
+    parser.add_argument(
+        "--num_samples", default=2048, type=int, help="Number of samples"
+    )
+    parser.add_argument(
+        "--num_dimensions", default=20, type=int, help="Number of dimensions"
+    )
+    parser.add_argument(
+        "--target_dimensions", default=1, type=int, help="Target dimensions"
+    )
 
     # DataLoader
     parser.add_argument("--num_workers", default=0, type=int, help="Number of workers")
@@ -476,6 +489,10 @@ def parse_args() -> argparse.Namespace:
     # DistributedSampler
     parser.add_argument("--sampler_shuffle", action="store_true", help="Shuffle")
     parser.add_argument("--sampler_drop_last", action="store_true", help="Drop last")
+
+    # Model
+    parser.add_argument("--input_dim", default=20, type=int, help="Input dimensions")
+    parser.add_argument("--output_dim", default=1, type=int, help="Output dimensions")
 
     # Criterion
     parser.add_argument(
