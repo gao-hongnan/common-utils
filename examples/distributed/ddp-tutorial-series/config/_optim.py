@@ -230,7 +230,8 @@ def build_optimizer(
 
     if not optimizer_builder_cls:
         raise ValueError(
-            f"The optimizer {optimizer_name} is not registered in registry"
+            f"The optimizer {optimizer_name} is not registered in registry."
+            f"Our registry has {OPTIMIZER_REGISTRY.keys()}"
         )
 
     del config.name  # remove the name attribute from the config

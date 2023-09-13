@@ -70,13 +70,13 @@ class BaseCriterionBuilder:
         raise NotImplementedError
 
 
-@register_criterion("crossentropy")
+@register_criterion("cross_entropy")
 class CrossEntropyBuilder(BaseCriterionBuilder):
     def build(self) -> CrossEntropyLoss:
         return CrossEntropyLoss(**self.config.__dict__)
 
 
-@register_criterion("mse")
+@register_criterion("mse_loss")
 class MSEBuilder(BaseCriterionBuilder):
     def build(self) -> MSELoss:
         return MSELoss(**self.config.__dict__)
@@ -88,7 +88,8 @@ def build_criterion(config: CriterionConfig) -> Any:
     criterion_builder_cls = CRITERION_REGISTRY.get(criterion_name)
     if not criterion_builder_cls:
         raise ValueError(
-            f"The criterion {criterion_name} is not registered in registry"
+            f"The criterion {criterion_name} is not registered in registry."
+            f"Our registry has {CRITERION_REGISTRY.keys()}"
         )
     del config.name
     criterion_builder = criterion_builder_cls(config)
