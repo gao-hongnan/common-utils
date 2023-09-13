@@ -163,6 +163,7 @@ from config.base import (
     InitProcessGroupArgs,
     TrainerConfig,
 )
+from config._optim import SGDConfig, build_optimizer
 from core._init import init_env, init_process
 from core._seed import seed_all
 from torch.distributed import destroy_process_group
@@ -184,8 +185,8 @@ class Trainer:
         "local_rank",
         "global_rank",
         "model",
-        "optimizer",
         "criterion",
+        "optimizer",
         "train_loader",
         "trainer_config",
         "dist_info",
@@ -316,15 +317,17 @@ class Trainer:
                 self._save_snapshot(epoch)
 
 
-def build_optimizer(cfg, model: torch.nn.Module) -> torch.optim.Optimizer:
-    pass
 
 
-def build_all():
+
+def build_all(args: argparse.Namespace):
     train_dataset = ToyDataset(num_samples=2048, num_dimensions=20, target_dimensions=1)
     model = torch.nn.Linear(20, 1)  # load your model
     criterion = torch.nn.MSELoss()  # load your criterion
-    optimizer = torch.optim.SGD(model.parameters(), lr=1e-3)
+
+    optimizer_config = SGDConfig(name=args.optimizer_name, lr=args.lr)
+    optimizer = build_optimizer(model=model, cfg=optimizer_config)
+    #optimizer = torch.optim.SGD(model.parameters(), lr=args.lr)
     return train_dataset, model, criterion, optimizer
 
 
@@ -366,7 +369,7 @@ def main(
     logger.info(f"Distributed info: {str(dist_info)}")
     torch.cuda.set_device(local_rank)
 
-    train_dataset, model, criterion, optimizer = build_all()
+    train_dataset, model, criterion, optimizer = build_all(args=args)
     distributed_sampler_config = partial_distributed_sampler_config(rank=global_rank)
     distributed_sampler = DistributedSampler(
         dataset=train_dataset, **asdict(distributed_sampler_config)
@@ -450,8 +453,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sampler_shuffle", action="store_true", help="Shuffle")
     parser.add_argument("--sampler_drop_last", action="store_true", help="Drop last")
 
-    # Trainer
+    # Optimizer
+    parser.add_argument("--optimizer_name", default="sgd", type=str, help="Optimizer")
+    parser.add_argument("--lr", default=1e-3, type=float, help="Learning rate")
 
+    # Trainer
     parser.add_argument(
         "--max_epochs", default=50, type=int, help="Total epochs to train the model"
     )
