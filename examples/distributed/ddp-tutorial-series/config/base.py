@@ -2,11 +2,13 @@ import datetime
 import os
 import socket
 from dataclasses import MISSING, dataclass, field, fields
-from typing import Iterable, Literal, Optional, Union
+from typing import Dict, Iterable, Literal, Optional, Type, Union
 
 import torch
 import torch.distributed as dist
 from torch.utils.data import Sampler
+
+from config._optim import AdamConfig, OptimizerConfig, SGDConfig
 
 __all__ = [
     "TrainerConfig",
@@ -15,7 +17,13 @@ __all__ = [
     "InitEnvArgs",
     "InitProcessGroupArgs",
     "DistributedInfo",
+    "OPTIMIZER_NAME_TO_CONFIG_MAPPING",
 ]
+
+OPTIMIZER_NAME_TO_CONFIG_MAPPING: Dict[str, Type[OptimizerConfig]] = {
+    "adam": AdamConfig,
+    "sgd": SGDConfig,
+}
 
 
 @dataclass(init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=False)

@@ -61,6 +61,8 @@ class OptimizerConfig:
 
 @dataclass
 class SGDConfig(OptimizerConfig):
+    """SGD optimizer configuration, add attributes as needed."""
+
     momentum: float = 0.0
     dampening: float = 0.0
     weight_decay: float = 0.0
@@ -68,15 +70,11 @@ class SGDConfig(OptimizerConfig):
 
 @dataclass
 class AdamConfig(OptimizerConfig):
+    """Adam optimizer configuration, add attributes as needed."""
+
     betas: Tuple[float, float] = (0.9, 0.999)
     eps: float = 1e-8
     weight_decay: float = 0.0
-
-
-OPTIMIZER_NAME_TO_CONFIG_MAPPING: Dict[str, Type[OptimizerConfig]] = {
-    "adam": AdamConfig,
-    "sgd": SGDConfig,
-}
 
 
 def register_optimizer(name: str) -> Any:
@@ -121,12 +119,12 @@ class BaseOptimizerBuilder:
 
     Attributes
     ----------
-    cfg : OptimizerConfig
+    config : OptimizerConfig
         Configuration for the optimizer.
     """
 
-    def __init__(self, cfg: OptimizerConfig):
-        self.cfg = cfg
+    def __init__(self, config: OptimizerConfig):
+        self.config = config
 
     def build(self, model: torch.nn.Module) -> torch.optim.Optimizer:
         """
@@ -166,7 +164,7 @@ class SGDBuilder(BaseOptimizerBuilder):
         Adam
             The constructed Adam optimizer instance from PyTorch.
         """
-        return SGD(model.parameters(), **self.cfg.__dict__)
+        return SGD(model.parameters(), **self.config.__dict__)
 
 
 @register_optimizer("adam")
@@ -194,11 +192,11 @@ class AdamBuilder(BaseOptimizerBuilder):
         Adam
             The constructed Adam optimizer instance from PyTorch.
         """
-        return Adam(model.parameters(), **self.cfg.__dict__)
+        return Adam(model.parameters(), **self.config.__dict__)
 
 
 def build_optimizer(
-    cfg: OptimizerConfig, model: torch.nn.Module
+    config: OptimizerConfig, model: torch.nn.Module
 ) -> torch.optim.Optimizer:
     """
     Function to build an optimizer based on provided configuration, employing the
@@ -209,7 +207,7 @@ def build_optimizer(
 
     Parameters
     ----------
-    cfg : Union[OptimizerConfig, ClipLionConfig, AdaLRLionConfig]
+    config : Union[OptimizerConfig, ClipLionConfig, AdaLRLionConfig]
         Configuration data class instance for the optimizer.
     model : Any
         The model for which the optimizer will be built.
@@ -222,10 +220,10 @@ def build_optimizer(
     Raises
     ------
     ValueError
-        If the optimizer's name from the cfg is not found in the registry.
+        If the optimizer's name from the config is not found in the registry.
     """
 
-    optimizer_name = cfg.name
+    optimizer_name = config.name
     optimizer_builder_cls = OPTIMIZER_REGISTRY.get(optimizer_name)
 
     if not optimizer_builder_cls:
@@ -233,7 +231,7 @@ def build_optimizer(
             f"The optimizer {optimizer_name} is not registered in registry"
         )
 
-    del cfg.name  # remove the name attribute from the cfg
+    del config.name  # remove the name attribute from the config
 
-    optimizer_builder = optimizer_builder_cls(cfg)
+    optimizer_builder = optimizer_builder_cls(config)
     return optimizer_builder.build(model)

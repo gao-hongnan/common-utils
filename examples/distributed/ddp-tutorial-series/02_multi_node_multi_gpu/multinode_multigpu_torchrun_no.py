@@ -159,7 +159,8 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 
-from config._optim import OPTIMIZER_NAME_TO_CONFIG_MAPPING, build_optimizer
+from config._optim import build_optimizer
+
 from config.base import (
     DataLoaderConfig,
     DistributedInfo,
@@ -167,6 +168,7 @@ from config.base import (
     InitEnvArgs,
     InitProcessGroupArgs,
     TrainerConfig,
+    OPTIMIZER_NAME_TO_CONFIG_MAPPING,
 )
 from core._init import init_env, init_process
 from core._seed import seed_all
@@ -331,7 +333,7 @@ def build_all_elegant(args: argparse.Namespace):
     optimizer_config = OPTIMIZER_NAME_TO_CONFIG_MAPPING[args.optimizer_name](
         name=args.optimizer_name, lr=args.lr
     )
-    optimizer = build_optimizer(model=model, cfg=optimizer_config)
+    optimizer = build_optimizer(model=model, config=optimizer_config)
     return train_dataset, model, criterion, optimizer
 
 
@@ -373,14 +375,16 @@ def main(
     logger.info(f"Distributed info: {str(dist_info)}")
     torch.cuda.set_device(local_rank)
 
-    train_dataset, model, criterion, optimizer = build_all(args=args)
+    # train_dataset, model, criterion, optimizer = build_all(args=args)
+    train_dataset, model, criterion, optimizer = build_all_elegant(args=args)
+
     distributed_sampler_config = partial_distributed_sampler_config(rank=global_rank)
     distributed_sampler = DistributedSampler(
         dataset=train_dataset, **asdict(distributed_sampler_config)
     )
 
     dataloader_config = partial_dataloader_config(sampler=distributed_sampler)
-    train_loader = prepare_dataloader(train_dataset, cfg=dataloader_config)
+    train_loader = prepare_dataloader(train_dataset, config=dataloader_config)
 
     logger = configure_logger(rank=global_rank)  # unique rank across all nodes
 

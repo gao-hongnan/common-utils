@@ -19,20 +19,20 @@ from utils.common_utils import configure_logger, display_dist_info, init_env
 
 
 def init_process(
-    cfg: InitProcessGroupArgs,
+    config: InitProcessGroupArgs,
     node_rank: int,
     logger: logging.Logger,
     func: Optional[Callable] = None,
 ) -> None:
     """Initialize the distributed environment via init_process_group."""
 
-    logger = configure_logger(rank=cfg.rank)
+    logger = configure_logger(rank=config.rank)
 
-    dist.init_process_group(**asdict(cfg))
+    dist.init_process_group(**asdict(config))
 
     dist_info = DistributedInfo(node_rank=node_rank)
-    assert dist_info.global_rank == cfg.rank
-    assert dist_info.world_size == cfg.world_size
+    assert dist_info.global_rank == config.rank
+    assert dist_info.world_size == config.world_size
 
     logger.info(
         f"Initialized process group: Rank {dist_info.global_rank} out of {dist_info.world_size}."
@@ -43,7 +43,7 @@ def init_process(
     display_dist_info(dist_info=dist_info, format="table", logger=logger)
 
     if func is not None:
-        func(cfg.rank, cfg.world_size)
+        func(config.rank, config.world_size)
 
 
 def run(rank: int, world_size: int) -> None:
@@ -65,7 +65,7 @@ def run(rank: int, world_size: int) -> None:
 
 def main(world_size: int, node_rank: int) -> None:
     """Main driver function."""
-    init_env(cfg=InitEnvArgs())
+    init_env(config=InitEnvArgs())
     processes = []
     mp.set_start_method("spawn")
     logger = configure_logger("main")

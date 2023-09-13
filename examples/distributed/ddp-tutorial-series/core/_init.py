@@ -10,14 +10,14 @@ from config.base import DistributedInfo, InitEnvArgs, InitProcessGroupArgs
 from utils.common_utils import display_dist_info
 
 
-def init_env(cfg: InitEnvArgs) -> None:
+def init_env(config: InitEnvArgs) -> None:
     """Initialize environment variables."""
     # use __dict__ to get all the attributes of the dataclass
     # if use asdict may not fetch new assigned attributes
     # after the dataclass is instantiated.
-    cfg: Dict[str, str] = {**cfg.__dict__}
+    config: Dict[str, str] = {**config.__dict__}
 
-    for key, value in cfg.items():
+    for key, value in config.items():
         upper_key = key.upper()
         os.environ[upper_key] = value
 

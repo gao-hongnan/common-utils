@@ -29,5 +29,5 @@ class ToyDataset(Dataset):
         return X, y
 
 
-def prepare_dataloader(dataset: Dataset, cfg: DataLoaderConfig) -> DataLoader:
-    return DataLoader(dataset, **asdict(cfg))
+def prepare_dataloader(dataset: Dataset, config: DataLoaderConfig) -> DataLoader:
+    return DataLoader(dataset, **asdict(config))
