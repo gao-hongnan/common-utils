@@ -154,7 +154,7 @@ from typing import Optional
 
 import torch
 import torch.multiprocessing as mp
-import torch.nn.functional as F
+
 from config.base import (
     DataLoaderConfig,
     DistributedInfo,
@@ -178,11 +178,14 @@ from utils.data_utils import ToyDataset, prepare_dataloader
 
 
 class Trainer:
+    """Trainer class for training a model."""
+
     __slots__ = [
         "local_rank",
         "global_rank",
         "model",
         "optimizer",
+        "criterion",
         "train_loader",
         "trainer_config",
         "dist_info",
@@ -193,6 +196,7 @@ class Trainer:
     local_rank: int
     global_rank: int
     model: torch.nn.Module
+    criterion: torch.nn.MSELoss
     optimizer: torch.optim.Optimizer
     train_loader: DataLoader
     trainer_config: TrainerConfig
@@ -204,6 +208,7 @@ class Trainer:
     def __init__(
         self,
         model: torch.nn.Module,
+        criterion: torch.nn.MSELoss,
         optimizer: torch.optim.Optimizer,
         train_loader: DataLoader,
         trainer_config: TrainerConfig,
@@ -211,10 +216,10 @@ class Trainer:
         logger: Optional[logging.Logger] = None,
     ) -> None:
         self.local_rank = dist_info.local_rank  # int(os.environ["LOCAL_RANK"])
-        self.global_rank = dist_info.global_rank # int(os.environ["RANK"])
+        self.global_rank = dist_info.global_rank  # int(os.environ["RANK"])
 
         self.model = model.to(self.local_rank)
-
+        self.criterion = criterion
         self.optimizer = optimizer
         self.train_loader = train_loader
         self.trainer_config = trainer_config
@@ -252,25 +257,20 @@ class Trainer:
         }
         torch.save(snapshot, self.save_path)
 
-        print(
-            f"Epoch {epoch} | Training snapshot saved at {self.save_path}"
-        )
-        self.logger.info(
-            f"Epoch {epoch} | Training snapshot saved at {self.save_path}"
-        )
+        print(f"Epoch {epoch} | Training snapshot saved at {self.save_path}")
+        self.logger.info(f"Epoch {epoch} | Training snapshot saved at {self.save_path}")
 
     def _load_snapshot(self, snapshot_path: str, map_location: str) -> None:
         snapshot = torch.load(snapshot_path, map_location=map_location)
         self.model.load_state_dict(snapshot["MODEL_STATE"])
         self.optimizer.load_state_dict(snapshot["OPTIMIZER_STATE"])
-        # torch.set_rng_state(snapshot["TORCH_RNG_STATE"])
         self.epochs_run = snapshot["EPOCHS_RUN"]
         self.logger.info(f"Resuming training from snapshot at Epoch {self.epochs_run}")
 
     def _run_batch(self, source: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         self.optimizer.zero_grad()
         output = self.model(source)
-        loss = F.mse_loss(output, targets)
+        loss = self.criterion(output, targets)
         loss.backward()
         self.optimizer.step()
         return loss
@@ -316,11 +316,16 @@ class Trainer:
                 self._save_snapshot(epoch)
 
 
-def load_train_objs():
+def build_optimizer(cfg, model: torch.nn.Module) -> torch.optim.Optimizer:
+    pass
+
+
+def build_all():
     train_dataset = ToyDataset(num_samples=2048, num_dimensions=20, target_dimensions=1)
     model = torch.nn.Linear(20, 1)  # load your model
+    criterion = torch.nn.MSELoss()  # load your criterion
     optimizer = torch.optim.SGD(model.parameters(), lr=1e-3)
-    return train_dataset, model, optimizer
+    return train_dataset, model, criterion, optimizer
 
 
 def main(
@@ -361,7 +366,7 @@ def main(
     logger.info(f"Distributed info: {str(dist_info)}")
     torch.cuda.set_device(local_rank)
 
-    train_dataset, model, optimizer = load_train_objs()
+    train_dataset, model, criterion, optimizer = build_all()
     distributed_sampler_config = partial_distributed_sampler_config(rank=global_rank)
     distributed_sampler = DistributedSampler(
         dataset=train_dataset, **asdict(distributed_sampler_config)
@@ -374,6 +379,7 @@ def main(
 
     trainer = Trainer(
         model=model,
+        criterion=criterion,
         optimizer=optimizer,
         train_loader=train_loader,
         trainer_config=trainer_config,
