@@ -1,12 +1,12 @@
+import datetime
+import os
 import socket
 from dataclasses import MISSING, dataclass, field, fields
-from typing import Iterable, Literal, Union, Optional
+from typing import Iterable, Literal, Optional, Union
 
 import torch
 import torch.distributed as dist
 from torch.utils.data import Sampler
-import os
-import datetime
 
 __all__ = [
     "TrainerConfig",

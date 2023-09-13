@@ -154,7 +154,12 @@ from typing import Optional
 
 import torch
 import torch.multiprocessing as mp
+from torch.distributed import destroy_process_group
+from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.utils.data import DataLoader
+from torch.utils.data.distributed import DistributedSampler
 
+from config._optim import OPTIMIZER_NAME_TO_CONFIG_MAPPING, build_optimizer
 from config.base import (
     DataLoaderConfig,
     DistributedInfo,
@@ -163,19 +168,10 @@ from config.base import (
     InitProcessGroupArgs,
     TrainerConfig,
 )
-from config._optim import OPTIMIZER_NAME_TO_CONFIG_MAPPING, build_optimizer
 from core._init import init_env, init_process
 from core._seed import seed_all
-from torch.distributed import destroy_process_group
-from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.utils.data import DataLoader
-from torch.utils.data.distributed import DistributedSampler
 from utils.common_utils import calculate_global_rank, configure_logger
 from utils.data_utils import ToyDataset, prepare_dataloader
-
-# def ddp_setup():
-#     init_process_group(backend="nccl")
-#     torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
 
 
 class Trainer:
@@ -321,12 +317,21 @@ def build_all(args: argparse.Namespace):
     train_dataset = ToyDataset(num_samples=2048, num_dimensions=20, target_dimensions=1)
     model = torch.nn.Linear(20, 1)  # load your model
     criterion = torch.nn.MSELoss()  # load your criterion
+    optimizer = torch.optim.SGD(model.parameters(), lr=args.lr)
+    return train_dataset, model, criterion, optimizer
+
+
+def build_all_elegant(args: argparse.Namespace):
+    """A more elegant way of building the model, criterion, optimizer, and dataset
+    by using design pattern"""
+    train_dataset = ToyDataset(num_samples=2048, num_dimensions=20, target_dimensions=1)
+    model = torch.nn.Linear(20, 1)  # load your model
+    criterion = torch.nn.MSELoss()  # load your criterion
 
     optimizer_config = OPTIMIZER_NAME_TO_CONFIG_MAPPING[args.optimizer_name](
         name=args.optimizer_name, lr=args.lr
     )
     optimizer = build_optimizer(model=model, cfg=optimizer_config)
-    # optimizer = torch.optim.SGD(model.parameters(), lr=args.lr)
     return train_dataset, model, criterion, optimizer
 
 

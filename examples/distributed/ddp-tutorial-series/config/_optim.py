@@ -1,9 +1,33 @@
-from __future__ import annotations
-from dataclasses import dataclass
-from typing import Any, Type, Dict, Tuple
-import torch
-from torch.optim import Adam, SGD
+"""
+This module employs the Builder and Registry design patterns to abstract
+the creation of PyTorch optimizers and their configurations.
 
+1. The **Builder Design Pattern** is being used for creating the optimizer instances.
+This abstracts the process of creating an optimizer, allowing you to decouple
+the construction of complex objects from their representation.
+
+2. The **Registry Design Pattern** (or sometimes called the **Registration Design Pattern**)
+is used to register optimizer builders globally. This allows for decoupled and dynamic
+instantiation of optimizers based on a provided name, rather than direct instantiation.
+
+The Builder pattern decouples the process of constructing complex objects
+(optimizer and its configuration) from their representation. This makes
+it easier to handle varying configurations and optimizers without changing
+the core construction logic.
+
+The Registry pattern allows dynamic instantiation of optimizers based on
+provided names, thus fostering flexibility and extensibility. This is particularly
+useful when adding new optimizers without modifying the core logic.
+"""
+
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any, Dict, Tuple, Type
+
+import torch
+from torch.optim import SGD, Adam
 
 OPTIMIZER_REGISTRY: Dict[str, Type[BaseOptimizerBuilder]] = {}
 
@@ -12,6 +36,8 @@ OPTIMIZER_REGISTRY: Dict[str, Type[BaseOptimizerBuilder]] = {}
 class OptimizerConfig:
     """
     Configuration data class for optimizers.
+    Used as Dependency Injection and as a Service Locator to
+    instantiate optimizers.
 
     Attributes
     ----------
@@ -57,6 +83,9 @@ def register_optimizer(name: str) -> Any:
     """
     Decorator to register an optimizer builder in the global OPTIMIZER_REGISTRY.
 
+    The Registry pattern provides a systematic way to register and later instantiate
+    classes based on names, promoting flexibility in adding new classes.
+
     Parameters
     ----------
     name : str
@@ -85,7 +114,10 @@ def register_optimizer(name: str) -> Any:
 
 class BaseOptimizerBuilder:
     """
-    Base class for all optimizer builders.
+    Base class for optimizer builders utilizing the Builder design pattern.
+
+    The Builder pattern abstracts away the complex construction process, thus
+    simplifying object creation, especially for objects with many configurations.
 
     Attributes
     ----------
@@ -169,7 +201,11 @@ def build_optimizer(
     cfg: OptimizerConfig, model: torch.nn.Module
 ) -> torch.optim.Optimizer:
     """
-    Function to build an optimizer based on provided configuration.
+    Function to build an optimizer based on provided configuration, employing the
+    Builder and Registry design patterns.
+
+    The combination of these patterns enables dynamic, flexible, and extensible
+    optimizer instantiation without modifying the core logic.
 
     Parameters
     ----------
