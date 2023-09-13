@@ -6,14 +6,14 @@ the creation of PyTorch optimizers and their configurations.
 This abstracts the process of creating an optimizer, allowing you to decouple
 the construction of complex objects from their representation.
 
-2. The **Registry Design Pattern** (or sometimes called the **Registration Design Pattern**)
-is used to register optimizer builders globally. This allows for decoupled and dynamic
-instantiation of optimizers based on a provided name, rather than direct instantiation.
-
 The Builder pattern decouples the process of constructing complex objects
 (optimizer and its configuration) from their representation. This makes
 it easier to handle varying configurations and optimizers without changing
 the core construction logic.
+
+2. The **Registry Design Pattern** (or sometimes called the **Registration Design Pattern**)
+is used to register optimizer builders globally. This allows for decoupled and dynamic
+instantiation of optimizers based on a provided name, rather than direct instantiation.
 
 The Registry pattern allows dynamic instantiation of optimizers based on
 provided names, thus fostering flexibility and extensibility. This is particularly
@@ -24,7 +24,7 @@ useful when adding new optimizers without modifying the core logic.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, Tuple, Type
+from typing import Any, Dict, Tuple, Type, Callable
 
 import torch
 from torch.optim import SGD, Adam
@@ -77,7 +77,9 @@ class AdamConfig(OptimizerConfig):
     weight_decay: float = 0.0
 
 
-def register_optimizer(name: str) -> Any:
+def register_optimizer(
+    name: str,
+) -> Callable[[Type[BaseOptimizerBuilder]], Type[BaseOptimizerBuilder]]:
     """
     Decorator to register an optimizer builder in the global OPTIMIZER_REGISTRY.
 
@@ -97,7 +99,7 @@ def register_optimizer(name: str) -> Any:
 
     def register_optimizer_cls(
         cls: Type[BaseOptimizerBuilder],
-    ) -> Type[BaseOptimizerBuilder]:
+    ) -> BaseOptimizerBuilder:
         if name in OPTIMIZER_REGISTRY:
             raise ValueError(f"Cannot register duplicate optimizer {name}")
         if not issubclass(cls, BaseOptimizerBuilder):
@@ -214,7 +216,7 @@ def build_optimizer(
 
     Returns
     -------
-    Any
+    torch.optim.Optimizer
         The optimizer instance.
 
     Raises

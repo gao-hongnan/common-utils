@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import warnings
 from dataclasses import dataclass
-from typing import Any, Dict, Tuple, Type
+from typing import Any, Dict, Tuple, Type, Union, Optional, Callable
 
 import torch
 from torch.nn import CrossEntropyLoss, MSELoss
@@ -17,13 +17,36 @@ class CriterionConfig:
     name: str
     reduction: str = "mean"
 
+    def __delattr__(self, name: str) -> None:
+        if name in self.__dict__:
+            super().__delattr__(name)
+        else:
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute '{name}'"
+            )
 
-def register_criterion(name: str) -> Any:
+
+@dataclass
+class CrossEntropyConfig(CriterionConfig):
+    """CrossEntropy criterion configuration, add attributes as needed."""
+
+    weight: Optional[torch.Tensor] = None
+
+
+@dataclass
+class MSELossConfig(CriterionConfig):
+    """MSELoss criterion configuration, there is actually no other
+    attributes to add."""
+
+
+def register_criterion(
+    name: str,
+) -> Callable[[Type[BaseCriterionBuilder]], Type[BaseCriterionBuilder]]:
     """Decorator to register a criterion builder in the global CRITERION_REGISTRY."""
 
     def register_criterion_cls(
         cls: Type[BaseCriterionBuilder],
-    ) -> Type[BaseCriterionBuilder]:
+    ) -> BaseCriterionBuilder:
         if name in CRITERION_REGISTRY:
             raise ValueError(f"Cannot register duplicate criterion {name}")
         if not issubclass(cls, BaseCriterionBuilder):
@@ -56,7 +79,7 @@ class CrossEntropyBuilder(BaseCriterionBuilder):
 @register_criterion("mse")
 class MSEBuilder(BaseCriterionBuilder):
     def build(self) -> MSELoss:
-        return MSELoss()
+        return MSELoss(**self.config.__dict__)
 
 
 def build_criterion(config: CriterionConfig) -> Any:

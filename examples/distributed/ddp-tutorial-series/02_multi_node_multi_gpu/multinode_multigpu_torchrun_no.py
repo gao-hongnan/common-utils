@@ -38,6 +38,9 @@ python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
     --batch_size 32 \
     --snapshot_path "snapshot.pt"
 
+[GPU1] Epoch 49 | Batchsize: 32 | Steps: 16 | Average Loss: 0.0947
+[GPU0] Epoch 49 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1019
+
 # On Node 1:
 
 export PYTHONPATH=$PYTHONPATH:$(pwd) && \
@@ -88,6 +91,9 @@ python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
     --batch_size 32 \
     --snapshot_path "snapshot.pt" \
     --load_path "/common-utils/examples/distributed/ddp-tutorial-series/snapshot.pt"
+
+[GPU3] Epoch 49 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1025
+[GPU2] Epoch 49 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1094
 
 # On Node 1 Resume:
 
@@ -160,6 +166,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 
 from config._optim import build_optimizer
+from config._criterion import build_criterion
 
 from config.base import (
     DataLoaderConfig,
@@ -169,6 +176,7 @@ from config.base import (
     InitProcessGroupArgs,
     TrainerConfig,
     OPTIMIZER_NAME_TO_CONFIG_MAPPING,
+    CRITERION_NAME_TO_CONFIG_MAPPING,
 )
 from core._init import init_env, init_process
 from core._seed import seed_all
@@ -176,6 +184,7 @@ from utils.common_utils import calculate_global_rank, configure_logger
 from utils.data_utils import ToyDataset, prepare_dataloader
 
 
+# pylint: disable=missing-function-docstring,missing-class-docstring
 class Trainer:
     """Trainer class for training a model."""
 
@@ -328,7 +337,11 @@ def build_all_elegant(args: argparse.Namespace):
     by using design pattern"""
     train_dataset = ToyDataset(num_samples=2048, num_dimensions=20, target_dimensions=1)
     model = torch.nn.Linear(20, 1)  # load your model
-    criterion = torch.nn.MSELoss()  # load your criterion
+
+    criterion_config = CRITERION_NAME_TO_CONFIG_MAPPING[args.criterion_name](
+        name=args.criterion_name, reduction=args.reduction
+    )
+    criterion = build_criterion(config=criterion_config)
 
     optimizer_config = OPTIMIZER_NAME_TO_CONFIG_MAPPING[args.optimizer_name](
         name=args.optimizer_name, lr=args.lr
@@ -460,6 +473,10 @@ def parse_args() -> argparse.Namespace:
     # DistributedSampler
     parser.add_argument("--sampler_shuffle", action="store_true", help="Shuffle")
     parser.add_argument("--sampler_drop_last", action="store_true", help="Drop last")
+
+    # Criterion
+    parser.add_argument("--criterion_name", default="mse_loss", type=str, help="Criterion")
+    parser.add_argument("--reduction", default="mean", type=str, help="Reduction")
 
     # Optimizer
     parser.add_argument("--optimizer_name", default="sgd", type=str, help="Optimizer")

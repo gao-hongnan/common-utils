@@ -9,6 +9,7 @@ import torch.distributed as dist
 from torch.utils.data import Sampler
 
 from config._optim import AdamConfig, OptimizerConfig, SGDConfig
+from config._criterion import CriterionConfig, CrossEntropyConfig, MSELossConfig
 
 __all__ = [
     "TrainerConfig",
@@ -18,11 +19,16 @@ __all__ = [
     "InitProcessGroupArgs",
     "DistributedInfo",
     "OPTIMIZER_NAME_TO_CONFIG_MAPPING",
+    "CRITERION_NAME_TO_CONFIG_MAPPING",
 ]
 
 OPTIMIZER_NAME_TO_CONFIG_MAPPING: Dict[str, Type[OptimizerConfig]] = {
     "adam": AdamConfig,
     "sgd": SGDConfig,
+}
+CRITERION_NAME_TO_CONFIG_MAPPING: Dict[str, Type[CriterionConfig]] = {
+    "cross_entropy": CrossEntropyConfig,
+    "mse_loss": MSELossConfig,
 }
 
 
