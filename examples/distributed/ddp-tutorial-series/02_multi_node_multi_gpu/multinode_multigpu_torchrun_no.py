@@ -30,16 +30,26 @@ python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
     --master_addr $MASTER_ADDR \
     --master_port $MASTER_PORT \
     --seed 0 \
+    --num_samples 2048 \
+    --num_dimensions 20 \
+    --target_dimensions 1 \
     --num_workers 0 \
     --pin_memory \
     --sampler_shuffle \
+    --input_dim 20 \
+    --output_dim 1 \
+    --criterion_name "mse_loss" \
+    --reduction "mean" \
+    --optimizer_name "sgd" \
+    --lr 1e-3 \
     --max_epochs 50 \
     --save_checkpoint_interval 10 \
     --batch_size 32 \
     --snapshot_path "snapshot.pt"
 
-[GPU1] Epoch 49 | Batchsize: 32 | Steps: 16 | Average Loss: 0.0947
 [GPU0] Epoch 49 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1019
+[GPU1] Epoch 49 | Batchsize: 32 | Steps: 16 | Average Loss: 0.0947
+
 
 # On Node 1:
 
@@ -58,13 +68,26 @@ python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
     --master_addr 10.168.0.3 \
     --master_port 34397 \
     --seed 0 \
+    --num_samples 2048 \
+    --num_dimensions 20 \
+    --target_dimensions 1 \
     --num_workers 0 \
     --pin_memory \
     --sampler_shuffle \
+    --input_dim 20 \
+    --output_dim 1 \
+    --criterion_name "mse_loss" \
+    --reduction "mean" \
+    --optimizer_name "sgd" \
+    --lr 1e-3 \
     --max_epochs 50 \
     --save_checkpoint_interval 10 \
     --batch_size 32 \
     --snapshot_path "snapshot.pt"
+
+[GPU2] Epoch 49 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1094
+[GPU3] Epoch 49 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1025
+
 
 # On Node 0 Resume:
 
@@ -83,17 +106,23 @@ python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
     --master_addr $MASTER_ADDR \
     --master_port $MASTER_PORT \
     --seed 0 \
+    --num_samples 2048 \
+    --num_dimensions 20 \
+    --target_dimensions 1 \
     --num_workers 0 \
     --pin_memory \
     --sampler_shuffle \
+    --input_dim 20 \
+    --output_dim 1 \
+    --criterion_name "mse_loss" \
+    --reduction "mean" \
+    --optimizer_name "sgd" \
+    --lr 1e-3 \
     --max_epochs 50 \
     --save_checkpoint_interval 10 \
     --batch_size 32 \
     --snapshot_path "snapshot.pt" \
     --load_path "/common-utils/examples/distributed/ddp-tutorial-series/snapshot.pt"
-
-[GPU3] Epoch 49 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1025
-[GPU2] Epoch 49 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1094
 
 # On Node 1 Resume:
 
@@ -112,13 +141,22 @@ python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
     --master_addr 10.168.0.3 \
     --master_port 34397 \
     --seed 0 \
+    --num_samples 2048 \
+    --num_dimensions 20 \
+    --target_dimensions 1 \
     --num_workers 0 \
     --pin_memory \
     --sampler_shuffle \
+    --input_dim 20 \
+    --output_dim 1 \
+    --criterion_name "mse_loss" \
+    --reduction "mean" \
+    --optimizer_name "sgd" \
+    --lr 1e-3 \
     --max_epochs 50 \
     --save_checkpoint_interval 10 \
     --batch_size 32 \
-    --snapshot_path "snapshot.pt" \
+    --snapshot_path "snapshot.pt"
     --load_path "/common-utils/examples/distributed/ddp-tutorial-series/snapshot.pt"
 
 abstract
