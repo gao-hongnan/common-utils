@@ -37,8 +37,8 @@ from config.base import (
 )
 from core._init import init_env, init_process
 from core._seed import seed_all
+from data.toy_dataset import ToyDataset, prepare_dataloader
 from utils.common_utils import calculate_global_rank, configure_logger
-from utils.data_utils import ToyDataset, prepare_dataloader
 
 
 class Trainer:

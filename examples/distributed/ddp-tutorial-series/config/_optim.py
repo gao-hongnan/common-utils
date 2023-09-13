@@ -24,7 +24,7 @@ useful when adding new optimizers without modifying the core logic.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, Tuple, Type, Callable
+from typing import Any, Callable, Dict, Tuple, Type
 
 import torch
 from torch.optim import SGD, Adam

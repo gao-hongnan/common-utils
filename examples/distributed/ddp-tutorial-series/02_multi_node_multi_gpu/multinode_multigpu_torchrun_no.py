@@ -165,23 +165,22 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 
-from config._optim import build_optimizer
 from config._criterion import build_criterion
-
+from config._optim import build_optimizer
 from config.base import (
+    CRITERION_NAME_TO_CONFIG_MAPPING,
+    OPTIMIZER_NAME_TO_CONFIG_MAPPING,
     DataLoaderConfig,
     DistributedInfo,
     DistributedSamplerConfig,
     InitEnvArgs,
     InitProcessGroupArgs,
     TrainerConfig,
-    OPTIMIZER_NAME_TO_CONFIG_MAPPING,
-    CRITERION_NAME_TO_CONFIG_MAPPING,
 )
 from core._init import init_env, init_process
 from core._seed import seed_all
+from data.toy_dataset import ToyDataset, prepare_dataloader
 from utils.common_utils import calculate_global_rank, configure_logger
-from utils.data_utils import ToyDataset, prepare_dataloader
 
 
 # pylint: disable=missing-function-docstring,missing-class-docstring
@@ -414,6 +413,8 @@ def main(
     destroy_process_group()
 
 
+# TODO: all of these configs can be instantiated from hydra and wrapped
+# around dataclass/pydantic. Do compose pattern to compose the configs.
 def parse_args() -> argparse.Namespace:
     """
     Parses the input arguments for the distributed training job.
@@ -462,6 +463,8 @@ def parse_args() -> argparse.Namespace:
     # Seed
     parser.add_argument("--seed", default=0, type=int, help="Seed for reproducibility")
 
+    # Dataset
+
     # DataLoader
     parser.add_argument("--num_workers", default=0, type=int, help="Number of workers")
     parser.add_argument("--pin_memory", action="store_true", help="Pin memory")
@@ -475,7 +478,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sampler_drop_last", action="store_true", help="Drop last")
 
     # Criterion
-    parser.add_argument("--criterion_name", default="mse_loss", type=str, help="Criterion")
+    parser.add_argument(
+        "--criterion_name", default="mse_loss", type=str, help="Criterion"
+    )
     parser.add_argument("--reduction", default="mean", type=str, help="Reduction")
 
     # Optimizer
