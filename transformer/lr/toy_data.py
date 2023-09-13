@@ -32,6 +32,7 @@ def generate_toy_data(seed: int, n_data: int) -> Tuple[torch.Tensor, torch.Tenso
 
     return x_data_torch, y_data_torch
 
+
 # Generate the toy data
 x_data_torch, y_data_torch = generate_toy_data(seed=0, n_data=100)
 labels = np.unique(y_data_torch.numpy())
@@ -40,18 +41,30 @@ plt.figure(figsize=(8, 8))
 
 # Scatter plot for Class 0
 # need colors for each class
-plt.scatter(x_data_torch[y_data_torch == 0][:, 0], x_data_torch[y_data_torch == 0][:, 1],
-            label='Class 0', edgecolors='k',  facecolors='g', marker='o')
+plt.scatter(
+    x_data_torch[y_data_torch == 0][:, 0],
+    x_data_torch[y_data_torch == 0][:, 1],
+    label="Class 0",
+    edgecolors="k",
+    facecolors="g",
+    marker="o",
+)
 
 # Scatter plot for Class 1
-plt.scatter(x_data_torch[y_data_torch == 1][:, 0], x_data_torch[y_data_torch == 1][:, 1],
-            label='Class 1', edgecolors='k', facecolors='b', marker='x')
+plt.scatter(
+    x_data_torch[y_data_torch == 1][:, 0],
+    x_data_torch[y_data_torch == 1][:, 1],
+    label="Class 1",
+    edgecolors="k",
+    facecolors="b",
+    marker="x",
+)
 
-plt.xlabel('Feature 1')
-plt.ylabel('Feature 2')
-plt.title('Generated Toy Data')
+plt.xlabel("Feature 1")
+plt.ylabel("Feature 2")
+plt.title("Generated Toy Data")
 plt.legend()
-plt.colorbar(label='Label')
+plt.colorbar(label="Label")
 plt.grid(True)
 plt.show()
 
@@ -63,6 +76,7 @@ from torch.optim.lr_scheduler import CosineAnnealingLR
 
 class SimpleModel(nn.Module):
     """A simple linear model for binary classification."""
+
     def __init__(self):
         super(SimpleModel, self).__init__()
         self.fc = nn.Linear(2, 2)
@@ -71,12 +85,14 @@ class SimpleModel(nn.Module):
         return self.fc(x)
 
 
-def train_model(model: nn.Module,
-                optimizer: optim.Optimizer,
-                scheduler: CosineAnnealingLR,
-                x_data: torch.Tensor,
-                y_data: torch.Tensor,
-                n_epochs: int) -> Tuple[nn.Module, np.ndarray]:
+def train_model(
+    model: nn.Module,
+    optimizer: optim.Optimizer,
+    scheduler: CosineAnnealingLR,
+    x_data: torch.Tensor,
+    y_data: torch.Tensor,
+    n_epochs: int,
+) -> Tuple[nn.Module, np.ndarray]:
     """
     Train a PyTorch model.
 
@@ -113,20 +129,28 @@ optimizer = optim.AdamW(model.parameters(), lr=0.1)
 scheduler = CosineAnnealingLR(optimizer, T_max=50, eta_min=0.01)
 
 # Train the model
-trained_model, losses = train_model(model, optimizer, scheduler, x_data_torch, y_data_torch, n_epochs=100)
+trained_model, losses = train_model(
+    model, optimizer, scheduler, x_data_torch, y_data_torch, n_epochs=100
+)
 
 # Plot the loss
 plt.plot(losses)
-plt.xlabel('Epoch')
-plt.ylabel('Loss')
-plt.title('Training Loss')
+plt.xlabel("Epoch")
+plt.ylabel("Loss")
+plt.title("Training Loss")
 plt.show()
 
 from matplotlib import cm
 
 
-def plot_loss_contour(model: nn.Module, x_data: torch.Tensor, y_data: torch.Tensor,
-                      xlim: Tuple[float, float], ylim: Tuple[float, float], n_points: int = 100):
+def plot_loss_contour(
+    model: nn.Module,
+    x_data: torch.Tensor,
+    y_data: torch.Tensor,
+    xlim: Tuple[float, float],
+    ylim: Tuple[float, float],
+    n_points: int = 100,
+):
     """
     Plot the loss contour for the model given the data.
 
@@ -156,10 +180,11 @@ def plot_loss_contour(model: nn.Module, x_data: torch.Tensor, y_data: torch.Tens
 
     plt.contourf(X, Y, Z, levels=50, cmap=cm.coolwarm)
     plt.colorbar()
-    plt.xlabel('Weight 1')
-    plt.ylabel('Weight 2')
-    plt.title('Loss Contour')
+    plt.xlabel("Weight 1")
+    plt.ylabel("Weight 2")
+    plt.title("Loss Contour")
     plt.show()
+
 
 # Define limits for the weights
 xlim = (-2, 2)

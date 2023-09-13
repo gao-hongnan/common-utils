@@ -50,9 +50,21 @@ class MultiHeadedAttention(nn.Module):
         # embeddings shape = [2, 4, 100] [batch, seq_len, D]
 
         # 1) Do all the linear projections in batch from d_model => h x d_k
-        Q = self.W_q(embeddings).view(nbatches, seq_len, self.h, self.d_k).transpose(1, 2)
-        K = self.W_k(embeddings).view(nbatches, seq_len, self.h, self.d_k).transpose(1, 2)
-        V = self.W_v(embeddings).view(nbatches, seq_len, self.h, self.d_k).transpose(1, 2)
+        Q = (
+            self.W_q(embeddings)
+            .view(nbatches, seq_len, self.h, self.d_k)
+            .transpose(1, 2)
+        )
+        K = (
+            self.W_k(embeddings)
+            .view(nbatches, seq_len, self.h, self.d_k)
+            .transpose(1, 2)
+        )
+        V = (
+            self.W_v(embeddings)
+            .view(nbatches, seq_len, self.h, self.d_k)
+            .transpose(1, 2)
+        )
         pprint(Q.shape)
 
         # Apply attention

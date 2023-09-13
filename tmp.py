@@ -266,7 +266,7 @@ def induce_fragmentation_experiment(
 
     seed_all(seed_value, seed_torch=seed_torch_flag)
 
-    buffer = CustomAllocator(buffer=750000000 * 2) #3*2=6gb
+    buffer = CustomAllocator(buffer=750000000 * 2)  # 3*2=6gb
     placeholder_optimizer = buffer.allocate(1000000000)
     placeholder_model = buffer.allocate(500000000)
 
@@ -437,6 +437,7 @@ class CustomAllocator:
         end = start + tensor_slice.numel()
         self.free_slices.append((start, end))
 
+
 # # Initialize the custom allocator with a buffer size
 # buffer_size = 100000  # This is a small size just for the example
 # allocator = CustomAllocator(buffer_size)
@@ -459,5 +460,3 @@ class CustomAllocator:
 # # Checking the pointer addresses to ensure reuse
 # print(f"Tensor1 address: {tensor1.data_ptr()}")
 # print(f"Tensor3 address: {tensor3.data_ptr()}")  # This should be same as tensor1's address if reuse was successful
-
-

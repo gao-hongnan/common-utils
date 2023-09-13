@@ -15,7 +15,6 @@ from common_utils.core.common import seed_all
 seed_all(42, seed_torch=True)
 
 
-
 class MultiHeadedAttention(nn.Module):
     def __init__(self, H, d_model, dropout=0.1, bias=False) -> None:
         "Take in model size and number of heads."
@@ -49,9 +48,9 @@ class MultiHeadedAttention(nn.Module):
         # then apply linear transformations to each part. This is
         # WRONG. You apply linear transformations to the whole
         # embeddings and then split the result into 8 parts.
-        W_q = self.W_q.weight # D x D
-        W_k = self.W_k.weight # D x D
-        W_v = self.W_v.weight # D x D
+        W_q = self.W_q.weight  # D x D
+        W_k = self.W_k.weight  # D x D
+        W_v = self.W_v.weight  # D x D
 
         # NOTE: in pytorch, you need to transpose the weight matrix if
         # you see their formula, so this has a bit of a different
@@ -84,9 +83,9 @@ class MultiHeadedAttention(nn.Module):
 
             # NOTE: W_q_h, W_k_h, W_v_h are computed just to check that
             # Q_h = embeddings @ W_q_h^T
-            W_q_h = W_q.T[:, head_start:head_end] # D x d_q
-            W_k_h = W_k.T[:, head_start:head_end] # D x d_k
-            W_v_h = W_v.T[:, head_start:head_end] # D x d_v
+            W_q_h = W_q.T[:, head_start:head_end]  # D x d_q
+            W_k_h = W_k.T[:, head_start:head_end]  # D x d_k
+            W_v_h = W_v.T[:, head_start:head_end]  # D x d_v
 
             Q_h = Q[:, :, head_start:head_end]
             pprint(embeddings.shape)
@@ -132,8 +131,6 @@ class MultiHeadedAttention(nn.Module):
         return self.W_o(x_concat)
 
 
-
-
 def tensors_are_same(tensor1, tensor2, atol=1e-8, rtol=1e-5):
     return torch.allclose(tensor1, tensor2, atol=atol, rtol=rtol)
 
@@ -143,7 +140,7 @@ if __name__ == "__main__":
     model = MultiHeadedAttention(H=num_heads, d_model=num_hiddens, bias=False)
     batch_size, num_queries, num_kvpairs = 2, 4, 6
     valid_lens = torch.tensor([3, 2])
-    X = torch.ones((batch_size, num_queries, num_hiddens)) # shape = [2, 4, 100]
+    X = torch.ones((batch_size, num_queries, num_hiddens))  # shape = [2, 4, 100]
     # Y = torch.ones((batch_size, num_kvpairs, num_hiddens))
     # check the output shape
     # out_mask = model(X, Y, Y, mask=torch.ones((batch_size, num_queries, num_kvpairs)))

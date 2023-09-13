@@ -9,6 +9,7 @@ torch.manual_seed(42)
 X = torch.linspace(-1, 1, 100).reshape(-1, 1)
 y = 3 * X + torch.randn(X.size()) * 0.3
 
+
 # Define simple linear model
 class LinearModel(nn.Module):
     def __init__(self):
@@ -18,11 +19,14 @@ class LinearModel(nn.Module):
     def forward(self, x):
         return self.linear(x)
 
+
 # Define training function with interventions
-def train_model(intervention='baseline'):
+def train_model(intervention="baseline"):
     model = LinearModel()
     criterion = nn.MSELoss()
-    optimizer = optim.SGD(model.parameters(), lr=1)  # High learning rate to create divergence
+    optimizer = optim.SGD(
+        model.parameters(), lr=1
+    )  # High learning rate to create divergence
     losses = []
 
     for epoch in range(1000):
@@ -33,12 +37,12 @@ def train_model(intervention='baseline'):
 
         # Check for divergence
         if loss_value > 1e3 and epoch > 50:
-            if intervention == 'reset_optimizer':
+            if intervention == "reset_optimizer":
                 optimizer = optim.SGD(model.parameters(), lr=1)
-            elif intervention == 'reduce_lr':
+            elif intervention == "reduce_lr":
                 for param_group in optimizer.param_groups:
-                    param_group['lr'] *= 0.5
-            elif intervention == 'combination':
+                    param_group["lr"] *= 0.5
+            elif intervention == "combination":
                 optimizer = optim.SGD(model.parameters(), lr=0.5)
 
         optimizer.zero_grad()
@@ -47,8 +51,9 @@ def train_model(intervention='baseline'):
 
     return losses
 
+
 # Run experiments
-strategies = ['baseline', 'reset_optimizer', 'reduce_lr', 'combination']
+strategies = ["baseline", "reset_optimizer", "reduce_lr", "combination"]
 loss_curves = {}
 
 for strategy in strategies:
@@ -59,8 +64,8 @@ for strategy in strategies:
 plt.figure(figsize=(10, 6))
 for strategy, losses in loss_curves.items():
     plt.plot(losses, label=strategy)
-plt.yscale('log')  # Log scale to handle large loss values
-plt.xlabel('Epoch')
-plt.ylabel('Loss')
+plt.yscale("log")  # Log scale to handle large loss values
+plt.xlabel("Epoch")
+plt.ylabel("Loss")
 plt.legend()
 plt.show()

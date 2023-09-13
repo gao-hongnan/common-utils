@@ -13,6 +13,8 @@ seed_all(42, seed_torch=True)
 
 
 _ = nn.MultiheadAttention
+
+
 def clones(module, N):
     "Produce N identical layers."
     return nn.ModuleList([copy.deepcopy(module) for _ in range(N)])
@@ -55,9 +57,6 @@ class MultiHeadedAttention(nn.Module):
         return self.linears[-1](x)
 
 
-
-
-
 def attention(query, key, value, mask=None, dropout=None):
     "Compute 'Scaled Dot Product Attention'"
     d_k = query.size(-1)
@@ -85,8 +84,8 @@ if __name__ == "__main__":
     # out_mask = model(X, Y, Y, mask=torch.ones((batch_size, num_queries, num_kvpairs)))
     out_no_mask = model(X, X, X, mask=None)
     # torch.save(out_no_mask, "output_tensor.pt")
-    #pprint(out_no_mask)
-    #print(out_no_mask.shape)
+    # pprint(out_no_mask)
+    # print(out_no_mask.shape)
 
     loaded_out = torch.load("output_tensor.pt")
 

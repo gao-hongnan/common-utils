@@ -25,6 +25,8 @@ class CustomAllocator:
         start = tensor_slice.data_ptr() - self.buffer.data_ptr()
         end = start + tensor_slice.numel()
         self.free_slices.append((start, end))
+
+
 induce_fragmentation_experiment()
 # # Initialize the custom allocator with a buffer size
 # buffer_size = 100000  # This is a small size just for the example
