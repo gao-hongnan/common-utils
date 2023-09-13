@@ -32,6 +32,7 @@ class OptimizerConfig:
                 f"'{type(self).__name__}' object has no attribute '{name}'"
             )
 
+
 @dataclass
 class SGDConfig(OptimizerConfig):
     momentum: float = 0.0
@@ -44,6 +45,12 @@ class AdamConfig(OptimizerConfig):
     betas: Tuple[float, float] = (0.9, 0.999)
     eps: float = 1e-8
     weight_decay: float = 0.0
+
+
+OPTIMIZER_NAME_TO_CONFIG_MAPPING: Dict[str, Type[OptimizerConfig]] = {
+    "adam": AdamConfig,
+    "sgd": SGDConfig,
+}
 
 
 def register_optimizer(name: str) -> Any:
@@ -110,6 +117,7 @@ class BaseOptimizerBuilder:
         """
         raise NotImplementedError
 
+
 @register_optimizer("sgd")
 class SGDBuilder(BaseOptimizerBuilder):
     def build(self, model: torch.nn.Module) -> Adam:
@@ -127,7 +135,6 @@ class SGDBuilder(BaseOptimizerBuilder):
             The constructed Adam optimizer instance from PyTorch.
         """
         return SGD(model.parameters(), **self.cfg.__dict__)
-
 
 
 @register_optimizer("adam")
@@ -186,9 +193,11 @@ def build_optimizer(
     optimizer_builder_cls = OPTIMIZER_REGISTRY.get(optimizer_name)
 
     if not optimizer_builder_cls:
-        raise ValueError(f"The optimizer {optimizer_name} is not registered in registry")
+        raise ValueError(
+            f"The optimizer {optimizer_name} is not registered in registry"
+        )
 
-    del cfg.name # remove the name attribute from the cfg
+    del cfg.name  # remove the name attribute from the cfg
 
     optimizer_builder = optimizer_builder_cls(cfg)
     return optimizer_builder.build(model)

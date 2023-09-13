@@ -163,7 +163,7 @@ from config.base import (
     InitProcessGroupArgs,
     TrainerConfig,
 )
-from config._optim import SGDConfig, build_optimizer
+from config._optim import OPTIMIZER_NAME_TO_CONFIG_MAPPING, build_optimizer
 from core._init import init_env, init_process
 from core._seed import seed_all
 from torch.distributed import destroy_process_group
@@ -317,17 +317,16 @@ class Trainer:
                 self._save_snapshot(epoch)
 
 
-
-
-
 def build_all(args: argparse.Namespace):
     train_dataset = ToyDataset(num_samples=2048, num_dimensions=20, target_dimensions=1)
     model = torch.nn.Linear(20, 1)  # load your model
     criterion = torch.nn.MSELoss()  # load your criterion
 
-    optimizer_config = SGDConfig(name=args.optimizer_name, lr=args.lr)
+    optimizer_config = OPTIMIZER_NAME_TO_CONFIG_MAPPING[args.optimizer_name](
+        name=args.optimizer_name, lr=args.lr
+    )
     optimizer = build_optimizer(model=model, cfg=optimizer_config)
-    #optimizer = torch.optim.SGD(model.parameters(), lr=args.lr)
+    # optimizer = torch.optim.SGD(model.parameters(), lr=args.lr)
     return train_dataset, model, criterion, optimizer
 
 
