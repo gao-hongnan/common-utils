@@ -236,7 +236,7 @@ class Trainer:
     local_rank: int
     global_rank: int
     model: torch.nn.Module
-    criterion: torch.nn.MSELoss
+    criterion: torch.nn._Loss
     optimizer: torch.optim.Optimizer
     train_loader: DataLoader
     trainer_config: TrainerConfig
@@ -248,7 +248,7 @@ class Trainer:
     def __init__(
         self,
         model: torch.nn.Module,
-        criterion: torch.nn.MSELoss,
+        criterion: torch.nn._Loss,
         optimizer: torch.optim.Optimizer,
         train_loader: DataLoader,
         trainer_config: TrainerConfig,
@@ -277,7 +277,7 @@ class Trainer:
         # directory and others wait till it's done.
         # You must call this on all processes, not just rank 0.
         # If you put in the if clause above, the barrier is not symmetrically
-        # executed by all processes.  The issue is that the other processes are
+        # executed by all processes because the issue is that the other processes are
         # not hitting the barrier at all.
         torch.distributed.barrier()
 

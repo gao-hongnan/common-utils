@@ -210,6 +210,7 @@ class DistributedInfo:
         default_factory=dist.is_initialized,
         metadata={"help": "Whether the distributed package is initialized."},
     )
+    process_id: int = field(default_factory=os.getpid, metadata={"help": "Process ID."})
     global_rank: int = field(
         default_factory=dist.get_rank,
         metadata={
