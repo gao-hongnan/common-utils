@@ -194,8 +194,8 @@ import functools
 import logging
 import os
 from dataclasses import asdict
-from typing import Optional
-
+from typing import Optional, Tuple
+import gc
 import torch
 import torch.multiprocessing as mp
 from torch.distributed import destroy_process_group
@@ -214,7 +214,7 @@ from core._seed import seed_all
 from data.toy_dataset import ToyDataset, prepare_dataloader
 from models.toy_model import ToyModel
 from utils.common_utils import calculate_global_rank, configure_logger
-
+import time
 
 # pylint: disable=missing-function-docstring,missing-class-docstring
 class Trainer:
@@ -248,7 +248,7 @@ class Trainer:
     def __init__(
         self,
         model: torch.nn.Module,
-        criterion: torch.nn.Module, # hard to type hint _Loss
+        criterion: torch.nn.Module,  # hard to type hint _Loss
         optimizer: torch.optim.Optimizer,
         train_loader: DataLoader,
         trainer_config: TrainerConfig,
@@ -309,7 +309,6 @@ class Trainer:
         }
         torch.save(snapshot, self.save_path)
 
-        # print(f"Epoch {epoch} | Training snapshot saved at {self.save_path}")
         self.logger.info(f"Epoch {epoch} | Training snapshot saved at {self.save_path}")
 
     def _load_snapshot(self, snapshot_path: str, map_location: str) -> None:
@@ -318,6 +317,11 @@ class Trainer:
         self.optimizer.load_state_dict(snapshot["OPTIMIZER_STATE"])
         self.epochs_run = snapshot["EPOCHS_RUN"]
         self.logger.info(f"Resuming training from snapshot at Epoch {self.epochs_run}")
+
+        del snapshot
+        gc.collect()
+        torch.cuda.empty_cache()
+
 
     def _run_batch(self, source: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         self.optimizer.zero_grad()
@@ -342,13 +346,6 @@ class Trainer:
         # Calculate average loss for the epoch
         avg_loss = total_loss / len(self.train_loader)
 
-        # print(
-        #     (
-        #         f"[GPU{self.global_rank}] Epoch {epoch} | "
-        #         f"Batchsize: {batch_size} | Steps: {len(self.train_loader)} | "
-        #         f"Average Loss: {avg_loss:.4f}"
-        #     )
-        # )
         self.logger.info(
             (
                 f"[GPU{self.global_rank}] Epoch {epoch} | "
@@ -373,7 +370,9 @@ class Trainer:
             torch.distributed.barrier()
 
 
-def build_all(args: argparse.Namespace):
+def build_all(
+    args: argparse.Namespace,
+) -> Tuple[ToyDataset, ToyModel, torch.nn.Module, torch.optim.Optimizer]:
     train_dataset = ToyDataset(
         num_samples=args.num_samples,
         num_dimensions=args.num_dimensions,
@@ -385,7 +384,9 @@ def build_all(args: argparse.Namespace):
     return train_dataset, model, criterion, optimizer
 
 
-def build_all_elegant(args: argparse.Namespace):
+def build_all_elegant(
+    args: argparse.Namespace,
+) -> Tuple[ToyDataset, ToyModel, torch.nn.Module, torch.optim.Optimizer]:
     """A more elegant way of building the model, criterion, optimizer, and dataset
     by using design pattern"""
     train_dataset = ToyDataset(
@@ -518,7 +519,9 @@ def parse_args() -> argparse.Namespace:
     )
 
     # Logger
-    parser.add_argument("--print_to_console", action="store_true", help="Print to console")
+    parser.add_argument(
+        "--print_to_console", action="store_true", help="Print to console"
+    )
 
     # Seed
     parser.add_argument("--seed", default=0, type=int, help="Seed for reproducibility")
