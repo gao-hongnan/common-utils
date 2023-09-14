@@ -29,6 +29,7 @@ python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
     --init_method "env://" \
     --master_addr $MASTER_ADDR \
     --master_port $MASTER_PORT \
+    --print_to_console \
     --seed 0 \
     --num_samples 2048 \
     --num_dimensions 20 \
@@ -67,6 +68,7 @@ python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
     --init_method "env://" \
     --master_addr 10.168.0.3 \
     --master_port 34397 \
+    --print_to_console \
     --seed 0 \
     --num_samples 2048 \
     --num_dimensions 20 \
@@ -105,6 +107,7 @@ python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
     --init_method "env://" \
     --master_addr $MASTER_ADDR \
     --master_port $MASTER_PORT \
+    --print_to_console \
     --seed 0 \
     --num_samples 2048 \
     --num_dimensions 20 \
@@ -140,6 +143,7 @@ python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
     --init_method "env://" \
     --master_addr 10.168.0.3 \
     --master_port 34397 \
+    --print_to_console \
     --seed 0 \
     --num_samples 2048 \
     --num_dimensions 20 \
