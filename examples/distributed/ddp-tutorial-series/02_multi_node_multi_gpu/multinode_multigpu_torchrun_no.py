@@ -29,7 +29,6 @@ python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
     --init_method "env://" \
     --master_addr $MASTER_ADDR \
     --master_port $MASTER_PORT \
-    --print_to_console \
     --seed 0 \
     --num_samples 2048 \
     --num_dimensions 20 \
@@ -68,7 +67,6 @@ python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
     --init_method "env://" \
     --master_addr 10.168.0.3 \
     --master_port 34397 \
-    --print_to_console \
     --seed 0 \
     --num_samples 2048 \
     --num_dimensions 20 \
@@ -107,7 +105,6 @@ python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
     --init_method "env://" \
     --master_addr $MASTER_ADDR \
     --master_port $MASTER_PORT \
-    --print_to_console \
     --seed 0 \
     --num_samples 2048 \
     --num_dimensions 20 \
@@ -143,7 +140,6 @@ python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
     --init_method "env://" \
     --master_addr 10.168.0.3 \
     --master_port 34397 \
-    --print_to_console \
     --seed 0 \
     --num_samples 2048 \
     --num_dimensions 20 \
@@ -276,9 +272,14 @@ class Trainer:
         )
         if not os.path.exists(self.trainer_config.run_id) and self.global_rank == 0:
             os.makedirs(self.trainer_config.run_id, exist_ok=True)
-            # NOTE: To ensure only one process (usually rank 0) creates the
-            # directory and others wait till it's done.
-            torch.distributed.barrier()
+
+        # NOTE: To ensure only one process (usually rank 0) creates the
+        # directory and others wait till it's done.
+        # You must call this on all processes, not just rank 0.
+        # If you put in the if clause above, the barrier is not symmetrically
+        # executed by all processes.  The issue is that the other processes are
+        # not hitting the barrier at all.
+        torch.distributed.barrier()
 
         if trainer_config.load_path is not None and os.path.exists(
             trainer_config.load_path
@@ -365,10 +366,11 @@ class Trainer:
                 and epoch % self.trainer_config.save_checkpoint_interval == 0
             ):
                 self._save_snapshot(epoch)
-                # NOTE: To ensure that the main process (usually with rank 0)
-                # has finished saving before other processes potentially load or
-                # continue with other operations
-                torch.distributed.barrier()
+
+            # NOTE: To ensure that the main process (usually with rank 0)
+            # has finished saving before other processes potentially load or
+            # continue with other operations
+            torch.distributed.barrier()
 
 
 def build_all(args: argparse.Namespace):
