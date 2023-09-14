@@ -50,9 +50,30 @@ So we have to either:
 - set the environment variable `WORLD_SIZE` to the total number of GPUs on your machine
 - or set `world_size` in `dist.init_process_group` to the total number of GPUs on your machine
 
+Yes, placing a `dist.barrier()` can still make sense even if you're not loading a model, depending on the context. If there's a point in your distributed training code where all processes need to be synchronized, then `dist.barrier()` can be used to ensure that synchronization.
+
+Here are a few scenarios where you might want synchronization:
+
+1. **Logging**: If you're logging metrics and want to ensure that logs from different processes don't overlap or get intermingled, you might use a barrier to synchronize the processes before the logging step.
+
+2. **Data Preparation**: If there's a point in your code where each process prepares some data or does some computation that other processes depend upon, you would want to synchronize before continuing.
+
+3. **Resource Access**: If multiple processes are trying to access shared resources (like a file or database), you might want to synchronize to avoid conflicts.
+
+4. **Gradient Updates**: Normally, DistributedDataParallel (DDP) in PyTorch will handle gradient synchronization across processes. But if you're implementing custom gradient synchronization or aggregation logic, you might need explicit synchronization.
+
+However, it's important to be judicious in the use of barriers:
+
+- Overusing barriers can impact performance since processes spend time waiting at the synchronization points.
+
+- Unnecessary barriers can negate some of the speed-up benefits you get from distributed training.
+
+In summary, if there's a specific reason to ensure all processes are at the same point in your code, then a barrier makes sense. If not, adding barriers can slow down your training without providing any benefit.
+
 ## Single-Node Multi-GPU (Without `torchrun` or `torch.distributed.launch`)
 
 ...
+
 
 ## Caveats of not using `torchrun` or `torch.distributed.launch`
 

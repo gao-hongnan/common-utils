@@ -272,10 +272,17 @@ class Trainer:
         )
         if not os.path.exists(self.trainer_config.run_id) and self.global_rank == 0:
             os.makedirs(self.trainer_config.run_id, exist_ok=True)
+            # NOTE: To ensure only one process (usually rank 0) creates the
+            # directory and others wait till it's done.
+            torch.distributed.barrier()
 
         if trainer_config.load_path is not None and os.path.exists(
             trainer_config.load_path
         ):
+            # NOTE: this is to ensure that all processes wait for each other
+            # to load before proceeding to training or what not.
+            torch.distributed.barrier()
+
             # NOTE: in DDP you would need to load the snapshot
             # on every local rank, not just rank 0.
             logger.info(f"Loading snapshot from {trainer_config.load_path}")
@@ -297,7 +304,7 @@ class Trainer:
         }
         torch.save(snapshot, self.save_path)
 
-        print(f"Epoch {epoch} | Training snapshot saved at {self.save_path}")
+        # print(f"Epoch {epoch} | Training snapshot saved at {self.save_path}")
         self.logger.info(f"Epoch {epoch} | Training snapshot saved at {self.save_path}")
 
     def _load_snapshot(self, snapshot_path: str, map_location: str) -> None:
@@ -330,13 +337,13 @@ class Trainer:
         # Calculate average loss for the epoch
         avg_loss = total_loss / len(self.train_loader)
 
-        print(
-            (
-                f"[GPU{self.global_rank}] Epoch {epoch} | "
-                f"Batchsize: {batch_size} | Steps: {len(self.train_loader)} | "
-                f"Average Loss: {avg_loss:.4f}"
-            )
-        )
+        # print(
+        #     (
+        #         f"[GPU{self.global_rank}] Epoch {epoch} | "
+        #         f"Batchsize: {batch_size} | Steps: {len(self.train_loader)} | "
+        #         f"Average Loss: {avg_loss:.4f}"
+        #     )
+        # )
         self.logger.info(
             (
                 f"[GPU{self.global_rank}] Epoch {epoch} | "
@@ -354,6 +361,10 @@ class Trainer:
                 and epoch % self.trainer_config.save_checkpoint_interval == 0
             ):
                 self._save_snapshot(epoch)
+                # NOTE: To ensure that the main process (usually with rank 0)
+                # has finished saving before other processes potentially load or
+                # continue with other operations
+                torch.distributed.barrier()
 
 
 def build_all(args: argparse.Namespace):
@@ -409,8 +420,8 @@ def main(
         num_gpus_per_node=args.num_gpus_per_node,
     )
 
-    logger = configure_logger(rank=global_rank)  # unique rank across all nodes
-
+    # unique rank across all nodes for logging
+    logger = configure_logger(rank=global_rank, print_to_console=args.print_to_console)
     logger.info(
         f"Initializing the following Environment variables: {str(init_env_args)}"
     )
@@ -439,8 +450,6 @@ def main(
 
     dataloader_config = partial_dataloader_config(sampler=distributed_sampler)
     train_loader = prepare_dataloader(train_dataset, config=dataloader_config)
-
-    logger = configure_logger(rank=global_rank)  # unique rank across all nodes
 
     trainer = Trainer(
         model=model,
@@ -501,6 +510,9 @@ def parse_args() -> argparse.Namespace:
         type=str,
         help="Master port for distributed job. See InitEnvArgs for more details.",
     )
+
+    # Logger
+    parser.add_argument("--print_to_console", action="store_true", help="Print to console")
 
     # Seed
     parser.add_argument("--seed", default=0, type=int, help="Seed for reproducibility")
