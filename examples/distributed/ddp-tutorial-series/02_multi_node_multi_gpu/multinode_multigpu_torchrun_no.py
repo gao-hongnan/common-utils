@@ -236,7 +236,7 @@ class Trainer:
     local_rank: int
     global_rank: int
     model: torch.nn.Module
-    criterion: torch.nn._Loss
+    criterion: torch.nn.Module
     optimizer: torch.optim.Optimizer
     train_loader: DataLoader
     trainer_config: TrainerConfig
@@ -248,7 +248,7 @@ class Trainer:
     def __init__(
         self,
         model: torch.nn.Module,
-        criterion: torch.nn._Loss,
+        criterion: torch.nn.Module, # hard to type hint _Loss
         optimizer: torch.optim.Optimizer,
         train_loader: DataLoader,
         trainer_config: TrainerConfig,

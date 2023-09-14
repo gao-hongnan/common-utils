@@ -64,7 +64,7 @@ class BaseCriterionBuilder:
     def __init__(self, config: CriterionConfig):
         self.config = config
 
-    def build(self) -> torch.nn._Loss:
+    def build(self) -> torch.nn.Module:
         """Abstract method to build a criterion."""
         raise NotImplementedError
 
