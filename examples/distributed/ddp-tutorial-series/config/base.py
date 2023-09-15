@@ -8,8 +8,7 @@ import torch
 import torch.distributed as dist
 from torch.utils.data import Sampler
 
-from config._criterion import (CriterionConfig, CrossEntropyConfig,
-                               MSELossConfig)
+from config._criterion import CriterionConfig, CrossEntropyConfig, MSELossConfig
 from config._optim import AdamConfig, OptimizerConfig, SGDConfig
 
 __all__ = [
@@ -52,8 +51,11 @@ class TrainerConfig:
     batch_size: int = field(
         default=32, metadata={"help": "Number of samples per batch."}
     )
-    snapshot_path: str = field(
-        default=".", metadata={"help": "Path to save checkpoints."}
+    output_dir: Optional[str] = field(
+        default=None,
+        metadata={
+            "help": "Path to save checkpoints." "If None, will auto save to ./run_id"
+        },
     )
     load_path: Optional[str] = field(
         default=None,

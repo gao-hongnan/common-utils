@@ -45,7 +45,6 @@ python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
     --max_epochs 50 \
     --save_checkpoint_interval 10 \
     --batch_size 32 \
-    --snapshot_path "snapshot.pt"
 
 [GPU0] Epoch 49 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1019
 [GPU1] Epoch 49 | Batchsize: 32 | Steps: 16 | Average Loss: 0.0947
@@ -83,7 +82,7 @@ python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
     --max_epochs 50 \
     --save_checkpoint_interval 10 \
     --batch_size 32 \
-    --snapshot_path "snapshot.pt"
+
 
 [GPU2] Epoch 49 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1094
 [GPU3] Epoch 49 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1025
@@ -121,7 +120,6 @@ python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
     --max_epochs 50 \
     --save_checkpoint_interval 10 \
     --batch_size 32 \
-    --snapshot_path "snapshot.pt" \
     --load_path "/common-utils/examples/distributed/ddp-tutorial-series/snapshot.pt"
 
 # On Node 1 Resume:
@@ -156,7 +154,6 @@ python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
     --max_epochs 50 \
     --save_checkpoint_interval 10 \
     --batch_size 32 \
-    --snapshot_path "snapshot.pt"
     --load_path "/common-utils/examples/distributed/ddp-tutorial-series/snapshot.pt"
 
 abstract
@@ -205,16 +202,22 @@ from torch.utils.data.distributed import DistributedSampler
 
 from config._criterion import build_criterion
 from config._optim import build_optimizer
-from config.base import (CRITERION_NAME_TO_CONFIG_MAPPING,
-                         OPTIMIZER_NAME_TO_CONFIG_MAPPING, DataLoaderConfig,
-                         DistributedInfo, DistributedSamplerConfig,
-                         InitEnvArgs, InitProcessGroupArgs, TrainerConfig)
+from config.base import (
+    CRITERION_NAME_TO_CONFIG_MAPPING,
+    OPTIMIZER_NAME_TO_CONFIG_MAPPING,
+    DataLoaderConfig,
+    DistributedInfo,
+    DistributedSamplerConfig,
+    InitEnvArgs,
+    InitProcessGroupArgs,
+    TrainerConfig,
+)
 from core._init import init_env, init_process
 from core._seed import seed_all
 from data.toy_dataset import ToyDataset, prepare_dataloader
 from models.toy_model import ToyModel
 from utils.common_utils import calculate_global_rank, configure_logger
-import time
+
 
 # pylint: disable=missing-function-docstring,missing-class-docstring
 class Trainer:
@@ -231,6 +234,7 @@ class Trainer:
         "dist_info",
         "logger",
         "epochs_run",
+        "output_dir",
         "save_path",
     ]
     local_rank: int
@@ -243,6 +247,7 @@ class Trainer:
     dist_info: DistributedInfo
     logger: Optional[logging.Logger]
     epochs_run: int
+    output_dir: str
     save_path: str
 
     def __init__(
@@ -258,7 +263,11 @@ class Trainer:
         self.local_rank = dist_info.local_rank  # int(os.environ["LOCAL_RANK"])
         self.global_rank = dist_info.global_rank  # int(os.environ["RANK"])
 
-        self.model = model.to(self.local_rank)
+        self.model = model.to(
+            device=self.local_rank,
+            dtype=next(model.parameters()).dtype,
+            non_blocking=True,
+        )
         self.criterion = criterion
         self.optimizer = optimizer
         self.train_loader = train_loader
@@ -267,11 +276,11 @@ class Trainer:
         self.logger = logger
 
         self.epochs_run = 0
-        self.save_path = os.path.join(
-            self.trainer_config.run_id, self.trainer_config.snapshot_path
-        )
-        if not os.path.exists(self.trainer_config.run_id) and self.global_rank == 0:
-            os.makedirs(self.trainer_config.run_id, exist_ok=True)
+
+        self.output_dir = self._determine_output_dir()
+        if self.global_rank == 0 and not os.path.exists(self.output_dir):
+            # creates ./run_id/ folder
+            os.makedirs(self.output_dir, exist_ok=True)
 
         # NOTE: To ensure only one process (usually rank 0) creates the
         # directory and others wait till it's done.
@@ -281,6 +290,7 @@ class Trainer:
         # not hitting the barrier at all.
         torch.distributed.barrier()
 
+        # Resume from snapshot
         if trainer_config.load_path is not None and os.path.exists(
             trainer_config.load_path
         ):
@@ -300,7 +310,16 @@ class Trainer:
         # snapshot["MODEL_STATE"].module in sync with the save of the snapshot.
         self.model = DDP(self.model, device_ids=[self.local_rank])
 
+    def _determine_output_dir(self) -> str:
+        """Determine the output directory based on trainer configuration."""
+        return self.trainer_config.output_dir or self.trainer_config.run_id
+
     def _save_snapshot(self, epoch: int) -> None:
+        """Save snapshot of the model, optimizer, and other training states."""
+        checkpoint_dir = os.path.join(self.output_dir, f"epoch_{epoch}")
+        os.makedirs(checkpoint_dir, exist_ok=True)
+        self.save_path = os.path.join(checkpoint_dir, "snapshot.pt")
+
         snapshot = {
             "MODEL_STATE": self.model.module.state_dict(),
             "OPTIMIZER_STATE": self.optimizer.state_dict(),
@@ -311,8 +330,8 @@ class Trainer:
 
         self.logger.info(f"Epoch {epoch} | Training snapshot saved at {self.save_path}")
 
-    def _load_snapshot(self, snapshot_path: str, map_location: str) -> None:
-        snapshot = torch.load(snapshot_path, map_location=map_location)
+    def _load_snapshot(self, load_path: str, map_location: str) -> None:
+        snapshot = torch.load(load_path, map_location=map_location)
         self.model.load_state_dict(snapshot["MODEL_STATE"])
         self.optimizer.load_state_dict(snapshot["OPTIMIZER_STATE"])
         self.epochs_run = snapshot["EPOCHS_RUN"]
@@ -321,7 +340,6 @@ class Trainer:
         del snapshot
         gc.collect()
         torch.cuda.empty_cache()
-
 
     def _run_batch(self, source: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         self.optimizer.zero_grad()
@@ -338,8 +356,18 @@ class Trainer:
 
         total_loss = 0.0  # Initialize total loss for the epoch
         for source, targets in self.train_loader:
-            source = source.to(self.local_rank)
-            targets = targets.to(self.local_rank)
+            source = source.to(
+                self.local_rank,
+                non_blocking=False,
+                copy=False,
+                memory_format=torch.preserve_format,
+            )
+            targets = targets.to(
+                self.local_rank,
+                non_blocking=False,
+                copy=False,
+                memory_format=torch.preserve_format,
+            )
             batch_loss = self._run_batch(source, targets)
             total_loss += batch_loss
 
@@ -580,7 +608,7 @@ def parse_args() -> argparse.Namespace:
         help="Input batch size on each device (default: 32)",
     )
     parser.add_argument(
-        "--snapshot_path", default="snapshot.pt", type=str, help="Path to save snapshot"
+        "--output_dir", default=None, type=str, help="Path to save snapshot"
     )
     parser.add_argument("--load_path", default=None, type=str, help="Path to load")
     return parser.parse_args()
@@ -613,7 +641,7 @@ if __name__ == "__main__":
         max_epochs=args.max_epochs,
         save_checkpoint_interval=args.save_checkpoint_interval,
         batch_size=args.batch_size,
-        snapshot_path=args.snapshot_path,
+        output_dir=args.output_dir,
         load_path=args.load_path,
     )
 
