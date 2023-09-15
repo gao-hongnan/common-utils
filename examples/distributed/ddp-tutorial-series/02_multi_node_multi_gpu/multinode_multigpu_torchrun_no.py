@@ -460,6 +460,9 @@ class Trainer:
             if self.valid_loader is not None:
                 self._run_valid_epoch(epoch)
 
+            if self.scheduler:
+                self.scheduler.step()
+
             # TODO: here you can have a checkpoint callback to save "best" model
             # save monolithic snapshot on global rank 0
             if (
