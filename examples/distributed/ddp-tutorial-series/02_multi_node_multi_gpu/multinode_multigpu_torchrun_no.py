@@ -186,13 +186,18 @@ torchrun \
 --max_restarts=3 \
 multinode.py 50 10
 """
+from __future__ import annotations
+
 import argparse
+import copy
 import functools
+import gc
 import logging
 import os
+import typing
 from dataclasses import asdict
 from typing import Optional, Tuple
-import gc
+
 import torch
 import torch.multiprocessing as mp
 from torch.distributed import destroy_process_group
@@ -202,9 +207,11 @@ from torch.utils.data.distributed import DistributedSampler
 
 from config._criterion import build_criterion
 from config._optim import build_optimizer
+from config._scheduler import build_scheduler
 from config.base import (
     CRITERION_NAME_TO_CONFIG_MAPPING,
     OPTIMIZER_NAME_TO_CONFIG_MAPPING,
+    SCHEDULER_NAME_TO_CONFIG_MAPPING,
     DataLoaderConfig,
     DistributedInfo,
     DistributedSamplerConfig,
@@ -229,6 +236,7 @@ class Trainer:
         "model",
         "criterion",
         "optimizer",
+        "scheduler",
         "train_loader",
         "valid_loader",
         "trainer_config",
@@ -240,14 +248,21 @@ class Trainer:
     ]
     local_rank: int
     global_rank: int
+
     model: torch.nn.Module
     criterion: torch.nn.Module
     optimizer: torch.optim.Optimizer
+    scheduler: torch.optim.lr_scheduler._LRScheduler
+
     train_loader: DataLoader
     valid_loader: Optional[DataLoader]
+
     trainer_config: TrainerConfig
+
     dist_info: DistributedInfo
+
     logger: Optional[logging.Logger]
+
     epochs_run: int
     output_dir: str
     save_path: str
@@ -257,6 +272,7 @@ class Trainer:
         model: torch.nn.Module,
         criterion: torch.nn.Module,  # hard to type hint _Loss
         optimizer: torch.optim.Optimizer,
+        scheduler: torch.optim.lr_scheduler._LRScheduler,
         trainer_config: TrainerConfig,
         dist_info: DistributedInfo,
         logger: Optional[logging.Logger] = None,
@@ -271,12 +287,15 @@ class Trainer:
         )
         self.criterion = criterion
         self.optimizer = optimizer
+        self.scheduler = scheduler
+
         self.trainer_config = trainer_config
+
         self.dist_info = dist_info
+
         self.logger = logger
 
         self.epochs_run = 0
-
         self.output_dir = self._determine_output_dir()
         if self.global_rank == 0 and not os.path.exists(self.output_dir):
             # creates ./run_id/ folder
@@ -388,7 +407,7 @@ class Trainer:
 
         self.logger.info(
             (
-                f"[VALID: GPU{self.global_rank}] Epoch {epoch} | "
+                f"[TRAIN: GPU{self.global_rank}] Epoch {epoch} | "
                 f"Batchsize: {batch_size} | Steps: {len(self.train_loader)} | "
                 f"Average Loss: {avg_loss:.4f}"
             )
@@ -424,7 +443,7 @@ class Trainer:
 
         self.logger.info(
             (
-                f"[TRAIN: GPU{self.global_rank}] Epoch {epoch} | "
+                f"[VALID: GPU{self.global_rank}] Epoch {epoch} | "
                 f"Batchsize: {batch_size} | Steps: {len(self.valid_loader)} | "
                 f"Average Loss: {avg_loss:.4f}"
             )
@@ -455,6 +474,7 @@ class Trainer:
             torch.distributed.barrier()
 
 
+@typing.deprecated("Use build_all_elegant instead.")
 def build_all(
     args: argparse.Namespace,
 ) -> Tuple[ToyDataset, ToyModel, torch.nn.Module, torch.optim.Optimizer]:
@@ -471,7 +491,13 @@ def build_all(
 
 def build_all_elegant(
     args: argparse.Namespace,
-) -> Tuple[ToyDataset, ToyModel, torch.nn.Module, torch.optim.Optimizer]:
+) -> Tuple[
+    ToyDataset,
+    ToyModel,
+    torch.nn.Module,
+    torch.optim.Optimizer,
+    torch.optim.lr_scheduler._LRScheduler,
+]:
     """A more elegant way of building the model, criterion, optimizer, and dataset
     by using design pattern"""
     train_dataset = ToyDataset(
@@ -491,7 +517,12 @@ def build_all_elegant(
         name=args.optimizer_name, lr=args.lr
     )
     optimizer = build_optimizer(model=model, config=optimizer_config)
-    return train_dataset, model, criterion, optimizer
+
+    scheduler_config = SCHEDULER_NAME_TO_CONFIG_MAPPING[args.scheduler_name](
+        name=args.scheduler_name, optimizer=optimizer
+    )
+    scheduler = build_scheduler(config=scheduler_config)
+    return train_dataset, model, criterion, optimizer, scheduler
 
 
 def main(
@@ -533,7 +564,7 @@ def main(
     torch.cuda.set_device(local_rank)
 
     # train_dataset, model, criterion, optimizer = build_all(args=args)
-    train_dataset, model, criterion, optimizer = build_all_elegant(args=args)
+    train_dataset, model, criterion, optimizer, scheduler = build_all_elegant(args=args)
 
     distributed_sampler_config = partial_distributed_sampler_config(rank=global_rank)
     distributed_sampler = DistributedSampler(
@@ -544,12 +575,13 @@ def main(
     train_loader = prepare_dataloader(train_dataset, config=dataloader_config)
     # NOTE: set valid loader as clone of train loader for simplicity
     # note it will produce different loss results due to model.eval() mode.
-    valid_loader = train_loader.clone()
+    valid_loader = copy.deepcopy(train_loader)
 
     trainer = Trainer(
         model=model,
         criterion=criterion,
         optimizer=optimizer,
+        scheduler=scheduler,
         trainer_config=trainer_config,
         dist_info=dist_info,
         logger=logger,
@@ -649,6 +681,11 @@ def parse_args() -> argparse.Namespace:
     # Optimizer
     parser.add_argument("--optimizer_name", default="sgd", type=str, help="Optimizer")
     parser.add_argument("--lr", default=1e-3, type=float, help="Learning rate")
+
+    # Scheduler
+    parser.add_argument("--scheduler_name", default=None, type=str, help="Scheduler")
+    # add your necessary scheduler arguments here if needed, else refer to
+    # config/_scheduler.py for default arguments
 
     # Trainer
     parser.add_argument(

@@ -10,6 +10,7 @@ from torch.utils.data import Sampler
 
 from config._criterion import CriterionConfig, CrossEntropyConfig, MSELossConfig
 from config._optim import AdamConfig, OptimizerConfig, SGDConfig
+from config._scheduler import ConstantLRConfig, CosineAnnealingLRConfig
 
 __all__ = [
     "TrainerConfig",
@@ -29,6 +30,10 @@ OPTIMIZER_NAME_TO_CONFIG_MAPPING: Dict[str, Type[OptimizerConfig]] = {
 CRITERION_NAME_TO_CONFIG_MAPPING: Dict[str, Type[CriterionConfig]] = {
     "cross_entropy": CrossEntropyConfig,
     "mse_loss": MSELossConfig,
+}
+SCHEDULER_NAME_TO_CONFIG_MAPPING: Dict[str, Type[CriterionConfig]] = {
+    "constant_lr": ConstantLRConfig,
+    "cosine_annealing_lr": CosineAnnealingLRConfig,
 }
 
 
