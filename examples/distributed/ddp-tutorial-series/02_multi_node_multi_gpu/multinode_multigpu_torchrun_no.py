@@ -194,7 +194,6 @@ import functools
 import gc
 import logging
 import os
-import typing
 from dataclasses import asdict
 from typing import Optional, Tuple
 
@@ -208,22 +207,17 @@ from torch.utils.data.distributed import DistributedSampler
 from config._criterion import build_criterion
 from config._optim import build_optimizer
 from config._scheduler import build_scheduler
-from config.base import (
-    CRITERION_NAME_TO_CONFIG_MAPPING,
-    OPTIMIZER_NAME_TO_CONFIG_MAPPING,
-    SCHEDULER_NAME_TO_CONFIG_MAPPING,
-    DataLoaderConfig,
-    DistributedInfo,
-    DistributedSamplerConfig,
-    InitEnvArgs,
-    InitProcessGroupArgs,
-    TrainerConfig,
-)
+from config.base import (CRITERION_NAME_TO_CONFIG_MAPPING,
+                         OPTIMIZER_NAME_TO_CONFIG_MAPPING,
+                         SCHEDULER_NAME_TO_CONFIG_MAPPING, DataLoaderConfig,
+                         DistributedInfo, DistributedSamplerConfig,
+                         InitEnvArgs, InitProcessGroupArgs, TrainerConfig)
 from core._init import init_env, init_process
 from core._seed import seed_all
 from data.toy_dataset import ToyDataset, prepare_dataloader
 from models.toy_model import ToyModel
-from utils.common_utils import calculate_global_rank, configure_logger, deprecated
+from utils.common_utils import (calculate_global_rank, configure_logger,
+                                deprecated)
 
 
 # pylint: disable=missing-function-docstring,missing-class-docstring
@@ -406,7 +400,7 @@ class Trainer:
         avg_loss = total_epoch_loss / len(self.train_loader)
 
         # we index 0 because we only have one param group
-        current_lr = self.optimizer.param_groups[0]['lr']
+        current_lr = self.optimizer.param_groups[0]["lr"]
         self.logger.info(
             (
                 f"[TRAIN: GPU{self.global_rank}] Epoch {epoch} | "
@@ -457,7 +451,7 @@ class Trainer:
         self.train_loader = train_loader
         self.valid_loader = valid_loader
 
-        initial_lr = self.optimizer.param_groups[0]['lr']
+        initial_lr = self.optimizer.param_groups[0]["lr"]
         self.logger.info(f"Starting training with Learning Rate: {initial_lr}")
 
         for epoch in range(self.epochs_run, self.trainer_config.max_epochs):
