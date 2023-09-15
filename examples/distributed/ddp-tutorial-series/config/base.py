@@ -8,8 +8,7 @@ import torch
 import torch.distributed as dist
 from torch.utils.data import Sampler
 
-from config._criterion import (CriterionConfig, CrossEntropyConfig,
-                               MSELossConfig)
+from config._criterion import CriterionConfig, CrossEntropyConfig, MSELossConfig
 from config._optim import AdamConfig, OptimizerConfig, SGDConfig
 from config._scheduler import ConstantLRConfig, CosineAnnealingLRConfig
 
@@ -44,9 +43,9 @@ class TrainerConfig:
 
     run_id: str = field(
         default_factory=lambda: datetime.datetime.now().strftime(
-            "%Y-%m-%d %H:%M:%S.%f"
+            "%Y-%m-%dT%H:%M:%S.%f"
         ),
-        metadata={"help": "Unique ID for the run as YYYY-MM-DD HH:MM:SS.ssssss."},
+        metadata={"help": "Unique ID for the run as YYYY-MM-DD[T]HH:MM:SS.ssssss."},
     )
     max_epochs: int = field(
         default=50, metadata={"help": "Number of epochs to train for."}

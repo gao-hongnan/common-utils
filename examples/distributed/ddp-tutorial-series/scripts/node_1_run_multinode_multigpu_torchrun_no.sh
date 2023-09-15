@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Read master address and port from the shared file
-export MASTER_ADDR=$(sed -n '1p' shared_file.txt)
-export MASTER_PORT=$(sed -n '2p' shared_file.txt)
+export MASTER_ADDR=$(awk -F': ' 'NR==1 {print $2}' shared_file.txt)
+export MASTER_PORT=$(awk -F': ' 'NR==2 {print $2}' shared_file.txt)
 echo "Master Address: $MASTER_ADDR"
 echo "Master Port: $MASTER_PORT"
 
