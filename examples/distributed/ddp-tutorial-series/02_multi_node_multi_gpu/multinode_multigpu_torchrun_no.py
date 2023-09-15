@@ -405,11 +405,13 @@ class Trainer:
         # Calculate average loss for the epoch
         avg_loss = total_epoch_loss / len(self.train_loader)
 
+        # we index 0 because we only have one param group
+        current_lr = self.optimizer.param_groups[0]['lr']
         self.logger.info(
             (
                 f"[TRAIN: GPU{self.global_rank}] Epoch {epoch} | "
                 f"Batchsize: {batch_size} | Steps: {len(self.train_loader)} | "
-                f"Average Loss: {avg_loss:.4f}"
+                f"Average Loss: {avg_loss:.4f} | Learning Rate: {current_lr}"
             )
         )
 
@@ -454,6 +456,9 @@ class Trainer:
     ) -> None:
         self.train_loader = train_loader
         self.valid_loader = valid_loader
+
+        initial_lr = self.optimizer.param_groups[0]['lr']
+        self.logger.info(f"Starting training with Learning Rate: {initial_lr}")
 
         for epoch in range(self.epochs_run, self.trainer_config.max_epochs):
             self._run_train_epoch(epoch)
