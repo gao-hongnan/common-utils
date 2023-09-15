@@ -230,6 +230,7 @@ class Trainer:
         "criterion",
         "optimizer",
         "train_loader",
+        "valid_loader",
         "trainer_config",
         "dist_info",
         "logger",
@@ -243,6 +244,7 @@ class Trainer:
     criterion: torch.nn.Module
     optimizer: torch.optim.Optimizer
     train_loader: DataLoader
+    valid_loader: Optional[DataLoader]
     trainer_config: TrainerConfig
     dist_info: DistributedInfo
     logger: Optional[logging.Logger]
@@ -255,7 +257,6 @@ class Trainer:
         model: torch.nn.Module,
         criterion: torch.nn.Module,  # hard to type hint _Loss
         optimizer: torch.optim.Optimizer,
-        train_loader: DataLoader,
         trainer_config: TrainerConfig,
         dist_info: DistributedInfo,
         logger: Optional[logging.Logger] = None,
@@ -270,7 +271,6 @@ class Trainer:
         )
         self.criterion = criterion
         self.optimizer = optimizer
-        self.train_loader = train_loader
         self.trainer_config = trainer_config
         self.dist_info = dist_info
         self.logger = logger
@@ -341,20 +341,32 @@ class Trainer:
         gc.collect()
         torch.cuda.empty_cache()
 
-    def _run_batch(self, source: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+    def _run_train_batch(
+        self, source: torch.Tensor, targets: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         self.optimizer.zero_grad()
         output = self.model(source)
         loss = self.criterion(output, targets)
         loss.backward()
         self.optimizer.step()
-        return loss
+        return output, loss
 
-    def _run_epoch(self, epoch: int) -> None:
+    def _run_valid_batch(
+        self, source: torch.Tensor, targets: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        with torch.no_grad():  # Disable gradient computation
+            output = self.model(source)
+            loss = self.criterion(output, targets)
+        return output, loss
+
+    def _run_train_epoch(self, epoch: int) -> None:
+        self.model.train()  # Switch the model to train mode
+
         batch_size = len(next(iter(self.train_loader))[0])
 
         self.train_loader.sampler.set_epoch(epoch)
 
-        total_loss = 0.0  # Initialize total loss for the epoch
+        total_epoch_loss = 0.0  # Initialize total loss for the epoch
         for source, targets in self.train_loader:
             source = source.to(
                 self.local_rank,
@@ -368,11 +380,11 @@ class Trainer:
                 copy=False,
                 memory_format=torch.preserve_format,
             )
-            batch_loss = self._run_batch(source, targets)
-            total_loss += batch_loss
+            _, batch_loss = self._run_train_batch(source, targets)
+            total_epoch_loss += batch_loss
 
         # Calculate average loss for the epoch
-        avg_loss = total_loss / len(self.train_loader)
+        avg_loss = total_epoch_loss / len(self.train_loader)
 
         self.logger.info(
             (
@@ -382,9 +394,54 @@ class Trainer:
             )
         )
 
-    def train(self, max_epochs: int) -> None:
-        for epoch in range(self.epochs_run, max_epochs):
-            self._run_epoch(epoch)
+    def _run_valid_epoch(self, epoch: int) -> None:
+        self.model.eval()  # Switch the model to evaluation mode
+
+        batch_size = len(next(iter(self.valid_loader))[0])
+
+        self.valid_loader.sampler.set_epoch(epoch)
+
+        total_epoch_loss = 0.0  # Initialize total loss for the epoch
+        # Ensure no gradient is computed, saving memory and time
+        with torch.no_grad():
+            for source, targets in self.eval_loader:
+                source = source.to(
+                    self.local_rank,
+                    non_blocking=False,
+                    copy=False,
+                    memory_format=torch.preserve_format,
+                )
+                targets = targets.to(
+                    self.local_rank,
+                    non_blocking=False,
+                    copy=False,
+                    memory_format=torch.preserve_format,
+                )
+                _, batch_loss = self._run_valid_batch(source, targets)
+                total_epoch_loss += batch_loss
+
+        avg_loss = total_epoch_loss / len(self.eval_loader)
+
+        self.logger.info(
+            (
+                f"[GPU{self.global_rank}] Epoch {epoch} | "
+                f"Batchsize: {batch_size} | Steps: {len(self.valid_loader)} | "
+                f"Average Loss: {avg_loss:.4f}"
+            )
+        )
+
+    def fit(
+        self, train_loader: DataLoader, valid_loader: Optional[DataLoader] = None
+    ) -> None:
+        self.train_loader = train_loader
+        self.valid_loader = valid_loader
+
+        for epoch in range(self.epochs_run, self.trainer_config.max_epochs):
+            self._run_train_epoch(epoch)
+            if self.valid_loader is not None:
+                self._run_valid_epoch(epoch)
+
+            # TODO: here you can have a checkpoint callback to save "best" model
             # save monolithic snapshot on global rank 0
             if (
                 self.global_rank == 0
@@ -490,12 +547,11 @@ def main(
         model=model,
         criterion=criterion,
         optimizer=optimizer,
-        train_loader=train_loader,
         trainer_config=trainer_config,
         dist_info=dist_info,
         logger=logger,
     )
-    trainer.train(max_epochs=trainer_config.max_epochs)
+    trainer.fit(train_loader=train_loader)
     destroy_process_group()
 
 

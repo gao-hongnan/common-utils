@@ -43,7 +43,7 @@ class TrainerConfig:
         metadata={"help": "Unique ID for the run as YYYY-MM-DD HH:MM:SS.ssssss."},
     )
     max_epochs: int = field(
-        default=100, metadata={"help": "Number of epochs to train for."}
+        default=50, metadata={"help": "Number of epochs to train for."}
     )
     save_checkpoint_interval: int = field(
         default=10, metadata={"help": "Save checkpoint every n epochs."}
