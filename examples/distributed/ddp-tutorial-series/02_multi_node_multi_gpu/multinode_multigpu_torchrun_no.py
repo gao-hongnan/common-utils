@@ -388,7 +388,7 @@ class Trainer:
 
         self.logger.info(
             (
-                f"[GPU{self.global_rank}] Epoch {epoch} | "
+                f"[VALID: GPU{self.global_rank}] Epoch {epoch} | "
                 f"Batchsize: {batch_size} | Steps: {len(self.train_loader)} | "
                 f"Average Loss: {avg_loss:.4f}"
             )
@@ -404,7 +404,7 @@ class Trainer:
         total_epoch_loss = 0.0  # Initialize total loss for the epoch
         # Ensure no gradient is computed, saving memory and time
         with torch.no_grad():
-            for source, targets in self.eval_loader:
+            for source, targets in self.valid_loader:
                 source = source.to(
                     self.local_rank,
                     non_blocking=False,
@@ -420,11 +420,11 @@ class Trainer:
                 _, batch_loss = self._run_valid_batch(source, targets)
                 total_epoch_loss += batch_loss
 
-        avg_loss = total_epoch_loss / len(self.eval_loader)
+        avg_loss = total_epoch_loss / len(self.valid_loader)
 
         self.logger.info(
             (
-                f"[GPU{self.global_rank}] Epoch {epoch} | "
+                f"[TRAIN: GPU{self.global_rank}] Epoch {epoch} | "
                 f"Batchsize: {batch_size} | Steps: {len(self.valid_loader)} | "
                 f"Average Loss: {avg_loss:.4f}"
             )
@@ -542,6 +542,9 @@ def main(
 
     dataloader_config = partial_dataloader_config(sampler=distributed_sampler)
     train_loader = prepare_dataloader(train_dataset, config=dataloader_config)
+    # NOTE: set valid loader as clone of train loader for simplicity
+    # note it will produce different loss results due to model.eval() mode.
+    valid_loader = train_loader.clone()
 
     trainer = Trainer(
         model=model,
@@ -551,7 +554,7 @@ def main(
         dist_info=dist_info,
         logger=logger,
     )
-    trainer.fit(train_loader=train_loader)
+    trainer.fit(train_loader=train_loader, valid_loader=valid_loader)
     destroy_process_group()
 
 
