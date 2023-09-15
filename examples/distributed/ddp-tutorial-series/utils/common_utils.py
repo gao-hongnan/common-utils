@@ -1,7 +1,9 @@
+import functools
 import logging
 import socket
+import warnings
 from dataclasses import asdict
-from typing import Dict, Optional, Union
+from typing import Any, Callable, Dict, Optional, Union
 
 import torch.distributed as dist
 from rich.logging import RichHandler
@@ -122,3 +124,29 @@ def calculate_global_rank(
         The global rank of the process.
     """
     return local_rank + node_rank * num_gpus_per_node
+
+
+def deprecated(reason: str = "") -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    """
+    A decorator to mark functions or methods as deprecated with a given reason.
+
+    Args:
+        reason: A string indicating why this function/method is deprecated.
+
+    Returns:
+        The decorated function/method.
+    """
+
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        @functools.wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            warnings.warn(
+                f"'{func.__name__}' is deprecated. {reason}",
+                category=DeprecationWarning,
+                stacklevel=2,
+            )
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator

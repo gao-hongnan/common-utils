@@ -223,7 +223,7 @@ from core._init import init_env, init_process
 from core._seed import seed_all
 from data.toy_dataset import ToyDataset, prepare_dataloader
 from models.toy_model import ToyModel
-from utils.common_utils import calculate_global_rank, configure_logger
+from utils.common_utils import calculate_global_rank, configure_logger, deprecated
 
 
 # pylint: disable=missing-function-docstring,missing-class-docstring
@@ -477,7 +477,7 @@ class Trainer:
             torch.distributed.barrier()
 
 
-@typing.deprecated("Use build_all_elegant instead.")
+@deprecated("Use build_all_elegant instead.")
 def build_all(
     args: argparse.Namespace,
 ) -> Tuple[ToyDataset, ToyModel, torch.nn.Module, torch.optim.Optimizer]:
@@ -521,10 +521,13 @@ def build_all_elegant(
     )
     optimizer = build_optimizer(model=model, config=optimizer_config)
 
-    scheduler_config = SCHEDULER_NAME_TO_CONFIG_MAPPING[args.scheduler_name](
-        name=args.scheduler_name, optimizer=optimizer
-    )
-    scheduler = build_scheduler(config=scheduler_config)
+    if args.scheduler_name:
+        scheduler_config = SCHEDULER_NAME_TO_CONFIG_MAPPING[args.scheduler_name](
+            name=args.scheduler_name, optimizer=optimizer
+        )
+        scheduler = build_scheduler(config=scheduler_config)
+    else:
+        scheduler = None
     return train_dataset, model, criterion, optimizer, scheduler
 
 
