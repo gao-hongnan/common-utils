@@ -21,8 +21,8 @@ python ./02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
     --world_size $WORLD_SIZE \
     --backend "nccl" \
     --init_method "env://" \
-    --master_addr 10.168.0.32 \
-    --master_port 39714 \
+    --master_addr $MASTER_ADDR \
+    --master_port $MASTER_PORT \
     --seed 0 \
     --num_samples 2048 \
     --num_dimensions 20 \
