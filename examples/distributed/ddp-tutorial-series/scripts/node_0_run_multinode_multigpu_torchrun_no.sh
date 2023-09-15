@@ -3,6 +3,9 @@
 # Get master address and port
 export MASTER_ADDR=$(hostname -i)
 export MASTER_PORT=$(comm -23 <(seq 1 65535 | sort) <(ss -Htan | awk '{print $4}' | cut -d':' -f2 | sort -u) | shuf | head -n 1)
+echo "Master Address: $MASTER_ADDR"
+echo "Master Port: $MASTER_PORT"
+
 echo "Master Address: $MASTER_ADDR" > shared_file.txt
 echo "Master Port: $MASTER_PORT" >> shared_file.txt
 
@@ -14,12 +17,7 @@ export NUM_GPUS_PER_NODE=2
 export WORLD_SIZE=4
 
 # Run python script
-export PYTHONPATH=$PYTHONPATH:$(pwd) && \
-export NODE_RANK=0 && \
-export NUM_NODES=2 && \
-export NUM_GPUS_PER_NODE=2 && \
-export WORLD_SIZE=4 && \
-python ../02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
+python ./02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
     --node_rank $NODE_RANK \
     --num_nodes $NUM_NODES \
     --num_gpus_per_node $NUM_GPUS_PER_NODE \

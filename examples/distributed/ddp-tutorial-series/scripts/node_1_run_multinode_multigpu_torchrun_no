@@ -3,6 +3,8 @@
 # Read master address and port from the shared file
 export MASTER_ADDR=$(sed -n '1p' shared_file.txt)
 export MASTER_PORT=$(sed -n '2p' shared_file.txt)
+echo "Master Address: $MASTER_ADDR"
+echo "Master Port: $MASTER_PORT"
 
 # Setup environment variables
 export PYTHONPATH=$PYTHONPATH:$(pwd)
@@ -12,7 +14,7 @@ export NUM_GPUS_PER_NODE=2
 export WORLD_SIZE=4
 
 # Run python script
-python ../02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
+python ./02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
     --node_rank $NODE_RANK \
     --num_nodes $NUM_NODES \
     --num_gpus_per_node $NUM_GPUS_PER_NODE \
