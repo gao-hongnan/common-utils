@@ -64,17 +64,22 @@ from tqdm import tqdm
 from config._criterion import build_criterion
 from config._optim import build_optimizer
 from config._scheduler import build_scheduler
-from config.base import (CRITERION_NAME_TO_CONFIG_MAPPING,
-                         OPTIMIZER_NAME_TO_CONFIG_MAPPING,
-                         SCHEDULER_NAME_TO_CONFIG_MAPPING, DataLoaderConfig,
-                         DistributedInfo, DistributedSamplerConfig,
-                         InitEnvArgs, InitProcessGroupArgs, TrainerConfig)
+from config.base import (
+    CRITERION_NAME_TO_CONFIG_MAPPING,
+    OPTIMIZER_NAME_TO_CONFIG_MAPPING,
+    SCHEDULER_NAME_TO_CONFIG_MAPPING,
+    DataLoaderConfig,
+    DistributedInfo,
+    DistributedSamplerConfig,
+    InitEnvArgs,
+    InitProcessGroupArgs,
+    TrainerConfig,
+)
 from core._init import init_env, init_process
 from core._seed import seed_all
 from data.toy_dataset import ToyDataset, prepare_dataloader
 from models.toy_model import ToyModel
-from utils.common_utils import (calculate_global_rank, configure_logger,
-                                deprecated)
+from utils.common_utils import calculate_global_rank, configure_logger, deprecated
 
 
 # TODO: Consider using composer's State to maintain the state of the trainer.
@@ -341,11 +346,20 @@ class Trainer:
 
         total_epoch_loss = 0.0  # Initialize total loss for the epoch
         total_samples = 0
+
+        valid_progress_bar = (
+            tqdm(
+                enumerate(self.valid_loader, start=1),
+                total=len(self.valid_loader),
+                desc=f"Epoch {epoch}",
+            )
+            if self.global_rank == 0
+            else enumerate(self.valid_loader, start=1)
+        )
+
         # Ensure no gradient is computed, saving memory and time
         with torch.no_grad():
-            for _batch_index, (source, targets) in enumerate(
-                self.valid_loader, start=1
-            ):  # increment by 1 to start from 1
+            for _batch_index, (source, targets) in valid_progress_bar:
                 source = source.to(
                     self.local_rank,
                     non_blocking=False,
