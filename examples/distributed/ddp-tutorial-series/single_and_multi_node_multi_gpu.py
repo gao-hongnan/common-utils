@@ -211,7 +211,9 @@ class Trainer:
             checkpoint_dir = os.path.join(
                 self.output_dir, f"epoch_{epoch}_batch_{batch}"
             )
-        checkpoint_dir = os.path.join(self.output_dir, f"epoch_{epoch}")
+        else:
+            batch = -1 # using -1 to indicate the entire epoch
+            checkpoint_dir = os.path.join(self.output_dir, f"epoch_{epoch}")
         os.makedirs(checkpoint_dir, exist_ok=True)
         self.save_path = os.path.join(checkpoint_dir, "snapshot.pt")
 
@@ -222,10 +224,11 @@ class Trainer:
             "SCHEDULER_STATE": self.scheduler.state_dict(),
             "TORCH_RNG_STATE": torch.get_rng_state(),
             "EPOCHS_RUN": epoch,
+            "BATCH_INDEX": batch
         }
         torch.save(snapshot, self.save_path)
 
-        self.logger.info(f"Epoch {epoch} | Training snapshot saved at {self.save_path}")
+        self.logger.info(f"Epoch {epoch} Batch {batch} | Training snapshot saved at {self.save_path}")
 
     def _load_snapshot(self, load_path: str, map_location: str) -> None:
         snapshot = torch.load(load_path, map_location=map_location)
@@ -265,7 +268,7 @@ class Trainer:
         self.train_loader.sampler.set_epoch(epoch)
 
         total_epoch_loss = 0.0  # Initialize total loss for the epoch
-        for _batch_idx, (source, targets) in enumerate(self.train_loader):
+        for _batch_index, (source, targets) in enumerate(self.train_loader):
             source = source.to(
                 self.local_rank,
                 non_blocking=False,
@@ -344,7 +347,7 @@ class Trainer:
                 # and also based on the previous metric performance.
                 if self.trainer_config.save_checkpoint_interval_batch:
                     if (self.global_rank == 0) and (
-                        _batch_index
+                        _batch_index + 1 # increment by 1 to start from 1
                         % self.trainer_config.save_checkpoint_interval_batch
                         == 0
                     ):
