@@ -423,9 +423,14 @@ class Trainer:
 
         # Calculate average loss for the epoch
         avg_loss = total_epoch_loss / len(self.train_loader)
-        avg_loss_all_reduce = avg_loss.clone()
+        avg_loss_all_reduce = avg_loss.clone() # NOTE: expensive ops, don't do this in production
         torch.distributed.all_reduce(avg_loss_all_reduce, op=torch.distributed.ReduceOp.SUM)
-        print(f"[GPU{self.global_rank}] avg_loss_all_reduce: {avg_loss_all_reduce}")
+
+        if self.dist_info.global_rank == 0:
+            world_size = self.dist_info.world_size
+            avg_loss_all_reduce /= world_size
+            print(f"[GPU{self.global_rank}] avg_loss_all_reduce: {avg_loss_all_reduce}")
+
 
         current_lr = self._get_current_lr_or_lrs()
 
