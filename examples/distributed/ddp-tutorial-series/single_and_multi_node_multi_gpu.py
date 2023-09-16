@@ -270,6 +270,7 @@ class Trainer:
         self.train_loader.sampler.set_epoch(epoch)
 
         total_epoch_loss = 0.0  # Initialize total loss for the epoch
+        total_samples = 0
         for _batch_index, (source, targets) in enumerate(
             self.train_loader, start=1
         ):  # increment by 1 to start from 1
@@ -287,27 +288,28 @@ class Trainer:
             )
             _, batch_loss = self._run_train_batch(source, targets)
             total_epoch_loss += batch_loss
+            total_samples += source.size(0)
 
-        # Calculate average loss for the epoch
-        avg_loss = total_epoch_loss / len(self.train_loader)
+        # Calculate average loss for the epoch per sample
+        avg_epoch_loss = total_epoch_loss / total_samples
 
         # NOTE: do an all reduce to get the average loss across all processes
-        # NOTE: this is not the same as the average loss across all batches
+        # NOTE: this is not the same as the average loss across all samples
         # NOTE: so this means if I were to train on 2 nodes of 2 gpus each (4 gpus)
         # NOTE: the average loss across all processes will be the same as if I
         # NOTE: were to train on 1 node of 1 gpu (1 gpu) with the same effective batch size.
-        avg_loss_all_reduce = (
-            avg_loss.clone()
+        avg_epoch_loss_all_reduce = (
+            avg_epoch_loss.clone()
         )  # NOTE: expensive ops, don't do this in production
         torch.distributed.all_reduce(
-            avg_loss_all_reduce, op=torch.distributed.ReduceOp.SUM
+            avg_epoch_loss_all_reduce, op=torch.distributed.ReduceOp.SUM
         )
 
         if self.dist_info.global_rank == 0:
             world_size = self.dist_info.world_size
-            avg_loss_all_reduce /= world_size
+            avg_epoch_loss_all_reduce /= world_size
             self.logger_all_reduce.info(
-                f"Epoch {epoch} | [AVG_LOSS_AL_REDUCE]: {avg_loss_all_reduce:.4f}"
+                f"TRAIN: Epoch {epoch} | [AVG_EPOCH_LOSS_AL_REDUCE]: {avg_epoch_loss_all_reduce:.4f}"
             )
 
         current_lr = self._get_current_lr_or_lrs()
@@ -317,7 +319,7 @@ class Trainer:
                 f"[TRAIN: NODE{self.dist_info.node_rank} GPU{self.global_rank}] "
                 f"Epoch {epoch} | "
                 f"Batchsize: {batch_size} | Steps: {len(self.train_loader)} | "
-                f"Average Loss: {avg_loss:.4f} | Learning Rate: {current_lr}"
+                f"Average Loss: {avg_epoch_loss:.4f} | Learning Rate: {current_lr}"
             )
         )
 
@@ -329,6 +331,7 @@ class Trainer:
         self.valid_loader.sampler.set_epoch(epoch)
 
         total_epoch_loss = 0.0  # Initialize total loss for the epoch
+        total_samples = 0
         # Ensure no gradient is computed, saving memory and time
         with torch.no_grad():
             for _batch_index, (source, targets) in enumerate(
@@ -348,6 +351,7 @@ class Trainer:
                 )
                 _, batch_loss = self._run_valid_batch(source, targets)
                 total_epoch_loss += batch_loss
+                total_samples += source.size(0)
 
                 # TODO: by right saving mechanism is usually done in the callback
                 # and also based on the previous metric performance.
@@ -361,7 +365,7 @@ class Trainer:
 
                     torch.distributed.barrier()  # as usual, barrier after saving
 
-        avg_loss = total_epoch_loss / len(self.valid_loader)
+        avg_epoch_loss = total_epoch_loss / total_samples
 
         current_lr = self._get_current_lr_or_lrs()
 
@@ -370,7 +374,7 @@ class Trainer:
                 f"[VALID: NODE{self.dist_info.node_rank} GPU{self.global_rank}] "
                 f"Epoch {epoch} | "
                 f"Batchsize: {batch_size} | Steps: {len(self.valid_loader)} | "
-                f"Average Loss: {avg_loss:.4f} | Learning Rate: {current_lr}"
+                f"Average Loss: {avg_epoch_loss:.4f} | Learning Rate: {current_lr}"
             )
         )
 
