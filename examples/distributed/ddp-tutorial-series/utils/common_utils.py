@@ -92,6 +92,7 @@ def configure_logger(rank: int, print_to_console: bool = False) -> logging.Logge
     messages from different ranks in the same file.
     """
     handlers = [logging.FileHandler(filename=f"process_{rank}.log")]
+
     if print_to_console:
         handlers.append(RichHandler())
 

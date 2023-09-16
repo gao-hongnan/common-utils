@@ -299,6 +299,7 @@ class Trainer:
         self.dist_info = dist_info
 
         self.logger = logger
+        logging.root.handlers = []
         self.logger_all_reduce = configure_logger(
             rank="all_reduce", print_to_console=True
         )
