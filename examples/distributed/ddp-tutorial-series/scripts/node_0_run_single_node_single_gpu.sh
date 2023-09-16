@@ -13,8 +13,8 @@ echo "Master Port: $MASTER_PORT" >> shared_file.txt
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 export NODE_RANK=0
 export NUM_NODES=1
-export NUM_GPUS_PER_NODE=4
-export WORLD_SIZE=4
+export NUM_GPUS_PER_NODE=1
+export WORLD_SIZE=1
 
 # Run python script
 python single_and_multi_node_multi_gpu.py \
@@ -44,32 +44,3 @@ python single_and_multi_node_multi_gpu.py \
     --batch_size 32 \
     --scheduler_name constant_lr
 
-# Define a function to compare the last two lines of log files
-compare_logs() {
-    local current_log=$1
-    local ground_truth_log=$2
-
-    # Extract the last two lines and remove timestamps
-    local current_last_lines=$(tail -n 2 $current_log | sed 's/^[^[]*//')
-    local ground_truth_last_lines=$(tail -n 2 $ground_truth_log | sed 's/^[^[]*//')
-
-    # Compare
-    if [ "$current_last_lines" != "$ground_truth_last_lines" ]; then
-        echo "Difference detected in the last two lines of $current_log compared to the ground truth!"
-        echo "Since we are training on single node, the difference could be just the node rank."
-        echo "Current last two lines:"
-        echo "$current_last_lines"
-        echo "Ground truth last two lines:"
-        echo "$ground_truth_last_lines"
-    else
-        echo "Last two lines of $current_log match with the ground truth."
-    fi
-}
-
-# Iterate over logs and compare
-for i in 0 1 2 3; do
-    CURRENT_LOG="process_${i}.log"
-    GROUND_TRUTH_LOG="./tests/ground_truths/single_and_multi_node_multi_gpu/process_${i}.txt"
-
-    compare_logs $CURRENT_LOG $GROUND_TRUTH_LOG
-done
