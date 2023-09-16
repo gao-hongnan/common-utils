@@ -47,7 +47,7 @@ python single_and_multi_node_multi_gpu.py \
 # Compare the last two lines of log files
 for i in 0 1 2 3; do
     CURRENT_LOG="process_${i}.log"
-    GROUND_TRUTH_LOG="examples/distributed/ddp-tutorial-series/tests/ground_truths/single_and_multi_node_multi_gpu/process_${i}.txt"
+    GROUND_TRUTH_LOG="./tests/ground_truths/single_and_multi_node_multi_gpu/process_${i}.txt"
 
     # Extract the last two lines
     CURRENT_LAST_LINES=$(tail -n 2 $CURRENT_LOG)
