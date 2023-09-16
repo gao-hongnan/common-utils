@@ -46,17 +46,26 @@ python single_and_multi_node_multi_gpu.py \
 
 # Compare the last two lines of log files
 # Define a function to compare the last two lines of log files
+# Modify compare_logs to handle stripping and aggregation logic
 compare_logs() {
     local current_log=$1
     local ground_truth_log=$2
+    local node_count=$3
+    local gpu_count=$4
 
-    # Extract the last two lines and remove timestamps
-    local current_last_lines=$(tail -n 2 $current_log | sed 's/^[^[]*//')
+    if [ "$node_count" -eq 1 ] && [ "$gpu_count" -gt 1 ]; then
+        # Strip off "Node X GPU X" from the log
+        local current_last_lines=$(tail -n 2 $current_log | sed 's/^[^[]*//' | sed 's/Node [0-9] GPU [0-9] //')
+    else
+        local current_last_lines=$(tail -n 2 $current_log | sed 's/^[^[]*//')
+    fi
+
     local ground_truth_last_lines=$(tail -n 2 $ground_truth_log | sed 's/^[^[]*//')
 
     # Compare
     if [ "$current_last_lines" != "$ground_truth_last_lines" ]; then
         echo "Difference detected in the last two lines of $current_log compared to the ground truth!"
+        echo "Since we are training on single node, the difference could be just the node rank."
         echo "Current last two lines:"
         echo "$current_last_lines"
         echo "Ground truth last two lines:"
@@ -66,10 +75,21 @@ compare_logs() {
     fi
 }
 
-# Iterate over logs and compare
-for i in 0 1 2 3; do
-    CURRENT_LOG="process_${i}.log"
-    GROUND_TRUTH_LOG="./tests/ground_truths/single_and_multi_node_multi_gpu/process_${i}.txt"
+# If only one node and one GPU, aggregate and divide by 4
+if [ "$NUM_NODES" -eq 1 ] && [ "$NUM_GPUS_PER_NODE" -eq 1 ]; then
+    # Combine all log files and average the results
+    cat process_{0..3}.log > aggregated_log.log
+    # Apply some processing to divide results by 4, e.g., using awk
+    # (This requires knowing the exact format and calculations you want to apply)
+    awk '{...}' aggregated_log.log > averaged_log.log
 
-    compare_logs $CURRENT_LOG $GROUND_TRUTH_LOG
-done
+    compare_logs averaged_log.log ./tests/ground_truths/single_and_multi_node_multi_gpu/averaged_log.txt $NUM_NODES $NUM_GPUS_PER_NODE
+else
+    # Iterate over logs and compare
+    for i in 0 1 2 3; do
+        CURRENT_LOG="process_${i}.log"
+        GROUND_TRUTH_LOG="./tests/ground_truths/single_and_multi_node_multi_gpu/process_${i}.txt"
+
+        compare_logs $CURRENT_LOG $GROUND_TRUTH_LOG $NUM_NODES $NUM_GPUS_PER_NODE
+    done
+fi

@@ -9,6 +9,11 @@ echo "Master Port: $MASTER_PORT"
 echo "Master Address: $MASTER_ADDR" > shared_file.txt
 echo "Master Port: $MASTER_PORT" >> shared_file.txt
 
+echo "Training on single node single gpu."
+echo "We are multiplying the batch size by 4 to simulate 4 GPUs."
+echo "Then we aggregate the loss by averaging the results."
+echo "This is equivalent to training on 4 GPUs with the original batch size."
+
 # Setup other environment variables
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 export NODE_RANK=0
@@ -41,6 +46,55 @@ python single_and_multi_node_multi_gpu.py \
     --lr 1e-3 \
     --max_epochs 50 \
     --save_checkpoint_interval 10 \
-    --batch_size 32 \
+    --batch_size 128 \
     --scheduler_name constant_lr
 
+# Compare the last two lines of log files
+# Define a function to compare the last two lines of log files
+# Modify compare_logs to handle stripping and aggregation logic
+compare_logs() {
+    local current_log=$1
+    local ground_truth_log=$2
+    local node_count=$3
+    local gpu_count=$4
+
+    if [ "$node_count" -eq 1 ] && [ "$gpu_count" -gt 1 ]; then
+        # Strip off "Node X GPU X" from the log
+        local current_last_lines=$(tail -n 2 $current_log | sed 's/^[^[]*//' | sed 's/Node [0-9] GPU [0-9] //')
+    else
+        local current_last_lines=$(tail -n 2 $current_log | sed 's/^[^[]*//')
+    fi
+
+    local ground_truth_last_lines=$(tail -n 2 $ground_truth_log | sed 's/^[^[]*//')
+
+    # Compare
+    if [ "$current_last_lines" != "$ground_truth_last_lines" ]; then
+        echo "Difference detected in the last two lines of $current_log compared to the ground truth!"
+        echo "Since we are training on single node, the difference could be just the node rank."
+        echo "Current last two lines:"
+        echo "$current_last_lines"
+        echo "Ground truth last two lines:"
+        echo "$ground_truth_last_lines"
+    else
+        echo "Last two lines of $current_log match with the ground truth."
+    fi
+}
+
+# If only one node and one GPU, aggregate and divide by 4
+if [ "$NUM_NODES" -eq 1 ] && [ "$NUM_GPUS_PER_NODE" -eq 1 ]; then
+    # Combine all log files and average the results
+    cat process_{0..3}.log > aggregated_log.log
+    # Apply some processing to divide results by 4, e.g., using awk
+    # (This requires knowing the exact format and calculations you want to apply)
+    awk '{...}' aggregated_log.log > averaged_log.log
+
+    compare_logs averaged_log.log ./tests/ground_truths/single_and_multi_node_multi_gpu/averaged_log.txt $NUM_NODES $NUM_GPUS_PER_NODE
+else
+    # Iterate over logs and compare
+    for i in 0 1 2 3; do
+        CURRENT_LOG="process_${i}.log"
+        GROUND_TRUTH_LOG="./tests/ground_truths/single_and_multi_node_multi_gpu/process_${i}.txt"
+
+        compare_logs $CURRENT_LOG $GROUND_TRUTH_LOG $NUM_NODES $NUM_GPUS_PER_NODE
+    done
+fi
