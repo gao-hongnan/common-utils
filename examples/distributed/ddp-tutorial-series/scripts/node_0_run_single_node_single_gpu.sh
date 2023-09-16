@@ -45,7 +45,8 @@ python single_and_multi_node_multi_gpu.py \
     --optimizer_name "sgd" \
     --lr 1e-3 \
     --max_epochs 50 \
-    --save_checkpoint_interval 10 \
+    --save_checkpoint_interval_epoch 10 \
+    --save_checkpoint_interval_batch 16 \
     --batch_size 128 \
     --scheduler_name constant_lr
 

@@ -50,8 +50,11 @@ class TrainerConfig:
     max_epochs: int = field(
         default=50, metadata={"help": "Number of epochs to train for."}
     )
-    save_checkpoint_interval: int = field(
+    save_checkpoint_interval_epoch: int = field(
         default=10, metadata={"help": "Save checkpoint every n epochs."}
+    )
+    save_checkpoint_interval_batch: Optional[int] = field(
+        default=None, metadata={"help": "Save checkpoint every n batches."}
     )
     batch_size: int = field(
         default=32, metadata={"help": "Number of samples per batch."}

@@ -12,154 +12,6 @@ batch size.
 2. cat $PBS_NODEFILE to get all nodes.
 3. ssh into the other nodes that are not the master node (step 1.)
 
-# On Node 0:
-
-export MASTER_ADDR=$(hostname -i) && \
-export MASTER_PORT=$(comm -23 <(seq 1 65535 | sort) <(ss -Htan | awk '{print $4}' | cut -d':' -f2 | sort -u) | shuf | head -n 1)
-echo $MASTER_ADDR
-echo $MASTER_PORT
-
-export PYTHONPATH=$PYTHONPATH:$(pwd) && \
-export NODE_RANK=0 && \
-export NUM_NODES=2 && \
-export NUM_GPUS_PER_NODE=2 && \
-export WORLD_SIZE=4 && \
-python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
-    --node_rank $NODE_RANK \
-    --num_nodes $NUM_NODES \
-    --num_gpus_per_node $NUM_GPUS_PER_NODE \
-    --world_size $WORLD_SIZE \
-    --backend "nccl" \
-    --init_method "env://" \
-    --master_addr $MASTER_ADDR \
-    --master_port $MASTER_PORT \
-    --seed 0 \
-    --num_samples 2048 \
-    --num_dimensions 20 \
-    --target_dimensions 1 \
-    --num_workers 0 \
-    --pin_memory \
-    --sampler_shuffle \
-    --input_dim 20 \
-    --output_dim 1 \
-    --criterion_name "mse_loss" \
-    --reduction "mean" \
-    --optimizer_name "sgd" \
-    --lr 1e-3 \
-    --max_epochs 50 \
-    --save_checkpoint_interval 10 \
-    --batch_size 32 \
-
-[GPU0] Epoch 49 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1019
-[GPU1] Epoch 49 | Batchsize: 32 | Steps: 16 | Average Loss: 0.0947
-
-
-# On Node 1:
-
-export PYTHONPATH=$PYTHONPATH:$(pwd) && \
-export NODE_RANK=1 && \
-export NUM_NODES=2 && \
-export NUM_GPUS_PER_NODE=2 && \
-export WORLD_SIZE=4 && \
-python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
-    --node_rank $NODE_RANK \
-    --num_nodes $NUM_NODES \
-    --num_gpus_per_node $NUM_GPUS_PER_NODE \
-    --world_size $WORLD_SIZE \
-    --backend "nccl" \
-    --init_method "env://" \
-    --master_addr 10.168.0.3 \
-    --master_port 34397 \
-    --seed 0 \
-    --num_samples 2048 \
-    --num_dimensions 20 \
-    --target_dimensions 1 \
-    --num_workers 0 \
-    --pin_memory \
-    --sampler_shuffle \
-    --input_dim 20 \
-    --output_dim 1 \
-    --criterion_name "mse_loss" \
-    --reduction "mean" \
-    --optimizer_name "sgd" \
-    --lr 1e-3 \
-    --max_epochs 50 \
-    --save_checkpoint_interval 10 \
-    --batch_size 32 \
-
-
-[GPU2] Epoch 49 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1094
-[GPU3] Epoch 49 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1025
-
-
-# On Node 0 Resume:
-
-export PYTHONPATH=$PYTHONPATH:$(pwd) && \
-export NODE_RANK=0 && \
-export NUM_NODES=2 && \
-export NUM_GPUS_PER_NODE=2 && \
-export WORLD_SIZE=4 && \
-python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
-    --node_rank $NODE_RANK \
-    --num_nodes $NUM_NODES \
-    --num_gpus_per_node $NUM_GPUS_PER_NODE \
-    --world_size $WORLD_SIZE \
-    --backend "nccl" \
-    --init_method "env://" \
-    --master_addr $MASTER_ADDR \
-    --master_port $MASTER_PORT \
-    --seed 0 \
-    --num_samples 2048 \
-    --num_dimensions 20 \
-    --target_dimensions 1 \
-    --num_workers 0 \
-    --pin_memory \
-    --sampler_shuffle \
-    --input_dim 20 \
-    --output_dim 1 \
-    --criterion_name "mse_loss" \
-    --reduction "mean" \
-    --optimizer_name "sgd" \
-    --lr 1e-3 \
-    --max_epochs 50 \
-    --save_checkpoint_interval 10 \
-    --batch_size 32 \
-    --load_path "/common-utils/examples/distributed/ddp-tutorial-series/snapshot.pt"
-
-# On Node 1 Resume:
-
-export PYTHONPATH=$PYTHONPATH:$(pwd) && \
-export NODE_RANK=1 && \
-export NUM_NODES=2 && \
-export NUM_GPUS_PER_NODE=2 && \
-export WORLD_SIZE=4 && \
-python 02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
-    --node_rank $NODE_RANK \
-    --num_nodes $NUM_NODES \
-    --num_gpus_per_node $NUM_GPUS_PER_NODE \
-    --world_size $WORLD_SIZE \
-    --backend "nccl" \
-    --init_method "env://" \
-    --master_addr 10.168.0.3 \
-    --master_port 34397 \
-    --seed 0 \
-    --num_samples 2048 \
-    --num_dimensions 20 \
-    --target_dimensions 1 \
-    --num_workers 0 \
-    --pin_memory \
-    --sampler_shuffle \
-    --input_dim 20 \
-    --output_dim 1 \
-    --criterion_name "mse_loss" \
-    --reduction "mean" \
-    --optimizer_name "sgd" \
-    --lr 1e-3 \
-    --max_epochs 50 \
-    --save_checkpoint_interval 10 \
-    --batch_size 32 \
-    --load_path "/common-utils/examples/distributed/ddp-tutorial-series/snapshot.pt"
-
 abstract
 torchrun \
 --nproc_per_node=$NUM_GPUS_PER_NODE \
@@ -229,6 +81,8 @@ from models.toy_model import ToyModel
 from utils.common_utils import calculate_global_rank, configure_logger, deprecated
 
 
+# TODO: Consider using composer's State to maintain the state of the trainer.
+# TODO: Consider using observer pattern to have on_batch_end, on_epoch_end, etc.
 # pylint: disable=missing-function-docstring,missing-class-docstring
 class Trainer:
     """Trainer class for training a model."""
@@ -351,8 +205,10 @@ class Trainer:
             lrs.append(param_group["lr"])
         return lrs
 
-    def _save_snapshot(self, epoch: int) -> None:
+    def _save_snapshot(self, epoch: int, batch: Optional[int] = None) -> None:
         """Save snapshot of the model, optimizer, and other training states."""
+        if batch is not None:
+            checkpoint_dir = os.path.join(self.output_dir, f"epoch_{epoch}_batch_{batch}")
         checkpoint_dir = os.path.join(self.output_dir, f"epoch_{epoch}")
         os.makedirs(checkpoint_dir, exist_ok=True)
         self.save_path = os.path.join(checkpoint_dir, "snapshot.pt")
@@ -407,7 +263,7 @@ class Trainer:
         self.train_loader.sampler.set_epoch(epoch)
 
         total_epoch_loss = 0.0  # Initialize total loss for the epoch
-        for source, targets in self.train_loader:
+        for _batch_idx, (source, targets) in enumerate(self.train_loader):
             source = source.to(
                 self.local_rank,
                 non_blocking=False,
@@ -466,7 +322,7 @@ class Trainer:
         total_epoch_loss = 0.0  # Initialize total loss for the epoch
         # Ensure no gradient is computed, saving memory and time
         with torch.no_grad():
-            for source, targets in self.valid_loader:
+            for _batch_index, (source, targets) in enumerate(self.valid_loader):
                 source = source.to(
                     self.local_rank,
                     non_blocking=False,
@@ -481,6 +337,14 @@ class Trainer:
                 )
                 _, batch_loss = self._run_valid_batch(source, targets)
                 total_epoch_loss += batch_loss
+
+                # TODO: by right saving mechanism is usually done in the callback
+                # and also based on the previous metric performance.
+                if (self.global_rank == 0) and (
+                    _batch_index % self.trainer_config.save_checkpoint_interval_batch
+                    == 0
+                ):
+                    self._save_snapshot(epoch, batch=_batch_index)
 
         avg_loss = total_epoch_loss / len(self.valid_loader)
 
@@ -516,7 +380,7 @@ class Trainer:
             # save monolithic snapshot on global rank 0
             if (
                 self.global_rank == 0
-                and epoch % self.trainer_config.save_checkpoint_interval == 0
+                and epoch % self.trainer_config.save_checkpoint_interval_epoch == 0
             ):
                 self._save_snapshot(epoch)
 
@@ -754,8 +618,14 @@ def parse_args() -> argparse.Namespace:
         "--max_epochs", default=50, type=int, help="Total epochs to train the model"
     )
     parser.add_argument(
-        "--save_checkpoint_interval",
+        "--save_checkpoint_interval_epoch",
         default=10,
+        type=int,
+        help="How often to save a snapshot",
+    )
+    parser.add_argument(
+        "--save_checkpoint_interval_batch",
+        default=None,
         type=int,
         help="How often to save a snapshot",
     )
@@ -797,7 +667,8 @@ if __name__ == "__main__":
 
     trainer_config: TrainerConfig = TrainerConfig(
         max_epochs=args.max_epochs,
-        save_checkpoint_interval=args.save_checkpoint_interval,
+        save_checkpoint_interval_epoch=args.save_checkpoint_interval_epoch,
+        save_checkpoint_interval_batch=args.save_checkpoint_interval_batch,
         batch_size=args.batch_size,
         output_dir=args.output_dir,
         load_path=args.load_path,
