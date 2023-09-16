@@ -2,6 +2,10 @@
 NOTE: I think the original torch code is not entirely efficient
 since it saves on the local rank of each node.
 
+NOTE: Effective batch size usually implies the same result ensues
+if you train on all 4 gpus vs 1 gpus just by maintaining the same effective
+batch size.
+
 1. hostname to get current node name.
 2. hostname -i to get current node ip. set this to MASTER_ADDR.
 3. MASTER_PORT=$(comm -23 <(seq 49152 65535 | sort) <(ss -Htan | awk '{print $4}' | cut -d':' -f2 | sort -u) | shuf | head -n 1)
@@ -241,6 +245,7 @@ class Trainer:
         "trainer_config",
         "dist_info",
         "logger",
+        "logger_all_reduce",
         "epochs_run",
         "output_dir",
         "save_path",
@@ -261,6 +266,7 @@ class Trainer:
     dist_info: DistributedInfo
 
     logger: Optional[logging.Logger]
+    logger_all_reduce: logging.Logger
 
     epochs_run: int
     output_dir: str
@@ -293,6 +299,7 @@ class Trainer:
         self.dist_info = dist_info
 
         self.logger = logger
+        self.logger_all_reduce = configure_logger(rank="all_reduce", print_to_console=True)
 
         self.epochs_run = 0
         self.output_dir = self._determine_output_dir()
@@ -416,6 +423,9 @@ class Trainer:
 
         # Calculate average loss for the epoch
         avg_loss = total_epoch_loss / len(self.train_loader)
+        avg_loss_all_reduce = avg_loss.clone()
+        torch.distributed.all_reduce(avg_loss_all_reduce, op=torch.distributed.ReduceOp.SUM)
+        print(f"[GPU{self.global_rank}] avg_loss_all_reduce: {avg_loss_all_reduce}")
 
         current_lr = self._get_current_lr_or_lrs()
 
