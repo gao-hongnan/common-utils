@@ -60,12 +60,12 @@ compare_logs() {
 
     if [ "$node_count" -eq 1 ] && [ "$gpu_count" -gt 1 ]; then
         # Strip off "Node X GPU X" from the log
-        local current_last_lines=$(tail -n 2 $current_log | sed 's/^[^[]*//' | sed 's/Node [0-9] GPU [0-9] //')
+        local current_last_lines=$(tail -n 2 $current_log | sed 's/^[^[]*//' | sed 's/\[\(INFO\|ERROR\|DEBUG\|WARN\|WARNING\|CRITICAL\)\]: \[\(TRAIN\|VALID\): NODE[0-9]\+ GPU[0-9]\+\] //')
+        local ground_truth_last_lines=$(tail -n 2 $ground_truth_log | sed 's/^[^[]*//' | sed 's/\[\(INFO\|ERROR\|DEBUG\|WARN\|WARNING\|CRITICAL\)\]: \[\(TRAIN\|VALID\): NODE[0-9]\+ GPU[0-9]\+\] //')
     else
         local current_last_lines=$(tail -n 2 $current_log | sed 's/^[^[]*//')
+        local ground_truth_last_lines=$(tail -n 2 $ground_truth_log | sed 's/^[^[]*//')
     fi
-
-    local ground_truth_last_lines=$(tail -n 2 $ground_truth_log | sed 's/^[^[]*//')
 
     # Compare
     if [ "$current_last_lines" != "$ground_truth_last_lines" ]; then
@@ -98,3 +98,4 @@ else
         compare_logs $CURRENT_LOG $GROUND_TRUTH_LOG $NUM_NODES $NUM_GPUS_PER_NODE
     done
 fi
+
