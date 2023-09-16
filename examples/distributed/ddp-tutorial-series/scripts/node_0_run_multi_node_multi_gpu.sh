@@ -56,7 +56,11 @@ for i in 0 1 2 3; do
     # Compare
     if [ "$CURRENT_LAST_LINES" != "$GROUND_TRUTH_LAST_LINES" ]; then
         echo "Difference detected in the last two lines of process_${i}.log compared to the ground truth!"
+        echo "Current last two lines:"
+        echo "$CURRENT_LAST_LINES"
+        echo "Ground truth last two lines:"
+        echo "$GROUND_TRUTH_LAST_LINES"
     else
-        echo "Last two lines of process_${i}.log match with the ground truth."
+        echo "Last two lines of process_${i}.log match with the ground truth.
     fi
 done
