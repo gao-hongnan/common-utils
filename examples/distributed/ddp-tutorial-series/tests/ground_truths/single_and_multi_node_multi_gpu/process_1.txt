@@ -25,103 +25,103 @@
 2023-09-16 13:28:27 [INFO]: Distributed info: DistributedInfo(node_rank=0, num_nodes=2, num_gpus_per_node=2, num_gpus_in_curr_node_rank=2, is_dist_available=True, is_dist_initialized=True, process_id=2720955, global_rank=1, world_size=4, local_rank=1, device=device(type='cuda', index=1), node_hostname='asp2a-gpu003')
 2023-09-16 13:28:29 [INFO]: Starting training with Learning Rate: 0.001
 2023-09-16 13:28:30 [INFO]: Reducer buckets have been rebuilt in this iteration.
-2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 0 | Batchsize: 32 | Steps: 16 | Average Loss: 0.6214 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 0 | Batchsize: 32 | Steps: 16 | Average Loss: 0.6023 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 1 | Batchsize: 32 | Steps: 16 | Average Loss: 0.5574 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 1 | Batchsize: 32 | Steps: 16 | Average Loss: 0.5398 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 2 | Batchsize: 32 | Steps: 16 | Average Loss: 0.5663 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 2 | Batchsize: 32 | Steps: 16 | Average Loss: 0.5493 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 3 | Batchsize: 32 | Steps: 16 | Average Loss: 0.5043 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 3 | Batchsize: 32 | Steps: 16 | Average Loss: 0.4906 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 4 | Batchsize: 32 | Steps: 16 | Average Loss: 0.4851 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 4 | Batchsize: 32 | Steps: 16 | Average Loss: 0.4717 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 5 | Batchsize: 32 | Steps: 16 | Average Loss: 0.4925 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 5 | Batchsize: 32 | Steps: 16 | Average Loss: 0.4787 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 6 | Batchsize: 32 | Steps: 16 | Average Loss: 0.4761 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 6 | Batchsize: 32 | Steps: 16 | Average Loss: 0.4624 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 7 | Batchsize: 32 | Steps: 16 | Average Loss: 0.3659 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 7 | Batchsize: 32 | Steps: 16 | Average Loss: 0.3562 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 8 | Batchsize: 32 | Steps: 16 | Average Loss: 0.3917 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 8 | Batchsize: 32 | Steps: 16 | Average Loss: 0.3814 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 9 | Batchsize: 32 | Steps: 16 | Average Loss: 0.3794 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 9 | Batchsize: 32 | Steps: 16 | Average Loss: 0.3692 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 10 | Batchsize: 32 | Steps: 16 | Average Loss: 0.3493 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 10 | Batchsize: 32 | Steps: 16 | Average Loss: 0.3402 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 11 | Batchsize: 32 | Steps: 16 | Average Loss: 0.3225 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 11 | Batchsize: 32 | Steps: 16 | Average Loss: 0.3146 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 12 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2828 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 12 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2758 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 13 | Batchsize: 32 | Steps: 16 | Average Loss: 0.3174 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 13 | Batchsize: 32 | Steps: 16 | Average Loss: 0.3096 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 14 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2691 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 14 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2617 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 15 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2510 | Learning Rate: 0.001
-2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 15 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2454 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 16 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2539 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 16 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2479 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 17 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2496 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 17 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2435 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 18 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2406 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 18 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2350 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 19 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2240 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 19 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2192 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 20 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2232 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 20 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2183 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 21 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2089 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 21 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2042 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 22 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1986 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 22 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1946 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 23 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1977 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 23 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1937 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 24 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2085 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 24 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2046 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 25 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1774 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 25 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1740 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 26 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1728 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 26 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1697 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 27 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1720 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 27 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1690 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 28 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1667 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 28 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1639 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 29 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1577 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 29 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1550 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 30 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1468 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 30 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1443 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 31 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1352 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 31 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1334 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 32 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1425 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 32 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1402 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 33 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1363 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 33 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1343 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 34 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1394 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 34 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1374 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 35 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1348 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 35 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1331 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 36 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1273 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 36 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1256 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 37 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1262 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 37 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1246 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 38 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1383 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 38 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1364 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 39 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1166 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 39 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1153 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 40 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1201 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 40 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1187 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 41 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1238 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 41 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1225 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 42 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1089 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 42 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1078 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 43 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1157 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 43 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1146 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 44 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1103 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 44 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1093 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 45 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1037 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 45 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1028 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 46 | Batchsize: 32 | Steps: 16 | Average Loss: 0.0992 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 46 | Batchsize: 32 | Steps: 16 | Average Loss: 0.0984 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 47 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1041 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 47 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1032 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 48 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1039 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 48 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1032 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 49 | Batchsize: 32 | Steps: 16 | Average Loss: 0.0947 | Learning Rate: 0.001
-2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 49 | Batchsize: 32 | Steps: 16 | Average Loss: 0.0941 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 0 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.6214 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 0 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.6023 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 1 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.5574 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 1 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.5398 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 2 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.5663 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 2 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.5493 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 3 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.5043 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 3 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.4906 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 4 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.4851 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 4 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.4717 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 5 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.4925 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 5 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.4787 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 6 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.4761 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 6 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.4624 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 7 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.3659 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 7 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.3562 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 8 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.3917 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 8 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.3814 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 9 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.3794 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 9 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.3692 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 10 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.3493 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 10 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.3402 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 11 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.3225 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 11 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.3146 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 12 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.2828 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 12 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.2758 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 13 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.3174 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 13 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.3096 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 14 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.2691 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 14 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.2617 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [TRAIN: NODE0 GPU1] Epoch 15 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.2510 | Learning Rate: 0.001
+2023-09-16 13:28:30 [INFO]: [VALID: NODE0 GPU1] Epoch 15 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.2454 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 16 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.2539 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 16 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.2479 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 17 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.2496 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 17 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.2435 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 18 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.2406 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 18 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.2350 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 19 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.2240 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 19 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.2192 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 20 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.2232 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 20 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.2183 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 21 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.2089 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 21 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.2042 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 22 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1986 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 22 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1946 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 23 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1977 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 23 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1937 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 24 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.2085 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 24 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.2046 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 25 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1774 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 25 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1740 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 26 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1728 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 26 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1697 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 27 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1720 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 27 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1690 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 28 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1667 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 28 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1639 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 29 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1577 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 29 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1550 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 30 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1468 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 30 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1443 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 31 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1352 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 31 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1334 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 32 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1425 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 32 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1402 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 33 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1363 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 33 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1343 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 34 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1394 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 34 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1374 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 35 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1348 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 35 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1331 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 36 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1273 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 36 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1256 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 37 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1262 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 37 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1246 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 38 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1383 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 38 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1364 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 39 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1166 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 39 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1153 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 40 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1201 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 40 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1187 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 41 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1238 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 41 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1225 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 42 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1089 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 42 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1078 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 43 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1157 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 43 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1146 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 44 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1103 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 44 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1093 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 45 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1037 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 45 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1028 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 46 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.0992 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 46 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.0984 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 47 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1041 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 47 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1032 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 48 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1039 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 48 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.1032 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [TRAIN: NODE0 GPU1] Epoch 49 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.0947 | Learning Rate: 0.001
+2023-09-16 13:28:31 [INFO]: [VALID: NODE0 GPU1] Epoch 49 | Batchsize: 32 | Steps: 16 | Average Loss Per Sample: 0.0941 | Learning Rate: 0.001
