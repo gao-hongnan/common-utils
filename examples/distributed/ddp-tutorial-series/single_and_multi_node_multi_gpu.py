@@ -51,7 +51,7 @@ import gc
 import logging
 import os
 from dataclasses import asdict
-from typing import Optional, Tuple, Union, List
+from typing import List, Optional, Tuple, Union
 
 import torch
 import torch.multiprocessing as mp
@@ -59,26 +59,22 @@ from torch.distributed import destroy_process_group
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
+from tqdm import tqdm
 
 from config._criterion import build_criterion
 from config._optim import build_optimizer
 from config._scheduler import build_scheduler
-from config.base import (
-    CRITERION_NAME_TO_CONFIG_MAPPING,
-    OPTIMIZER_NAME_TO_CONFIG_MAPPING,
-    SCHEDULER_NAME_TO_CONFIG_MAPPING,
-    DataLoaderConfig,
-    DistributedInfo,
-    DistributedSamplerConfig,
-    InitEnvArgs,
-    InitProcessGroupArgs,
-    TrainerConfig,
-)
+from config.base import (CRITERION_NAME_TO_CONFIG_MAPPING,
+                         OPTIMIZER_NAME_TO_CONFIG_MAPPING,
+                         SCHEDULER_NAME_TO_CONFIG_MAPPING, DataLoaderConfig,
+                         DistributedInfo, DistributedSamplerConfig,
+                         InitEnvArgs, InitProcessGroupArgs, TrainerConfig)
 from core._init import init_env, init_process
 from core._seed import seed_all
 from data.toy_dataset import ToyDataset, prepare_dataloader
 from models.toy_model import ToyModel
-from utils.common_utils import calculate_global_rank, configure_logger, deprecated
+from utils.common_utils import (calculate_global_rank, configure_logger,
+                                deprecated)
 
 
 # TODO: Consider using composer's State to maintain the state of the trainer.
@@ -269,9 +265,19 @@ class Trainer:
 
         total_epoch_loss = 0.0  # Initialize total loss for the epoch
         total_samples = 0
-        for _batch_index, (source, targets) in enumerate(
-            self.train_loader, start=1
-        ):  # increment by 1 to start from 1
+
+        # Initialize tqdm for rank 0 only
+        train_progress_bar = (
+            tqdm(
+                enumerate(self.train_loader, start=1),
+                total=len(self.train_loader),
+                desc=f"Epoch {epoch}",
+            )
+            if self.global_rank == 0
+            else enumerate(self.train_loader, start=1)
+        )
+        # batch_index starts from 1
+        for _batch_index, (source, targets) in train_progress_bar:
             source = source.to(
                 self.local_rank,
                 non_blocking=False,
@@ -288,6 +294,12 @@ class Trainer:
             _, avg_batch_loss = self._run_train_batch(source, targets)
             total_epoch_loss += avg_batch_loss * batch_size
             total_samples += batch_size
+
+            # Update tqdm progress bar if on rank 0
+            if self.global_rank == 0:
+                train_progress_bar.set_description(
+                    f"Epoch {epoch}, Avg Batch Loss: {avg_batch_loss.item():.4f}"
+                )
 
         # Calculate average loss for the epoch per sample
         avg_epoch_loss = total_epoch_loss / total_samples
