@@ -77,13 +77,7 @@ compare_logs() {
 
 # If only one node and one GPU, aggregate and divide by 4
 if [ "$NUM_NODES" -eq 1 ] && [ "$NUM_GPUS_PER_NODE" -eq 1 ]; then
-    # Combine all log files and average the results
-    cat process_{0..3}.log > aggregated_log.log
-    # Apply some processing to divide results by 4, e.g., using awk
-    # (This requires knowing the exact format and calculations you want to apply)
-    awk '{...}' aggregated_log.log > averaged_log.log
-
-    compare_logs averaged_log.log ./tests/ground_truths/single_and_multi_node_multi_gpu/averaged_log.txt $NUM_NODES $NUM_GPUS_PER_NODE
+    compare_logs process_all_reduce.log ./tests/ground_truths/single_and_multi_node_multi_gpu/process_all_reduce.txt $NUM_NODES $NUM_GPUS_PER_NODE
 else
     # Iterate over logs and compare
     for i in 0 1 2 3; do
@@ -93,3 +87,4 @@ else
         compare_logs $CURRENT_LOG $GROUND_TRUTH_LOG $NUM_NODES $NUM_GPUS_PER_NODE
     done
 fi
+
