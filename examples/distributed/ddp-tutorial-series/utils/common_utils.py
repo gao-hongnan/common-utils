@@ -70,20 +70,19 @@ def display_dist_info(
         return
 
 
-def configure_logger(rank: int, print_to_console: bool = False) -> logging.Logger:
+def configure_logger(rank: str, print_to_console: bool = False) -> logging.Logger:
     """
     Configure and return a logger for a given process rank.
 
     Parameters
     ----------
-    rank : int
+    rank : str
         The rank of the process for which the logger is being configured.
 
     Returns
     -------
     logging.Logger
         Configured logger for the specified process rank.
-
     Notes
     -----
     The logger is configured to write logs to a file named `process_{rank}.log` and
@@ -91,18 +90,34 @@ def configure_logger(rank: int, print_to_console: bool = False) -> logging.Logge
     logs to a separate file is to avoid the non-deterministic ordering of log
     messages from different ranks in the same file.
     """
-    handlers = [logging.FileHandler(filename=f"process_{rank}.log")]
+    logger = logging.getLogger(f"Process-{rank}")
 
-    if print_to_console:
-        handlers.append(RichHandler())
+    # Clear existing handlers
+    logger.handlers = []
 
-    logging.basicConfig(
-        level="INFO",
-        format="%(asctime)s [%(levelname)s]: %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-        handlers=handlers,
+    # Set the logging level
+    logger.setLevel(logging.INFO)
+
+    # File handler
+    file_handler = logging.FileHandler(filename=f"process_{rank}.log")
+    file_handler.setFormatter(
+        logging.Formatter(
+            "%(asctime)s [%(levelname)s]: %(message)s", "%Y-%m-%d %H:%M:%S"
+        )
     )
-    return logging.getLogger(f"Process-{rank}")
+    logger.addHandler(file_handler)
+
+    # Console handler if needed
+    if print_to_console:
+        console_handler = RichHandler()
+        console_handler.setFormatter(
+            logging.Formatter(
+                "%(asctime)s [%(levelname)s]: %(message)s", "%Y-%m-%d %H:%M:%S"
+            )
+        )
+        logger.addHandler(console_handler)
+
+    return logger
 
 
 def calculate_global_rank(
