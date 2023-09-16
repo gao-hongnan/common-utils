@@ -61,6 +61,6 @@ for i in 0 1 2 3; do
         echo "Ground truth last two lines:"
         echo "$GROUND_TRUTH_LAST_LINES"
     else
-        echo "Last two lines of process_${i}.log match with the ground truth.
+        echo "Last two lines of process_${i}.log match with the ground truth."
     fi
 done
