@@ -299,7 +299,9 @@ class Trainer:
         self.dist_info = dist_info
 
         self.logger = logger
-        self.logger_all_reduce = configure_logger(rank="all_reduce", print_to_console=True)
+        self.logger_all_reduce = configure_logger(
+            rank="all_reduce", print_to_console=True
+        )
 
         self.epochs_run = 0
         self.output_dir = self._determine_output_dir()
@@ -423,14 +425,26 @@ class Trainer:
 
         # Calculate average loss for the epoch
         avg_loss = total_epoch_loss / len(self.train_loader)
-        avg_loss_all_reduce = avg_loss.clone() # NOTE: expensive ops, don't do this in production
-        torch.distributed.all_reduce(avg_loss_all_reduce, op=torch.distributed.ReduceOp.SUM)
+
+        # NOTE: do an all reduce to get the average loss across all processes
+        # NOTE: this is not the same as the average loss across all batches
+        # NOTE: so this means if I were to train on 2 nodes of 2 gpus each (4 gpus)
+        # NOTE: the average loss across all processes will be the same as if I
+        # NOTE: were to train on 1 node of 1 gpu (1 gpu) with the same effective batch size.
+        avg_loss_all_reduce = (
+            avg_loss.clone()
+        )  # NOTE: expensive ops, don't do this in production
+        torch.distributed.all_reduce(
+            avg_loss_all_reduce, op=torch.distributed.ReduceOp.SUM
+        )
 
         if self.dist_info.global_rank == 0:
             world_size = self.dist_info.world_size
             avg_loss_all_reduce /= world_size
-            print(f"[GPU{self.global_rank}] avg_loss_all_reduce: {avg_loss_all_reduce}")
-
+            self.logger_all_reduce.info(
+                f"Epoch {epoch} | "
+                f"[AVG_LOSS_AL_REDUCE]: {avg_loss_all_reduce}"
+            )
 
         current_lr = self._get_current_lr_or_lrs()
 
