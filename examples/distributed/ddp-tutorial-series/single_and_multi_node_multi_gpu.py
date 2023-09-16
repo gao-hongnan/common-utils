@@ -442,7 +442,7 @@ class Trainer:
             world_size = self.dist_info.world_size
             avg_loss_all_reduce /= world_size
             self.logger_all_reduce.info(
-                f"Epoch {epoch} | [AVG_LOSS_AL_REDUCE]: {avg_loss_all_reduce}"
+                f"Epoch {epoch} | [AVG_LOSS_AL_REDUCE]: {avg_loss_all_reduce:.4f}"
             )
 
         current_lr = self._get_current_lr_or_lrs()
