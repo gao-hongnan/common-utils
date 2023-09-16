@@ -208,7 +208,9 @@ class Trainer:
     def _save_snapshot(self, epoch: int, batch: Optional[int] = None) -> None:
         """Save snapshot of the model, optimizer, and other training states."""
         if batch is not None:
-            checkpoint_dir = os.path.join(self.output_dir, f"epoch_{epoch}_batch_{batch}")
+            checkpoint_dir = os.path.join(
+                self.output_dir, f"epoch_{epoch}_batch_{batch}"
+            )
         checkpoint_dir = os.path.join(self.output_dir, f"epoch_{epoch}")
         os.makedirs(checkpoint_dir, exist_ok=True)
         self.save_path = os.path.join(checkpoint_dir, "snapshot.pt")
@@ -340,11 +342,15 @@ class Trainer:
 
                 # TODO: by right saving mechanism is usually done in the callback
                 # and also based on the previous metric performance.
-                if (self.global_rank == 0) and (
-                    _batch_index % self.trainer_config.save_checkpoint_interval_batch
-                    == 0
-                ):
-                    self._save_snapshot(epoch, batch=_batch_index)
+                if self.trainer_config.save_checkpoint_interval_batch:
+                    if (self.global_rank == 0) and (
+                        _batch_index
+                        % self.trainer_config.save_checkpoint_interval_batch
+                        == 0
+                    ):
+                        self._save_snapshot(epoch, batch=_batch_index)
+
+                    torch.distributed.barrier()  # as usual, barrier after saving
 
         avg_loss = total_epoch_loss / len(self.valid_loader)
 
