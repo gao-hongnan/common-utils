@@ -1,2 +1,0 @@
-# Single Node Multi GPU
-

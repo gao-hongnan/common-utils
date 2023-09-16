@@ -1,0 +1,127 @@
+2023-09-16 13:18:30 [INFO]: Initializing the following Environment variables: InitEnvArgs(master_addr='172.23.0.69', master_port='63165')
+2023-09-16 13:18:30 [INFO]: Process group arguments: InitProcessGroupArgs(rank=1, world_size=4, backend='nccl', init_method='env://')
+2023-09-16 13:18:32 [INFO]: Added key: store_based_barrier_key:1 to store for rank: 1
+2023-09-16 13:18:32 [INFO]: Rank 1: Completed store-based barrier for key:store_based_barrier_key:1 with 4 nodes.
+2023-09-16 13:18:32 [INFO]: Initialized process group: Rank 1 out of 4.
+2023-09-16 13:18:32 [INFO]: Distributed info: DistributedInfo(node_rank=0, num_nodes=2, num_gpus_per_node=2, num_gpus_in_curr_node_rank=2, is_dist_available=True, is_dist_initialized=True, process_id=2717662, global_rank=1, world_size=4, local_rank=1, device=device(type='cuda', index=1), node_hostname='asp2a-gpu003')
+2023-09-16 13:18:32 [INFO]: node_rank: 0
+2023-09-16 13:18:32 [INFO]: num_nodes: 2
+2023-09-16 13:18:32 [INFO]: num_gpus_per_node: 2
+2023-09-16 13:18:32 [INFO]: num_gpus_in_curr_node_rank: 2
+2023-09-16 13:18:32 [INFO]: is_dist_available: True
+2023-09-16 13:18:32 [INFO]: is_dist_initialized: True
+2023-09-16 13:18:32 [INFO]: process_id: 2717662
+2023-09-16 13:18:32 [INFO]: global_rank: 1
+2023-09-16 13:18:32 [INFO]: world_size: 4
+2023-09-16 13:18:32 [INFO]: local_rank: 1
+2023-09-16 13:18:32 [INFO]: device: cuda:1
+2023-09-16 13:18:32 [INFO]: node_hostname: asp2a-gpu003
+2023-09-16 13:18:32 [INFO]: 
++-------------+-------------+---------------------+------------------------------+---------------------+-----------------------+--------------+---------------+--------------+--------------+----------+-----------------+
+|   node_rank |   num_nodes |   num_gpus_per_node |   num_gpus_in_curr_node_rank | is_dist_available   | is_dist_initialized   |   process_id |   global_rank |   world_size |   local_rank | device   | node_hostname   |
++=============+=============+=====================+==============================+=====================+=======================+==============+===============+==============+==============+==========+=================+
+|           0 |           2 |                   2 |                            2 | True                | True                  |      2717662 |             1 |            4 |            1 | cuda:1   | asp2a-gpu003    |
++-------------+-------------+---------------------+------------------------------+---------------------+-----------------------+--------------+---------------+--------------+--------------+----------+-----------------+
+2023-09-16 13:18:32 [INFO]: Distributed info: DistributedInfo(node_rank=0, num_nodes=2, num_gpus_per_node=2, num_gpus_in_curr_node_rank=2, is_dist_available=True, is_dist_initialized=True, process_id=2717662, global_rank=1, world_size=4, local_rank=1, device=device(type='cuda', index=1), node_hostname='asp2a-gpu003')
+2023-09-16 13:18:35 [INFO]: Starting training with Learning Rate: 0.001
+2023-09-16 13:18:35 [INFO]: Reducer buckets have been rebuilt in this iteration.
+2023-09-16 13:18:35 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 0 | Batchsize: 32 | Steps: 16 | Average Loss: 0.6214 | Learning Rate: 0.001
+2023-09-16 13:18:35 [INFO]: [VALID: NODE 0 GPU1] Epoch 0 | Batchsize: 32 | Steps: 16 | Average Loss: 0.6023
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 1 | Batchsize: 32 | Steps: 16 | Average Loss: 0.5574 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 1 | Batchsize: 32 | Steps: 16 | Average Loss: 0.5398
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 2 | Batchsize: 32 | Steps: 16 | Average Loss: 0.5663 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 2 | Batchsize: 32 | Steps: 16 | Average Loss: 0.5493
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 3 | Batchsize: 32 | Steps: 16 | Average Loss: 0.5043 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 3 | Batchsize: 32 | Steps: 16 | Average Loss: 0.4906
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 4 | Batchsize: 32 | Steps: 16 | Average Loss: 0.4851 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 4 | Batchsize: 32 | Steps: 16 | Average Loss: 0.4717
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 5 | Batchsize: 32 | Steps: 16 | Average Loss: 0.4925 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 5 | Batchsize: 32 | Steps: 16 | Average Loss: 0.4787
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 6 | Batchsize: 32 | Steps: 16 | Average Loss: 0.4761 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 6 | Batchsize: 32 | Steps: 16 | Average Loss: 0.4624
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 7 | Batchsize: 32 | Steps: 16 | Average Loss: 0.3659 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 7 | Batchsize: 32 | Steps: 16 | Average Loss: 0.3562
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 8 | Batchsize: 32 | Steps: 16 | Average Loss: 0.3917 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 8 | Batchsize: 32 | Steps: 16 | Average Loss: 0.3814
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 9 | Batchsize: 32 | Steps: 16 | Average Loss: 0.3794 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 9 | Batchsize: 32 | Steps: 16 | Average Loss: 0.3692
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 10 | Batchsize: 32 | Steps: 16 | Average Loss: 0.3493 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 10 | Batchsize: 32 | Steps: 16 | Average Loss: 0.3402
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 11 | Batchsize: 32 | Steps: 16 | Average Loss: 0.3225 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 11 | Batchsize: 32 | Steps: 16 | Average Loss: 0.3146
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 12 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2828 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 12 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2758
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 13 | Batchsize: 32 | Steps: 16 | Average Loss: 0.3174 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 13 | Batchsize: 32 | Steps: 16 | Average Loss: 0.3096
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 14 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2691 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 14 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2617
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 15 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2510 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 15 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2454
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 16 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2539 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 16 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2479
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 17 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2496 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 17 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2435
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 18 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2406 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 18 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2350
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 19 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2240 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 19 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2192
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 20 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2232 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 20 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2183
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 21 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2089 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 21 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2042
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 22 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1986 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 22 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1946
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 23 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1977 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 23 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1937
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 24 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2085 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 24 | Batchsize: 32 | Steps: 16 | Average Loss: 0.2046
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 25 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1774 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 25 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1740
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 26 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1728 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 26 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1697
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 27 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1720 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 27 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1690
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 28 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1667 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 28 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1639
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 29 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1577 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 29 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1550
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 30 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1468 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 30 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1443
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 31 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1352 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 31 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1334
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 32 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1425 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 32 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1402
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 33 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1363 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 33 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1343
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 34 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1394 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 34 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1374
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 35 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1348 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 35 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1331
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 36 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1273 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 36 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1256
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 37 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1262 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 37 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1246
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 38 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1383 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 38 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1364
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 39 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1166 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 39 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1153
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 40 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1201 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 40 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1187
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 41 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1238 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 41 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1225
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 42 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1089 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 42 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1078
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 43 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1157 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 43 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1146
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 44 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1103 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 44 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1093
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 45 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1037 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 45 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1028
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 46 | Batchsize: 32 | Steps: 16 | Average Loss: 0.0992 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 46 | Batchsize: 32 | Steps: 16 | Average Loss: 0.0984
+2023-09-16 13:18:36 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 47 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1041 | Learning Rate: 0.001
+2023-09-16 13:18:36 [INFO]: [VALID: NODE 0 GPU1] Epoch 47 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1032
+2023-09-16 13:18:37 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 48 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1039 | Learning Rate: 0.001
+2023-09-16 13:18:37 [INFO]: [VALID: NODE 0 GPU1] Epoch 48 | Batchsize: 32 | Steps: 16 | Average Loss: 0.1032
+2023-09-16 13:18:37 [INFO]: [TRAIN: NODE 0 GPU1] Epoch 49 | Batchsize: 32 | Steps: 16 | Average Loss: 0.0947 | Learning Rate: 0.001
+2023-09-16 13:18:37 [INFO]: [VALID: NODE 0 GPU1] Epoch 49 | Batchsize: 32 | Steps: 16 | Average Loss: 0.0941

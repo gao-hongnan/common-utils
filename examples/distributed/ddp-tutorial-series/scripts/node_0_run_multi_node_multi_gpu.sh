@@ -43,3 +43,20 @@ python ./02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
     --save_checkpoint_interval 10 \
     --batch_size 32 \
     --scheduler_name constant_lr
+
+# Compare the last two lines of log files
+for i in 0 1 2 3; do
+    CURRENT_LOG="process_${i}.log"
+    GROUND_TRUTH_LOG="examples/distributed/ddp-tutorial-series/tests/ground_truths/single_and_multi_node_multi_gpu/process_${i}.txt"
+
+    # Extract the last two lines
+    CURRENT_LAST_LINES=$(tail -n 2 $CURRENT_LOG)
+    GROUND_TRUTH_LAST_LINES=$(tail -n 2 $GROUND_TRUTH_LOG)
+
+    # Compare
+    if [ "$CURRENT_LAST_LINES" != "$GROUND_TRUTH_LAST_LINES" ]; then
+        echo "Difference detected in the last two lines of process_${i}.log compared to the ground truth!"
+    else
+        echo "Last two lines of process_${i}.log match with the ground truth."
+    fi
+done

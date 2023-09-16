@@ -195,7 +195,7 @@ import gc
 import logging
 import os
 from dataclasses import asdict
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union, List
 
 import torch
 import torch.multiprocessing as mp
@@ -207,17 +207,22 @@ from torch.utils.data.distributed import DistributedSampler
 from config._criterion import build_criterion
 from config._optim import build_optimizer
 from config._scheduler import build_scheduler
-from config.base import (CRITERION_NAME_TO_CONFIG_MAPPING,
-                         OPTIMIZER_NAME_TO_CONFIG_MAPPING,
-                         SCHEDULER_NAME_TO_CONFIG_MAPPING, DataLoaderConfig,
-                         DistributedInfo, DistributedSamplerConfig,
-                         InitEnvArgs, InitProcessGroupArgs, TrainerConfig)
+from config.base import (
+    CRITERION_NAME_TO_CONFIG_MAPPING,
+    OPTIMIZER_NAME_TO_CONFIG_MAPPING,
+    SCHEDULER_NAME_TO_CONFIG_MAPPING,
+    DataLoaderConfig,
+    DistributedInfo,
+    DistributedSamplerConfig,
+    InitEnvArgs,
+    InitProcessGroupArgs,
+    TrainerConfig,
+)
 from core._init import init_env, init_process
 from core._seed import seed_all
 from data.toy_dataset import ToyDataset, prepare_dataloader
 from models.toy_model import ToyModel
-from utils.common_utils import (calculate_global_rank, configure_logger,
-                                deprecated)
+from utils.common_utils import calculate_global_rank, configure_logger, deprecated
 
 
 # pylint: disable=missing-function-docstring,missing-class-docstring
@@ -327,15 +332,27 @@ class Trainer:
         """Determine the output directory based on trainer configuration."""
         return self.trainer_config.output_dir or self.trainer_config.run_id
 
+    def _get_current_lr_or_lrs(self) -> Union[float, List[float]]:
+        """Get current learning rate."""
+        if len(self.optimizer.param_groups) == 1:
+            return self.optimizer.param_groups[0]["lr"]
+
+        lrs = []
+        for param_group in self.optimizer.param_groups:
+            lrs.append(param_group["lr"])
+        return lrs
+
     def _save_snapshot(self, epoch: int) -> None:
         """Save snapshot of the model, optimizer, and other training states."""
         checkpoint_dir = os.path.join(self.output_dir, f"epoch_{epoch}")
         os.makedirs(checkpoint_dir, exist_ok=True)
         self.save_path = os.path.join(checkpoint_dir, "snapshot.pt")
 
+        # TODO: consider renaming snapshot to states
         snapshot = {
             "MODEL_STATE": self.model.module.state_dict(),
             "OPTIMIZER_STATE": self.optimizer.state_dict(),
+            "SCHEDULER_STATE": self.scheduler.state_dict(),
             "TORCH_RNG_STATE": torch.get_rng_state(),
             "EPOCHS_RUN": epoch,
         }
@@ -347,6 +364,7 @@ class Trainer:
         snapshot = torch.load(load_path, map_location=map_location)
         self.model.load_state_dict(snapshot["MODEL_STATE"])
         self.optimizer.load_state_dict(snapshot["OPTIMIZER_STATE"])
+        self.scheduler.load_state_dict(snapshot["SCHEDULER_STATE"])
         self.epochs_run = snapshot["EPOCHS_RUN"]
         self.logger.info(f"Resuming training from snapshot at Epoch {self.epochs_run}")
 
@@ -399,11 +417,11 @@ class Trainer:
         # Calculate average loss for the epoch
         avg_loss = total_epoch_loss / len(self.train_loader)
 
-        # we index 0 because we only have one param group
-        current_lr = self.optimizer.param_groups[0]["lr"]
+        current_lr = self._get_current_lr_or_lrs()
+
         self.logger.info(
             (
-                f"[TRAIN: NODE {self.dist_info.node_rank} GPU{self.global_rank}] "
+                f"[TRAIN: NODE{self.dist_info.node_rank} GPU{self.global_rank}] "
                 f"Epoch {epoch} | "
                 f"Batchsize: {batch_size} | Steps: {len(self.train_loader)} | "
                 f"Average Loss: {avg_loss:.4f} | Learning Rate: {current_lr}"
@@ -438,12 +456,14 @@ class Trainer:
 
         avg_loss = total_epoch_loss / len(self.valid_loader)
 
+        current_lr = self._get_current_lr_or_lrs()
+
         self.logger.info(
             (
-                f"[VALID: NODE {self.dist_info.node_rank} GPU{self.global_rank}] "
+                f"[VALID: NODE{self.dist_info.node_rank} GPU{self.global_rank}] "
                 f"Epoch {epoch} | "
                 f"Batchsize: {batch_size} | Steps: {len(self.valid_loader)} | "
-                f"Average Loss: {avg_loss:.4f}"
+                f"Average Loss: {avg_loss:.4f} | Learning Rate: {current_lr}"
             )
         )
 

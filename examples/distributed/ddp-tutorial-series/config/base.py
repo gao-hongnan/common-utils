@@ -8,8 +8,7 @@ import torch
 import torch.distributed as dist
 from torch.utils.data import Sampler
 
-from config._criterion import (CriterionConfig, CrossEntropyConfig,
-                               MSELossConfig)
+from config._criterion import CriterionConfig, CrossEntropyConfig, MSELossConfig
 from config._optim import AdamConfig, OptimizerConfig, SGDConfig
 from config._scheduler import ConstantLRConfig, CosineAnnealingLRConfig
 
