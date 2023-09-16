@@ -14,7 +14,7 @@ export NUM_GPUS_PER_NODE=2
 export WORLD_SIZE=4
 
 # Run python script
-python ./02_multi_node_multi_gpu/multinode_multigpu_torchrun_no.py \
+python single_and_multi_node_multi_gpu.py \
     --node_rank $NODE_RANK \
     --num_nodes $NUM_NODES \
     --num_gpus_per_node $NUM_GPUS_PER_NODE \
