@@ -403,7 +403,8 @@ class Trainer:
         current_lr = self.optimizer.param_groups[0]["lr"]
         self.logger.info(
             (
-                f"[TRAIN: GPU{self.global_rank}] Epoch {epoch} | "
+                f"[TRAIN: NODE {self.dist_info.node_rank} GPU{self.global_rank}] "
+                f"Epoch {epoch} | "
                 f"Batchsize: {batch_size} | Steps: {len(self.train_loader)} | "
                 f"Average Loss: {avg_loss:.4f} | Learning Rate: {current_lr}"
             )
@@ -439,7 +440,8 @@ class Trainer:
 
         self.logger.info(
             (
-                f"[VALID: GPU{self.global_rank}] Epoch {epoch} | "
+                f"[VALID: NODE {self.dist_info.node_rank} GPU{self.global_rank}] "
+                f"Epoch {epoch} | "
                 f"Batchsize: {batch_size} | Steps: {len(self.valid_loader)} | "
                 f"Average Loss: {avg_loss:.4f}"
             )
