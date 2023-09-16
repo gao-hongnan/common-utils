@@ -6,6 +6,10 @@ NOTE: Effective batch size usually implies the same result ensues
 if you train on all 4 gpus vs 1 gpus just by maintaining the same effective
 batch size.
 
+NOTE: The `avg_epoch_loss_all_reduce` is still an average loss per sample for the entire epoch. However, its value represents a collective average across all the participating processes. If all processes are working on roughly equal portions of the data and the data is identically distributed across all processes, then `avg_epoch_loss_all_reduce` should be very close to the `avg_epoch_loss` computed on any single process.
+
+It becomes meaningful in a distributed setting to ensure that the training is proceeding similarly across all processes. In certain distributed settings, there can be some drift or disparity in the updates across nodes or GPUs due to various reasons (e.g., staleness in updates, different data partitions, etc.). By monitoring the `avg_epoch_loss_all_reduce`, you can ensure that all processes are on track and there's no significant divergence in the learned models across processes.
+
 1. hostname to get current node name.
 2. hostname -i to get current node ip. set this to MASTER_ADDR.
 3. MASTER_PORT=$(comm -23 <(seq 49152 65535 | sort) <(ss -Htan | awk '{print $4}' | cut -d':' -f2 | sort -u) | shuf | head -n 1)
