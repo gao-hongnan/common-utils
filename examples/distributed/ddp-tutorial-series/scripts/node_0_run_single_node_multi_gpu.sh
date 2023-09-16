@@ -44,19 +44,31 @@ python single_and_multi_node_multi_gpu.py \
     --batch_size 32 \
     --scheduler_name constant_lr
 
-# Compare the last two lines of log files
+# Define a function to compare the last two lines of log files
+compare_logs() {
+    local current_log=$1
+    local ground_truth_log=$2
+
+    # Extract the last two lines and remove timestamps
+    local current_last_lines=$(tail -n 2 $current_log | sed 's/^[^[]*//')
+    local ground_truth_last_lines=$(tail -n 2 $ground_truth_log | sed 's/^[^[]*//')
+
+    # Compare
+    if [ "$current_last_lines" != "$ground_truth_last_lines" ]; then
+        echo "Difference detected in the last two lines of $current_log compared to the ground truth!"
+        echo "Current last two lines:"
+        echo "$current_last_lines"
+        echo "Ground truth last two lines:"
+        echo "$ground_truth_last_lines"
+    else
+        echo "Last two lines of $current_log match with the ground truth."
+    fi
+}
+
+# Iterate over logs and compare
 for i in 0 1 2 3; do
     CURRENT_LOG="process_${i}.log"
     GROUND_TRUTH_LOG="./tests/ground_truths/single_and_multi_node_multi_gpu/process_${i}.txt"
 
-    # Extract the last two lines
-    CURRENT_LAST_LINES=$(tail -n 2 $CURRENT_LOG)
-    GROUND_TRUTH_LAST_LINES=$(tail -n 2 $GROUND_TRUTH_LOG)
-
-    # Compare
-    if [ "$CURRENT_LAST_LINES" != "$GROUND_TRUTH_LAST_LINES" ]; then
-        echo "Difference detected in the last two lines of process_${i}.log compared to the ground truth!"
-    else
-        echo "Last two lines of process_${i}.log match with the ground truth."
-    fi
+    compare_logs $CURRENT_LOG $GROUND_TRUTH_LOG
 done
