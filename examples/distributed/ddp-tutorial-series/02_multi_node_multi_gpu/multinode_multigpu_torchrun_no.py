@@ -207,22 +207,17 @@ from torch.utils.data.distributed import DistributedSampler
 from config._criterion import build_criterion
 from config._optim import build_optimizer
 from config._scheduler import build_scheduler
-from config.base import (
-    CRITERION_NAME_TO_CONFIG_MAPPING,
-    OPTIMIZER_NAME_TO_CONFIG_MAPPING,
-    SCHEDULER_NAME_TO_CONFIG_MAPPING,
-    DataLoaderConfig,
-    DistributedInfo,
-    DistributedSamplerConfig,
-    InitEnvArgs,
-    InitProcessGroupArgs,
-    TrainerConfig,
-)
+from config.base import (CRITERION_NAME_TO_CONFIG_MAPPING,
+                         OPTIMIZER_NAME_TO_CONFIG_MAPPING,
+                         SCHEDULER_NAME_TO_CONFIG_MAPPING, DataLoaderConfig,
+                         DistributedInfo, DistributedSamplerConfig,
+                         InitEnvArgs, InitProcessGroupArgs, TrainerConfig)
 from core._init import init_env, init_process
 from core._seed import seed_all
 from data.toy_dataset import ToyDataset, prepare_dataloader
 from models.toy_model import ToyModel
-from utils.common_utils import calculate_global_rank, configure_logger, deprecated
+from utils.common_utils import (calculate_global_rank, configure_logger,
+                                deprecated)
 
 
 # pylint: disable=missing-function-docstring,missing-class-docstring
@@ -484,7 +479,13 @@ class Trainer:
 @deprecated("Use build_all_elegant instead.")
 def build_all(
     args: argparse.Namespace,
-) -> Tuple[ToyDataset, ToyModel, torch.nn.Module, torch.optim.Optimizer]:
+) -> Tuple[
+    ToyDataset,
+    ToyModel,
+    torch.nn.Module,
+    torch.optim.Optimizer,
+    torch.optim.lr_scheduler._LRScheduler,
+]:
     train_dataset = ToyDataset(
         num_samples=args.num_samples,
         num_dimensions=args.num_dimensions,
@@ -493,7 +494,8 @@ def build_all(
     model = ToyModel(input_dim=args.input_dim, output_dim=args.output_dim)
     criterion = torch.nn.MSELoss(reduction=args.reduction)
     optimizer = torch.optim.SGD(model.parameters(), lr=args.lr)
-    return train_dataset, model, criterion, optimizer
+    scheduler = None
+    return train_dataset, model, criterion, optimizer, scheduler
 
 
 def build_all_elegant(
