@@ -265,8 +265,6 @@ class Trainer:
     def _run_train_epoch(self, epoch: int) -> None:
         self.model.train()  # Switch the model to train mode
 
-        batch_size = len(next(iter(self.train_loader))[0])
-
         self.train_loader.sampler.set_epoch(epoch)
 
         total_epoch_loss = 0.0  # Initialize total loss for the epoch
@@ -286,9 +284,10 @@ class Trainer:
                 copy=False,
                 memory_format=torch.preserve_format,
             )
-            _, batch_loss = self._run_train_batch(source, targets)
-            total_epoch_loss += batch_loss
-            total_samples += source.size(0)
+            batch_size = source.size(0)
+            _, avg_batch_loss = self._run_train_batch(source, targets)
+            total_epoch_loss += avg_batch_loss * batch_size
+            total_samples += batch_size
 
         # Calculate average loss for the epoch per sample
         avg_epoch_loss = total_epoch_loss / total_samples
@@ -319,14 +318,12 @@ class Trainer:
                 f"[TRAIN: NODE{self.dist_info.node_rank} GPU{self.global_rank}] "
                 f"Epoch {epoch} | "
                 f"Batchsize: {batch_size} | Steps: {len(self.train_loader)} | "
-                f"Average Loss: {avg_epoch_loss:.4f} | Learning Rate: {current_lr}"
+                f"Average Loss Per Sample: {avg_epoch_loss:.4f} | Learning Rate: {current_lr}"
             )
         )
 
     def _run_valid_epoch(self, epoch: int) -> None:
         self.model.eval()  # Switch the model to evaluation mode
-
-        batch_size = len(next(iter(self.valid_loader))[0])
 
         self.valid_loader.sampler.set_epoch(epoch)
 
@@ -349,8 +346,10 @@ class Trainer:
                     copy=False,
                     memory_format=torch.preserve_format,
                 )
-                _, batch_loss = self._run_valid_batch(source, targets)
-                total_epoch_loss += batch_loss
+                batch_size = source.size(0)
+                # NOTE: it is avg_batch_loss due to criterion's reduction="mean"
+                _, avg_batch_loss = self._run_valid_batch(source, targets)
+                total_epoch_loss += avg_batch_loss * batch_size
                 total_samples += source.size(0)
 
                 # TODO: by right saving mechanism is usually done in the callback
@@ -374,7 +373,7 @@ class Trainer:
                 f"[VALID: NODE{self.dist_info.node_rank} GPU{self.global_rank}] "
                 f"Epoch {epoch} | "
                 f"Batchsize: {batch_size} | Steps: {len(self.valid_loader)} | "
-                f"Average Loss: {avg_epoch_loss:.4f} | Learning Rate: {current_lr}"
+                f"Average Loss Per Sample: {avg_epoch_loss:.4f} | Learning Rate: {current_lr}"
             )
         )
 
