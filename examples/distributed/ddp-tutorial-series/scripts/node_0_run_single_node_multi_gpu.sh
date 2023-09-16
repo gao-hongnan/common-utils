@@ -67,6 +67,7 @@ compare_logs() {
     if [ "$current_last_lines" != "$ground_truth_last_lines" ]; then
         echo "Difference detected in the last two lines of $current_log compared to the ground truth!"
         echo "Since we are training on single node, the difference could be just the node rank."
+        echo "It could also be due to global rank 0 having more logs than other global ranks."
         echo "Current last two lines:"
         echo "$current_last_lines"
         echo "Ground truth last two lines:"
