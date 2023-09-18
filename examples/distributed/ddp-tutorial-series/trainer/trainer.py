@@ -3,7 +3,8 @@ from __future__ import annotations
 import gc
 import logging
 import os
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, Literal
+
 
 import torch
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -162,7 +163,11 @@ class Trainer:
             lrs.append(param_group["lr"])
         return lrs
 
-    def _update_state(self, **kwargs: Dict[str, Any]) -> None:
+    def _update_state(
+        self,
+        mode: Literal["train", "valid", "test"] = "train",
+        **kwargs: Dict[str, Any],
+    ) -> None:
         """Update the state of the trainer.
         It holds data on both the epoch and batch level.
         For example, we can observe both state at epoch 1 and batch 1
@@ -171,10 +176,11 @@ class Trainer:
         In addition, if epoch 0, then epoch 0 level info is -1.
         """
         # Update the model, optimizer, and scheduler states
-        self.state.model_state = self.model.module.state_dict()
-        self.state.optimizer_state = self.optimizer.state_dict()
-        self.state.scheduler_state = self.scheduler.state_dict()
-        self.state.torch_rng_state = torch.get_rng_state()
+        if mode == "train":
+            self.state.model_state = self.model.module.state_dict()
+            self.state.optimizer_state = self.optimizer.state_dict()
+            self.state.scheduler_state = self.scheduler.state_dict()
+            self.state.torch_rng_state = torch.get_rng_state()
 
         # Update other attributes based on the provided kwargs
         for key, value in kwargs.items():
@@ -336,7 +342,8 @@ class Trainer:
             world_size = self.dist_info.world_size
             avg_train_loss_per_sample_this_epoch_all_reduce /= world_size
             self.logger_all_reduce.info(
-                f"TRAIN: Epoch {epoch} | [AVG_EPOCH_LOSS_ALL_REDUCE]: {avg_train_loss_per_sample_this_epoch_all_reduce:.4f}"
+                f"TRAIN: Epoch {epoch} | "
+                f"[AVG_EPOCH_LOSS_ALL_REDUCE]: {avg_train_loss_per_sample_this_epoch_all_reduce:.4f}"
             )
 
         self.lr_or_ls_this_epoch = self._get_current_lr_or_lrs()
@@ -429,6 +436,8 @@ class Trainer:
             self.epoch_index = epoch
             self._run_train_epoch(epoch)
             self._update_state(
+                mode="train",
+                batch_index=self.batch_index,
                 epoch_index=epoch,
                 lr_or_ls_this_epoch=self._get_current_lr_or_lrs(),
                 avg_train_loss_per_sample_this_batch=self.avg_train_loss_per_sample_this_batch,
@@ -437,6 +446,7 @@ class Trainer:
             if self.valid_loader is not None:
                 self._run_valid_epoch(epoch)
                 self._update_state(
+                    mode="valid",
                     avg_valid_loss_per_sample_this_batch=self.avg_valid_loss_per_sample_this_batch,
                     avg_valid_loss_per_sample_this_epoch=self.avg_valid_loss_per_sample_this_epoch,
                 )
