@@ -51,6 +51,7 @@ torchrun \
 multinode.py 50 10
 """
 from __future__ import annotations
+from rich.pretty import pprint
 
 import argparse
 import copy
@@ -211,7 +212,6 @@ def main(
     if global_rank == 0:
         state = trainer.state
         history = trainer.history.states
-        from rich.pretty import pprint
 
         pprint(state)
         pprint(history)

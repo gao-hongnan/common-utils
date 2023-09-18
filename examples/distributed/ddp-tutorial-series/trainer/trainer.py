@@ -310,13 +310,6 @@ class Trainer:
             total_epoch_loss += self.avg_train_loss_per_sample_this_batch * batch_size
             total_samples += batch_size
 
-            self._update_state(
-                epoch_index=epoch,
-                batch_index=_batch_index,
-                lr_or_ls_this_epoch=self._get_current_lr_or_lrs(),
-                avg_train_loss_per_sample_this_batch=self.avg_train_loss_per_sample_this_batch,
-            )
-
             # Update tqdm progress bar if on rank 0
             if self.global_rank == 0:
                 train_progress_bar.set_description(
@@ -325,10 +318,6 @@ class Trainer:
 
         # Calculate average loss for the epoch per sample
         self.avg_train_loss_per_sample_this_epoch = total_epoch_loss / total_samples
-        # Update state with average loss per sample for the epoch
-        self._update_state(
-            avg_train_loss_per_sample_this_epoch=self.avg_train_loss_per_sample_this_epoch
-        )
 
         # NOTE: do an all reduce to get the average loss across all processes
         # NOTE: this is not the same as the average loss across all samples
@@ -404,18 +393,6 @@ class Trainer:
                 )
                 total_samples += source.size(0)
 
-                # no need update epoch index since it's the same as train
-                # but need update batch index because by the time train
-                # finish, batch index is already at the last batch index of
-                # the loader so need reset. We keep lr_or_ls_this_epoch
-                # because in larger training, we might have lr scheduler
-                # to step at every batch.
-                self._update_state(
-                    batch_index=_batch_index,
-                    lr_or_ls_this_epoch=self._get_current_lr_or_lrs(),
-                    avg_valid_loss_per_sample_this_batch=self.avg_valid_loss_per_sample_this_batch,
-                )
-
                 # TODO: by right saving mechanism is usually done in the callback
                 # and also based on the previous metric performance.
                 if self.trainer_config.save_checkpoint_interval_batch:
@@ -429,9 +406,6 @@ class Trainer:
                     torch.distributed.barrier()  # as usual, barrier after saving
 
         self.avg_valid_loss_per_sample_this_epoch = total_epoch_loss / total_samples
-        self._update_state(
-            avg_valid_loss_per_sample_this_epoch=self.avg_valid_loss_per_sample_this_epoch
-        )
 
         self.logger.info(
             (
@@ -454,8 +428,18 @@ class Trainer:
         for epoch in range(self.epochs_run, self.trainer_config.max_epochs):
             self.epoch_index = epoch
             self._run_train_epoch(epoch)
+            self._update_state(
+                epoch_index=epoch,
+                lr_or_ls_this_epoch=self._get_current_lr_or_lrs(),
+                avg_train_loss_per_sample_this_batch=self.avg_train_loss_per_sample_this_batch,
+                avg_train_loss_per_sample_this_epoch=self.avg_train_loss_per_sample_this_epoch,
+            )
             if self.valid_loader is not None:
                 self._run_valid_epoch(epoch)
+                self._update_state(
+                    avg_valid_loss_per_sample_this_batch=self.avg_valid_loss_per_sample_this_batch,
+                    avg_valid_loss_per_sample_this_epoch=self.avg_valid_loss_per_sample_this_epoch,
+                )
 
             self.history.add_state(self.state)
 
