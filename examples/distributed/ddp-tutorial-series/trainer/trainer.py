@@ -175,8 +175,11 @@ class Trainer:
             optimizer_state=self.optimizer.state_dict(),
             scheduler_state=self.scheduler.state_dict(),
             torch_rng_state=torch.get_rng_state(),
-            **kwargs,
         )
+
+        # Update other attributes based on the provided kwargs
+        for key, value in kwargs.items():
+            setattr(self.state, key, value)
 
     def _save_snapshot(self, epoch: int, batch: Optional[int] = None) -> None:
         """Save snapshot of the model, optimizer, and other training states."""
