@@ -108,6 +108,8 @@ class Trainer:
             rank="all_reduce", print_to_console=True
         )
 
+        self.state: State = State()
+
         self.epochs_run = 0
         self.output_dir = self._determine_output_dir()
         if self.global_rank == 0 and not os.path.exists(self.output_dir):
@@ -164,18 +166,11 @@ class Trainer:
         epoch level state but different batch level state.
         In addition, if epoch 0, then epoch 0 level info is -1.
         """
-        # TODO: hazard since epoch index starts from 0 but batch index starts from 1
-        # NOTE: this is to ensure that the first batch of the first epoch
-        #       the attributes of epoch
-        # if self.epoch_index == 0 and self.batch_index == 1:
-        #     self.avg_train_loss_per_sample_this_epoch = torch.tensor(-1.0)
-        #     self.avg_valid_loss_per_sample_this_epoch = torch.tensor(-1.0)
-        self.state = State(
-            model_state=self.model.module.state_dict(),
-            optimizer_state=self.optimizer.state_dict(),
-            scheduler_state=self.scheduler.state_dict(),
-            torch_rng_state=torch.get_rng_state(),
-        )
+        # Update the model, optimizer, and scheduler states
+        self.state.model_state = self.model.module.state_dict()
+        self.state.optimizer_state = self.optimizer.state_dict()
+        self.state.scheduler_state = self.scheduler.state_dict()
+        self.state.torch_rng_state = torch.get_rng_state()
 
         # Update other attributes based on the provided kwargs
         for key, value in kwargs.items():
