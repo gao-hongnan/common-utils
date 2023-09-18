@@ -174,7 +174,7 @@ class Trainer:
 
         # Update other attributes based on the provided kwargs
         for key, value in kwargs.items():
-            if isinstance(value, torch.Tensor) and value.requires_grad:
+            if isinstance(value, torch.Tensor):
                 kwargs[key] = value.detach()
             setattr(self.state, key, value)
 
@@ -310,7 +310,7 @@ class Trainer:
                 epoch_index=epoch,
                 batch_index=_batch_index,
                 lr_or_ls_this_epoch=self._get_current_lr_or_lrs(),
-                avg_train_loss_per_sample_this_batch=self.avg_train_loss_per_sample_this_batch.detach(),
+                avg_train_loss_per_sample_this_batch=self.avg_train_loss_per_sample_this_batch,
             )
 
             # Update tqdm progress bar if on rank 0
@@ -323,7 +323,7 @@ class Trainer:
         self.avg_train_loss_per_sample_this_epoch = total_epoch_loss / total_samples
         # Update state with average loss per sample for the epoch
         self._update_state(
-            avg_train_loss_per_sample_this_epoch=self.avg_train_loss_per_sample_this_epoch.detach()
+            avg_train_loss_per_sample_this_epoch=self.avg_train_loss_per_sample_this_epoch
         )
 
         # NOTE: do an all reduce to get the average loss across all processes
@@ -409,7 +409,7 @@ class Trainer:
                 self._update_state(
                     batch_index=_batch_index,
                     lr_or_ls_this_epoch=self._get_current_lr_or_lrs(),
-                    avg_valid_loss_per_sample_this_batch=self.avg_valid_loss_per_sample_this_batch.detach(),
+                    avg_valid_loss_per_sample_this_batch=self.avg_valid_loss_per_sample_this_batch,
                 )
 
                 # TODO: by right saving mechanism is usually done in the callback
@@ -426,7 +426,7 @@ class Trainer:
 
         self.avg_valid_loss_per_sample_this_epoch = total_epoch_loss / total_samples
         self._update_state(
-            avg_valid_loss_per_sample_this_epoch=self.avg_valid_loss_per_sample_this_epoch.detach()
+            avg_valid_loss_per_sample_this_epoch=self.avg_valid_loss_per_sample_this_epoch
         )
 
         self.logger.info(
