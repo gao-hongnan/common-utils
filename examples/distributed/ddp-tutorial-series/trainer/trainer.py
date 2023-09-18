@@ -179,7 +179,7 @@ class Trainer:
         # Update other attributes based on the provided kwargs
         for key, value in kwargs.items():
             if isinstance(value, torch.Tensor):
-                kwargs[key] = value.detach()
+                value = value.detach().item()
             setattr(self.state, key, value)
 
     def _save_snapshot(self, epoch: int, batch: Optional[int] = None) -> None:
