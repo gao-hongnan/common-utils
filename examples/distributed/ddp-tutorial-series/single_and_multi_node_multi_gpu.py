@@ -210,9 +210,11 @@ def main(
     trainer.fit(train_loader=train_loader, valid_loader=valid_loader)
     if global_rank == 0:
         state = trainer.state
+        history = state.history
         from rich.pretty import pprint
 
         pprint(state)
+        pprint(history)
     destroy_process_group()
 
 

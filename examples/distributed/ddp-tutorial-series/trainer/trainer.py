@@ -12,6 +12,7 @@ from tqdm import tqdm
 
 from config.base import DistributedInfo, TrainerConfig
 from core.state import State
+from core.history import History
 from utils.common_utils import configure_logger
 
 
@@ -69,6 +70,7 @@ class Trainer:
     save_path: str
 
     state: State
+    history: History
     epoch_index: int
     batch_index: int
     lr_or_ls_this_epoch: Union[float, List[float]]
@@ -452,6 +454,8 @@ class Trainer:
             self._run_train_epoch(epoch)
             if self.valid_loader is not None:
                 self._run_valid_epoch(epoch)
+
+            self.history.add_state(self.state)
 
             if self.scheduler:
                 self.scheduler.step()
