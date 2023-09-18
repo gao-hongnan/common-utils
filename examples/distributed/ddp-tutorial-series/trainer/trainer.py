@@ -156,17 +156,20 @@ class Trainer:
             lrs.append(param_group["lr"])
         return lrs
 
-    def _save_snapshot(self, epoch: int, batch: Optional[int] = None) -> None:
-        """Save snapshot of the model, optimizer, and other training states."""
-        if batch is not None:
-            checkpoint_dir = os.path.join(
-                self.output_dir, f"epoch_{epoch}_batch_{batch}"
-            )
-        else:
-            checkpoint_dir = os.path.join(self.output_dir, f"epoch_{epoch}")
-        os.makedirs(checkpoint_dir, exist_ok=True)
-        self.save_path = os.path.join(checkpoint_dir, "snapshot.pt")
-
+    def _update_state(self) -> None:
+        """Update the state of the trainer.
+        It holds data on both the epoch and batch level.
+        For example, we can observe both state at epoch 1 and batch 1
+        and also state at epoch 1 and batch 2 to have the same
+        epoch level state but different batch level state.
+        In addition, if epoch 0, then epoch 0 level info is -1.
+        """
+        # TODO: hazard since epoch index starts from 0 but batch index starts from 1
+        # NOTE: this is to ensure that the first batch of the first epoch
+        #       the attributes of epoch
+        if self.epoch_index == 0 and self.batch_index == 1:
+            self.avg_train_loss_per_sample_this_epoch = torch.tensor(-1.0)
+            self.avg_valid_loss_per_sample_this_epoch = torch.tensor(-1.0)
         self.state = State(
             model_state=self.model.module.state_dict(),
             optimizer_state=self.optimizer.state_dict(),
@@ -180,6 +183,22 @@ class Trainer:
             avg_train_loss_per_sample_this_batch=self.avg_train_loss_per_sample_this_batch.detach(),
             avg_valid_loss_per_sample_this_batch=self.avg_valid_loss_per_sample_this_batch.detach(),
         )
+
+    def _save_snapshot(self, epoch: int, batch: Optional[int] = None) -> None:
+        """Save snapshot of the model, optimizer, and other training states."""
+        # FIXME: is it lame that you save batch index info in State but at the
+        #        same time allow batch to be None here - meaning if batch is None
+        #        then you don't save this batch's snapshot and only save epoch's
+        #        snapshot?
+        if batch is not None:
+            checkpoint_dir = os.path.join(
+                self.output_dir, f"epoch_{epoch}_batch_{batch}"
+            )
+        else:
+            checkpoint_dir = os.path.join(self.output_dir, f"epoch_{epoch}")
+        os.makedirs(checkpoint_dir, exist_ok=True)
+        self.save_path = os.path.join(checkpoint_dir, "snapshot.pt")
+
         # call state_dict() to convert the dataclass to a dictionary (serializable)
         serialized_state = self.state.state_dict()
 
@@ -376,6 +395,15 @@ class Trainer:
                 )
                 total_samples += source.size(0)
 
+                # NOTE: Update the state of the trainer at valid batch end for
+                #       two reasons:
+                #       1. to save the snapshot at the end of the valid batch
+                #       2. assuming validation is always called after train,
+                #          this will ensure that the state of the trainer
+                #          will hold both the epoch and batch level info
+                #          of the train and valid state.
+                self._update_state()
+
                 # TODO: by right saving mechanism is usually done in the callback
                 # and also based on the previous metric performance.
                 if self.trainer_config.save_checkpoint_interval_batch:
@@ -389,8 +417,6 @@ class Trainer:
                     torch.distributed.barrier()  # as usual, barrier after saving
 
         self.avg_valid_loss_per_sample_this_epoch = total_epoch_loss / total_samples
-
-        self.lr_or_ls_this_epoch = self._get_current_lr_or_lrs()
 
         self.logger.info(
             (

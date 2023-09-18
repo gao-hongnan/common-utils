@@ -211,6 +211,7 @@ def main(
     if global_rank == 0:
         state = trainer.state
         from rich.pretty import pprint
+
         pprint(state)
     destroy_process_group()
 
