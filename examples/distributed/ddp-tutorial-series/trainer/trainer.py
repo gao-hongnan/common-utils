@@ -3,7 +3,7 @@ from __future__ import annotations
 import gc
 import logging
 import os
-from typing import List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import torch
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -156,7 +156,7 @@ class Trainer:
             lrs.append(param_group["lr"])
         return lrs
 
-    def _update_state(self) -> None:
+    def _update_state(self, **kwargs: Dict[str, Any]) -> None:
         """Update the state of the trainer.
         It holds data on both the epoch and batch level.
         For example, we can observe both state at epoch 1 and batch 1
@@ -167,21 +167,15 @@ class Trainer:
         # TODO: hazard since epoch index starts from 0 but batch index starts from 1
         # NOTE: this is to ensure that the first batch of the first epoch
         #       the attributes of epoch
-        if self.epoch_index == 0 and self.batch_index == 1:
-            self.avg_train_loss_per_sample_this_epoch = torch.tensor(-1.0)
-            self.avg_valid_loss_per_sample_this_epoch = torch.tensor(-1.0)
+        # if self.epoch_index == 0 and self.batch_index == 1:
+        #     self.avg_train_loss_per_sample_this_epoch = torch.tensor(-1.0)
+        #     self.avg_valid_loss_per_sample_this_epoch = torch.tensor(-1.0)
         self.state = State(
             model_state=self.model.module.state_dict(),
             optimizer_state=self.optimizer.state_dict(),
             scheduler_state=self.scheduler.state_dict(),
             torch_rng_state=torch.get_rng_state(),
-            epoch_index=self.epoch_index,
-            batch_index=self.batch_index,
-            lr_or_ls_this_epoch=self.lr_or_ls_this_epoch,
-            avg_train_loss_per_sample_this_epoch=self.avg_train_loss_per_sample_this_epoch.detach(),
-            avg_valid_loss_per_sample_this_epoch=self.avg_valid_loss_per_sample_this_epoch.detach(),
-            avg_train_loss_per_sample_this_batch=self.avg_train_loss_per_sample_this_batch.detach(),
-            avg_valid_loss_per_sample_this_batch=self.avg_valid_loss_per_sample_this_batch.detach(),
+            **kwargs,
         )
 
     def _save_snapshot(self, epoch: int, batch: Optional[int] = None) -> None:
@@ -312,6 +306,14 @@ class Trainer:
             total_epoch_loss += self.avg_train_loss_per_sample_this_batch * batch_size
             total_samples += batch_size
 
+            self._update_state(
+                epoch_index=epoch,
+                batch_index=_batch_index,
+                lr_or_ls_this_epoch=self._get_current_lr_or_lrs(),
+                avg_train_loss_per_sample_this_epoch=self.avg_train_loss_per_sample_this_epoch,
+                avg_train_loss_per_sample_this_batch=self.avg_train_loss_per_sample_this_batch,
+            )
+
             # Update tqdm progress bar if on rank 0
             if self.global_rank == 0:
                 train_progress_bar.set_description(
@@ -395,14 +397,14 @@ class Trainer:
                 )
                 total_samples += source.size(0)
 
-                # NOTE: Update the state of the trainer at valid batch end for
-                #       two reasons:
-                #       1. to save the snapshot at the end of the valid batch
-                #       2. assuming validation is always called after train,
-                #          this will ensure that the state of the trainer
-                #          will hold both the epoch and batch level info
-                #          of the train and valid state.
-                self._update_state()
+
+                self._update_state(
+                    epoch_index=epoch,
+                    batch_index=_batch_index,
+                    lr_or_ls_this_epoch=self._get_current_lr_or_lrs(),
+                    avg_valid_loss_per_sample_this_epoch=self.avg_valid_loss_per_sample_this_epoch,
+                    avg_valid_loss_per_sample_this_batch=self.avg_valid_loss_per_sample_this_batch,
+                )
 
                 # TODO: by right saving mechanism is usually done in the callback
                 # and also based on the previous metric performance.
