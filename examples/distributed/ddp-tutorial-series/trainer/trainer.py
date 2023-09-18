@@ -173,10 +173,10 @@ class Trainer:
             epoch_index=self.epoch_index,
             batch_index=self.batch_index,
             lr_or_ls_this_epoch=self.lr_or_ls_this_epoch,
-            avg_train_loss_per_sample_this_epoch=self.avg_train_loss_per_sample_this_epoch,
-            avg_valid_loss_per_sample_this_epoch=self.avg_valid_loss_per_sample_this_epoch,
-            avg_train_loss_per_sample_this_batch=self.avg_train_loss_per_sample_this_batch,
-            avg_valid_loss_per_sample_this_batch=self.avg_valid_loss_per_sample_this_batch,
+            avg_train_loss_per_sample_this_epoch=self.avg_train_loss_per_sample_this_epoch.detach().clone(),
+            avg_valid_loss_per_sample_this_epoch=self.avg_valid_loss_per_sample_this_epoch.detach().clone(),
+            avg_train_loss_per_sample_this_batch=self.avg_train_loss_per_sample_this_batch.detach().clone(),
+            avg_valid_loss_per_sample_this_batch=self.avg_valid_loss_per_sample_this_batch.detach().clone(),
         )
         # call state_dict() to convert the dataclass to a dictionary (serializable)
         serialized_state = state.state_dict()
