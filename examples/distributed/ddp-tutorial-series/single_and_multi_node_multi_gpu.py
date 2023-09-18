@@ -16,6 +16,8 @@ It becomes meaningful in a distributed setting to ensure that the training is pr
 2. cat $PBS_NODEFILE to get all nodes.
 3. ssh into the other nodes that are not the master node (step 1.)
 
+NOTE: To resume, just load ckpt on each node with --load_path.
+
 abstract
 torchrun \
 --nproc_per_node=$NUM_GPUS_PER_NODE \
@@ -204,6 +206,8 @@ def main(
         logger=logger,
     )
     trainer.fit(train_loader=train_loader, valid_loader=valid_loader)
+    state = trainer.state
+    logger.info(f"Final state: {str(state)}")
     destroy_process_group()
 
 

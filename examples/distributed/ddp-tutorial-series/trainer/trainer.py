@@ -37,6 +37,7 @@ class Trainer:
         "epochs_run",
         "output_dir",
         "save_path",
+        "state",
         "epoch_index",
         "batch_index",
         "lr_or_ls_this_epoch",
@@ -67,6 +68,7 @@ class Trainer:
     output_dir: str
     save_path: str
 
+    state: State
     epoch_index: int
     batch_index: int
     lr_or_ls_this_epoch: Union[float, List[float]]
@@ -165,7 +167,7 @@ class Trainer:
         os.makedirs(checkpoint_dir, exist_ok=True)
         self.save_path = os.path.join(checkpoint_dir, "snapshot.pt")
 
-        state = State(
+        self.state = State(
             model_state=self.model.module.state_dict(),
             optimizer_state=self.optimizer.state_dict(),
             scheduler_state=self.scheduler.state_dict(),
@@ -179,7 +181,7 @@ class Trainer:
             avg_valid_loss_per_sample_this_batch=self.avg_valid_loss_per_sample_this_batch.detach(),
         )
         # call state_dict() to convert the dataclass to a dictionary (serializable)
-        serialized_state = state.state_dict()
+        serialized_state = self.state.state_dict()
 
         torch.save(serialized_state, self.save_path)
 
@@ -193,33 +195,34 @@ class Trainer:
         serialized_state = torch.load(load_path, map_location=map_location)
 
         # Rehydrate the State object from the serialized dictionary
-        state = State(**serialized_state)
+        self.state = State(**serialized_state)
 
-        # Populate your model, optimizer, and scheduler using the state
-        self.model.load_state_dict(state.model_state)
-        self.optimizer.load_state_dict(state.optimizer_state)
-        self.scheduler.load_state_dict(state.scheduler_state)
+        # Populate your model, optimizer, and scheduler using the self.state
+        self.model.load_state_dict(self.state.model_state)
+        self.optimizer.load_state_dict(self.state.optimizer_state)
+        self.scheduler.load_state_dict(self.state.scheduler_state)
 
-        # Populate other state variables
-        self.epoch_index = state.epoch_index
-        self.batch_index = state.batch_index
-        self.lr_or_ls_this_epoch = state.lr_or_ls_this_epoch
+        # Populate other self.state variables
+        self.epoch_index = self.state.epoch_index
+        self.batch_index = self.state.batch_index
+        self.lr_or_ls_this_epoch = self.state.lr_or_ls_this_epoch
         self.avg_train_loss_per_sample_this_epoch = (
-            state.avg_train_loss_per_sample_this_epoch
+            self.state.avg_train_loss_per_sample_this_epoch
         )
         self.avg_valid_loss_per_sample_this_epoch = (
-            state.avg_valid_loss_per_sample_this_epoch
+            self.state.avg_valid_loss_per_sample_this_epoch
         )
         self.avg_train_loss_per_sample_this_batch = (
-            state.avg_train_loss_per_sample_this_batch
+            self.state.avg_train_loss_per_sample_this_batch
         )
         self.avg_valid_loss_per_sample_this_batch = (
-            state.avg_valid_loss_per_sample_this_batch
+            self.state.avg_valid_loss_per_sample_this_batch
         )
 
-        # Ensure that the RNG state of PyTorch is also restored
-        # torch.set_rng_state(state.torch_rng_state)
+        # Ensure that the RNG self.state of PyTorch is also restored
+        # torch.set_rng_state(self.state.torch_rng_state)
 
+        # if forget add + 1, will resume from previous epoch
         self.epochs_run = self.epoch_index + 1
         self.logger.info(
             f"Resuming training from snapshot at "
