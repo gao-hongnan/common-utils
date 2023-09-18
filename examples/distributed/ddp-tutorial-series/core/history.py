@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Any, Dict, Generic, List, OrderedDict, TypeVar, Union
+from copy import deepcopy
 
 import torch
 
@@ -36,4 +37,5 @@ class History:
 
     def add_state(self, state: State) -> None:
         """Add a new state after processing a batch."""
-        self.states.append(state)
+        copied_state = deepcopy(state)
+        self.states.append(copied_state)
