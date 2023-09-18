@@ -310,7 +310,6 @@ class Trainer:
                 epoch_index=epoch,
                 batch_index=_batch_index,
                 lr_or_ls_this_epoch=self._get_current_lr_or_lrs(),
-                avg_train_loss_per_sample_this_epoch=self.avg_train_loss_per_sample_this_epoch,
                 avg_train_loss_per_sample_this_batch=self.avg_train_loss_per_sample_this_batch,
             )
 
@@ -322,6 +321,10 @@ class Trainer:
 
         # Calculate average loss for the epoch per sample
         self.avg_train_loss_per_sample_this_epoch = total_epoch_loss / total_samples
+        # Update state with average loss per sample for the epoch
+        self._update_state(
+            avg_train_loss_per_sample_this_epoch=self.avg_train_loss_per_sample_this_epoch
+        )
 
         # NOTE: do an all reduce to get the average loss across all processes
         # NOTE: this is not the same as the average loss across all samples
@@ -397,12 +400,15 @@ class Trainer:
                 )
                 total_samples += source.size(0)
 
-
+                # no need update epoch index since it's the same as train
+                # but need update batch index because by the time train
+                # finish, batch index is already at the last batch index of
+                # the loader so need reset. We keep lr_or_ls_this_epoch
+                # because in larger training, we might have lr scheduler
+                # to step at every batch.
                 self._update_state(
-                    epoch_index=epoch,
                     batch_index=_batch_index,
                     lr_or_ls_this_epoch=self._get_current_lr_or_lrs(),
-                    avg_valid_loss_per_sample_this_epoch=self.avg_valid_loss_per_sample_this_epoch,
                     avg_valid_loss_per_sample_this_batch=self.avg_valid_loss_per_sample_this_batch,
                 )
 
@@ -419,6 +425,9 @@ class Trainer:
                     torch.distributed.barrier()  # as usual, barrier after saving
 
         self.avg_valid_loss_per_sample_this_epoch = total_epoch_loss / total_samples
+        self._update_state(
+            avg_valid_loss_per_sample_this_epoch=self.avg_valid_loss_per_sample_this_epoch
+        )
 
         self.logger.info(
             (
