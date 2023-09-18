@@ -210,7 +210,7 @@ def main(
     trainer.fit(train_loader=train_loader, valid_loader=valid_loader)
     if global_rank == 0:
         state = trainer.state
-        history = state.history
+        history = trainer.history.states
         from rich.pretty import pprint
 
         pprint(state)
