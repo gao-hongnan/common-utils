@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from config.base import DistributedInfo, TrainerConfig
+from core.state import State
 from utils.common_utils import configure_logger
 
 
@@ -36,6 +37,13 @@ class Trainer:
         "epochs_run",
         "output_dir",
         "save_path",
+        "epoch_index",
+        "batch_index",
+        "lr_or_ls_this_epoch",
+        "avg_train_loss_per_sample_this_epoch",
+        "avg_valid_loss_per_sample_this_epoch",
+        "avg_train_loss_per_sample_this_batch",
+        "avg_valid_loss_per_sample_this_batch",
     ]
     local_rank: int
     global_rank: int
@@ -58,6 +66,14 @@ class Trainer:
     epochs_run: int
     output_dir: str
     save_path: str
+
+    epoch_index: int
+    batch_index: int
+    lr_or_ls_this_epoch: Union[float, List[float]]
+    avg_train_loss_per_sample_this_epoch: float  # average loss per sample for the epoch
+    avg_valid_loss_per_sample_this_epoch: float
+    avg_train_loss_per_sample_this_batch: float  # average loss per sample for the batch
+    avg_valid_loss_per_sample_this_batch: float
 
     def __init__(
         self,
@@ -145,35 +161,74 @@ class Trainer:
                 self.output_dir, f"epoch_{epoch}_batch_{batch}"
             )
         else:
-            batch = -1  # using -1 to indicate the entire epoch
             checkpoint_dir = os.path.join(self.output_dir, f"epoch_{epoch}")
         os.makedirs(checkpoint_dir, exist_ok=True)
         self.save_path = os.path.join(checkpoint_dir, "snapshot.pt")
 
-        # TODO: consider renaming snapshot to states
-        snapshot = {
-            "MODEL_STATE": self.model.module.state_dict(),
-            "OPTIMIZER_STATE": self.optimizer.state_dict(),
-            "SCHEDULER_STATE": self.scheduler.state_dict(),
-            "TORCH_RNG_STATE": torch.get_rng_state(),
-            "EPOCHS_RUN": epoch,
-            "BATCH_INDEX": batch,
-        }
-        torch.save(snapshot, self.save_path)
+        state = State(
+            model_state=self.model.module.state_dict(),
+            optimizer_state=self.optimizer.state_dict(),
+            scheduler_state=self.scheduler.state_dict(),
+            torch_rng_state=torch.get_rng_state(),
+            epoch_index=self.epoch_index,
+            batch_index=self.batch_index,
+            lr_or_ls_this_epoch=self.lr_or_ls_this_epoch,
+            avg_train_loss_per_sample_this_epoch=self.avg_train_loss_per_sample_this_epoch,
+            avg_valid_loss_per_sample_this_epoch=self.avg_valid_loss_per_sample_this_epoch,
+            avg_train_loss_per_sample_this_batch=self.avg_train_loss_per_sample_this_batch,
+            avg_valid_loss_per_sample_this_batch=self.avg_valid_loss_per_sample_this_batch,
+        )
+        # call state_dict() to convert the dataclass to a dictionary (serializable)
+        serialized_state = state.state_dict()
+
+        torch.save(serialized_state, self.save_path)
 
         self.logger.info(
-            f"Epoch {epoch} Batch {batch} | Training snapshot saved at {self.save_path}"
+            f"Epoch {self.epoch_index} Batch {self.batch_index} "
+            f"| Training snapshot saved at {self.save_path}"
         )
 
     def _load_snapshot(self, load_path: str, map_location: str) -> None:
-        snapshot = torch.load(load_path, map_location=map_location)
-        self.model.load_state_dict(snapshot["MODEL_STATE"])
-        self.optimizer.load_state_dict(snapshot["OPTIMIZER_STATE"])
-        self.scheduler.load_state_dict(snapshot["SCHEDULER_STATE"])
-        self.epochs_run = snapshot["EPOCHS_RUN"]
-        self.logger.info(f"Resuming training from snapshot at Epoch {self.epochs_run}")
+        # Load the serialized dictionary
+        serialized_state = torch.load(load_path, map_location=map_location)
 
-        del snapshot
+        # Rehydrate the State object from the serialized dictionary
+        state = State(**serialized_state)
+
+        # Populate your model, optimizer, and scheduler using the state
+        self.model.load_state_dict(state.model_state)
+        self.optimizer.load_state_dict(state.optimizer_state)
+        self.scheduler.load_state_dict(state.scheduler_state)
+
+        # Populate other state variables
+        self.epoch_index = state.epoch_index
+        self.batch_index = state.batch_index
+        self.lr_or_ls_this_epoch = state.lr_or_ls_this_epoch
+        self.avg_train_loss_per_sample_this_epoch = (
+            state.avg_train_loss_per_sample_this_epoch
+        )
+        self.avg_valid_loss_per_sample_this_epoch = (
+            state.avg_valid_loss_per_sample_this_epoch
+        )
+        self.avg_train_loss_per_sample_this_batch = (
+            state.avg_train_loss_per_sample_this_batch
+        )
+        self.avg_valid_loss_per_sample_this_batch = (
+            state.avg_valid_loss_per_sample_this_batch
+        )
+
+        # Ensure that the RNG state of PyTorch is also restored
+        # torch.set_rng_state(state.torch_rng_state)
+
+        self.epochs_run = self.epoch_index + 1
+        self.logger.info(
+            f"Resuming training from snapshot at "
+            f"Epoch {self.epochs_run} and "
+            f"Batch {self.batch_index}"
+        )
+
+        # Cleanup
+        del serialized_state
         gc.collect()
         torch.cuda.empty_cache()
 
@@ -215,6 +270,7 @@ class Trainer:
         )
         # batch_index starts from 1
         for _batch_index, (source, targets) in train_progress_bar:
+            self.batch_index = _batch_index
             source = source.to(
                 self.local_rank,
                 non_blocking=False,
@@ -228,46 +284,49 @@ class Trainer:
                 memory_format=torch.preserve_format,
             )
             batch_size = source.size(0)
-            _, avg_batch_loss = self._run_train_batch(source, targets)
-            total_epoch_loss += avg_batch_loss * batch_size
+            _, self.avg_train_loss_per_sample_this_batch = self._run_train_batch(
+                source, targets
+            )
+            total_epoch_loss += self.avg_train_loss_per_sample_this_batch * batch_size
             total_samples += batch_size
 
             # Update tqdm progress bar if on rank 0
             if self.global_rank == 0:
                 train_progress_bar.set_description(
-                    f"Epoch {epoch}, Avg Batch Loss: {avg_batch_loss.item():.4f}"
+                    f"Epoch {epoch}, Avg Batch Loss: {self.avg_train_loss_per_sample_this_batch.item():.4f}"
                 )
 
         # Calculate average loss for the epoch per sample
-        avg_epoch_loss = total_epoch_loss / total_samples
+        self.avg_train_loss_per_sample_this_epoch = total_epoch_loss / total_samples
 
         # NOTE: do an all reduce to get the average loss across all processes
         # NOTE: this is not the same as the average loss across all samples
         # NOTE: so this means if I were to train on 2 nodes of 2 gpus each (4 gpus)
         # NOTE: the average loss across all processes will be the same as if I
         # NOTE: were to train on 1 node of 1 gpu (1 gpu) with the same effective batch size.
-        avg_epoch_loss_all_reduce = (
-            avg_epoch_loss.clone()
+        avg_train_loss_per_sample_this_epoch_all_reduce = (
+            self.avg_train_loss_per_sample_this_epoch.clone()
         )  # NOTE: expensive ops, don't do this in production
         torch.distributed.all_reduce(
-            avg_epoch_loss_all_reduce, op=torch.distributed.ReduceOp.SUM
+            avg_train_loss_per_sample_this_epoch_all_reduce,
+            op=torch.distributed.ReduceOp.SUM,
         )
 
         if self.dist_info.global_rank == 0:
             world_size = self.dist_info.world_size
-            avg_epoch_loss_all_reduce /= world_size
+            avg_train_loss_per_sample_this_epoch_all_reduce /= world_size
             self.logger_all_reduce.info(
-                f"TRAIN: Epoch {epoch} | [AVG_EPOCH_LOSS_ALL_REDUCE]: {avg_epoch_loss_all_reduce:.4f}"
+                f"TRAIN: Epoch {epoch} | [AVG_EPOCH_LOSS_ALL_REDUCE]: {avg_train_loss_per_sample_this_epoch_all_reduce:.4f}"
             )
 
-        current_lr = self._get_current_lr_or_lrs()
+        self.lr_or_ls_this_epoch = self._get_current_lr_or_lrs()
 
         self.logger.info(
             (
                 f"[TRAIN: NODE{self.dist_info.node_rank} GPU{self.global_rank}] "
                 f"Epoch {epoch} | "
                 f"Batchsize: {batch_size} | Steps: {len(self.train_loader)} | "
-                f"Average Loss Per Sample: {avg_epoch_loss:.4f} | Learning Rate: {current_lr}"
+                f"Average Loss Per Sample: {self.avg_train_loss_per_sample_this_epoch:.4f} | Learning Rate: {self.lr_or_ls_this_epoch}"
             )
         )
 
@@ -306,8 +365,12 @@ class Trainer:
                 )
                 batch_size = source.size(0)
                 # NOTE: it is avg_batch_loss due to criterion's reduction="mean"
-                _, avg_batch_loss = self._run_valid_batch(source, targets)
-                total_epoch_loss += avg_batch_loss * batch_size
+                _, self.avg_valid_loss_per_sample_this_batch = self._run_valid_batch(
+                    source, targets
+                )
+                total_epoch_loss += (
+                    self.avg_valid_loss_per_sample_this_batch * batch_size
+                )
                 total_samples += source.size(0)
 
                 # TODO: by right saving mechanism is usually done in the callback
@@ -322,16 +385,16 @@ class Trainer:
 
                     torch.distributed.barrier()  # as usual, barrier after saving
 
-        avg_epoch_loss = total_epoch_loss / total_samples
+        self.avg_valid_loss_per_sample_this_epoch = total_epoch_loss / total_samples
 
-        current_lr = self._get_current_lr_or_lrs()
+        self.lr_or_ls_this_epoch = self._get_current_lr_or_lrs()
 
         self.logger.info(
             (
                 f"[VALID: NODE{self.dist_info.node_rank} GPU{self.global_rank}] "
                 f"Epoch {epoch} | "
                 f"Batchsize: {batch_size} | Steps: {len(self.valid_loader)} | "
-                f"Average Loss Per Sample: {avg_epoch_loss:.4f} | Learning Rate: {current_lr}"
+                f"Average Loss Per Sample: {self.avg_valid_loss_per_sample_this_epoch:.4f} | Learning Rate: {self.lr_or_ls_this_epoch}"
             )
         )
 
@@ -345,6 +408,7 @@ class Trainer:
         self.logger.info(f"Starting training with Learning Rate: {initial_lr}")
 
         for epoch in range(self.epochs_run, self.trainer_config.max_epochs):
+            self.epoch_index = epoch
             self._run_train_epoch(epoch)
             if self.valid_loader is not None:
                 self._run_valid_epoch(epoch)

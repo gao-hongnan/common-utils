@@ -17,7 +17,6 @@ class Serializable:
         -------
         Dict[str, Any]: The state of the object.
         """
-        return {}
 
     def load_state_dict(self, state: Dict[str, Any]) -> None:
         """Restores the state of the object.
