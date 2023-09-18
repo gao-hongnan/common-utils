@@ -29,6 +29,7 @@ from core.state import State
 #         """Retrieve a state from a specific epoch index."""
 #         return self.epoch_states[epoch_index]
 
+
 @dataclass
 class History:
     states: List[State] = field(default_factory=list)

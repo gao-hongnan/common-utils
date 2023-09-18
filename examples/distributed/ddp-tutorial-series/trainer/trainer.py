@@ -11,8 +11,8 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from config.base import DistributedInfo, TrainerConfig
-from core.state import State
 from core.history import History
+from core.state import State
 from utils.common_utils import configure_logger
 
 
