@@ -39,6 +39,7 @@ class Trainer:
         "output_dir",
         "save_path",
         "state",
+        "history",
         "epoch_index",
         "batch_index",
         "lr_or_ls_this_epoch",
@@ -111,6 +112,7 @@ class Trainer:
         )
 
         self.state: State = State()
+        self.history: History = History()
 
         self.epochs_run = 0
         self.output_dir = self._determine_output_dir()
