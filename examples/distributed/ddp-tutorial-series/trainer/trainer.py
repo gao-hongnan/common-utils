@@ -461,7 +461,7 @@ class Trainer:
 
         for epoch in range(self.epochs_run, self.trainer_config.max_epochs):
             self.epoch_index = epoch
-            self.epoch_state = EpochState(epoch_index=epoch)
+            self.epoch_state = EpochState(epoch_index=epoch, batch_states={"train": [], "valid": []})
             self._run_train_epoch(epoch)
             self._update_state(
                 mode="train",
