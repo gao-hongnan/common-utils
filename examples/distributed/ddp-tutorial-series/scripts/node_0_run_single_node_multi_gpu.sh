@@ -33,6 +33,7 @@ python single_and_multi_node_multi_gpu.py \
     --num_workers 0 \
     --pin_memory \
     --sampler_shuffle \
+    --model_name toy_model \
     --input_dim 20 \
     --output_dim 1 \
     --criterion_name "mse_loss" \
