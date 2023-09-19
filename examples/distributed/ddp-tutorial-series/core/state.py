@@ -30,6 +30,14 @@ class BatchState(Serializable):
     gradient_state: Optional[Dict[str, torch.Tensor]] = field(
         default=None, metadata={"help": "State dictionary of the gradients."}
     )
+    l2_norm_gradient_state: Optional[Dict[str, torch.Tensor]] = field(
+        default=None,
+        metadata={"help": "State dictionary of the L2 norm of the gradients."},
+    )
+    global_l2_norm_gradient_state: Optional[float] = field(
+        default=None,
+        metadata={"help": "State dictionary of the global L2 norm of the gradients."},
+    )
 
     def state_dict(self) -> Dict[str, Any]:
         """Convert the BatchState dataclass to a dictionary."""

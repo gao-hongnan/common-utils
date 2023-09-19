@@ -376,7 +376,11 @@ class Trainer:
                 train_progress_bar.set_description(
                     f"Epoch {epoch}, Avg Batch Loss: {self.avg_train_loss_per_sample_this_batch.item():.4f}"
                 )
-                gradient_state, l2_norm_gradient_state, global_l2_norm_gradient_state = self.get_gradient_state_and_norms()
+                (
+                    gradient_state,
+                    l2_norm_gradient_state,
+                    global_l2_norm_gradient_state,
+                ) = self.get_gradient_state_and_norms()
                 self.batch_state = BatchState(
                     batch_index=_batch_index,
                     avg_train_loss_per_sample_this_batch=self.avg_train_loss_per_sample_this_batch.detach().item(),
