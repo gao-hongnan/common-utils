@@ -210,7 +210,7 @@ class Trainer:
         self.save_path = os.path.join(checkpoint_dir, "snapshot.pt")
 
         # call state_dict() to convert the dataclass to a dictionary (serializable)
-        serialized_state = self.state.state_dict()
+        serialized_state = self.epoch_state.state_dict()
 
         torch.save(serialized_state, self.save_path)
 
@@ -235,18 +235,6 @@ class Trainer:
         self.epoch_index = self.state.epoch_index
         self.batch_index = self.state.batch_index
         self.lr_or_ls_this_epoch = self.state.lr_or_ls_this_epoch
-        self.avg_train_loss_per_sample_this_epoch = (
-            self.state.avg_train_loss_per_sample_this_epoch
-        )
-        self.avg_valid_loss_per_sample_this_epoch = (
-            self.state.avg_valid_loss_per_sample_this_epoch
-        )
-        self.avg_train_loss_per_sample_this_batch = (
-            self.state.avg_train_loss_per_sample_this_batch
-        )
-        self.avg_valid_loss_per_sample_this_batch = (
-            self.state.avg_valid_loss_per_sample_this_batch
-        )
 
         # Ensure that the RNG self.state of PyTorch is also restored
         # torch.set_rng_state(self.state.torch_rng_state)
@@ -330,9 +318,9 @@ class Trainer:
                 if _batch_index % self.trainer_config.log_state_every_n_batches == 0:
                     self.batch_state = BatchState(
                         batch_index=_batch_index,
-                        avg_train_loss_per_sample_this_batch=self.avg_train_loss_per_sample_this_batch,
+                        avg_train_loss_per_sample_this_batch=self.avg_train_loss_per_sample_this_batch.detach().item(),
                     )
-                    self.epoch_state.batch_states["train"].append(self.batch_state)
+                    self.epoch_state.batch_states.append(self.batch_state)
 
         # Calculate average loss for the epoch per sample
         self.avg_train_loss_per_sample_this_epoch = total_epoch_loss / total_samples
@@ -421,12 +409,15 @@ class Trainer:
                         _batch_index % self.trainer_config.log_state_every_n_batches
                         == 0
                     ):
-                        self.batch_state = BatchState(
-                            batch_index=_batch_index,
-                            avg_valid_loss_per_sample_this_batch=self.avg_valid_loss_per_sample_this_batch,
+                        # self.batch_state = BatchState(
+                        #     batch_index=_batch_index,
+                        #     avg_valid_loss_per_sample_this_batch=self.avg_valid_loss_per_sample_this_batch,
+                        # )
+                        self.epoch_state.batch_states[
+                            _batch_index
+                        ].avg_valid_loss_per_sample_this_batch = (
+                            self.avg_valid_loss_per_sample_this_batch.detach().item()
                         )
-                        self.epoch_state.batch_states["valid"].append(self.batch_state)
-
                 # TODO: by right saving mechanism is usually done in the callback
                 # and also based on the previous metric performance.
                 if self.trainer_config.save_checkpoint_interval_batch:
@@ -461,7 +452,7 @@ class Trainer:
 
         for epoch in range(self.epochs_run, self.trainer_config.max_epochs):
             self.epoch_index = epoch
-            self.epoch_state = EpochState(epoch_index=epoch, batch_states={"train": [], "valid": []})
+            self.epoch_state = EpochState(epoch_index=epoch)
             self._run_train_epoch(epoch)
             self._update_state(
                 mode="train",
@@ -477,7 +468,7 @@ class Trainer:
                     avg_valid_loss_per_sample_this_epoch=self.avg_valid_loss_per_sample_this_epoch,
                 )
 
-            # self.history.add_state(self.state)
+            self.history.add_state(self.epoch_state)
 
             if self.scheduler:
                 self.scheduler.step()

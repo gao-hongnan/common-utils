@@ -1,4 +1,4 @@
-from dataclasses import asdict, dataclass, fields, MISSING
+from dataclasses import asdict, dataclass, fields, MISSING, field
 from typing import Any, Dict, List, Optional, OrderedDict, Union
 
 import torch
@@ -23,8 +23,8 @@ class BatchState(Serializable):
 
 @dataclass
 class EpochState(Serializable):
-    batch_states: Dict[str, List[BatchState]] = None
-
+    # batch_states: Dict[str, List[BatchState]] = None
+    batch_states: List[BatchState] = field(default_factory=list)
     epoch_index: int = -1
     lr_or_ls_this_epoch: Optional[Union[float, List[float]]] = -1.0
     avg_train_loss_per_sample_this_epoch: float = -1.0
@@ -50,6 +50,7 @@ class EpochState(Serializable):
             if default == MISSING:
                 default = field.default_factory()
             setattr(self, field.name, default)
+
 
 @dataclass
 class State(Serializable):
