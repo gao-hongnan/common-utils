@@ -125,8 +125,16 @@ def build_all_elegant(
         target_dimensions=args.target_dimensions,
     )
 
-    model = ToyModel(input_dim=args.input_dim, output_dim=args.output_dim)
-    # model = ExtendedToyModel(input_dim=20, hidden_dims=[128, 64], output_dim=1)
+    if args.model_name == "toy_model":
+        model = ToyModel(input_dim=args.input_dim, output_dim=args.output_dim)
+    elif args.model_name == "extended_toy_model":
+        model = ExtendedToyModel(
+            input_dim=args.input_dim,
+            hidden_dims=args.hidden_dims,
+            output_dim=args.output_dim,
+        )
+    else:
+        raise ValueError(f"Model name {args.model_name} not supported.")
 
     criterion_config = CRITERION_NAME_TO_CONFIG_MAPPING[args.criterion_name](
         name=args.criterion_name, reduction=args.reduction
@@ -298,7 +306,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sampler_drop_last", action="store_true", help="Drop last")
 
     # Model
+    parser.add_argument("--model_name", default="toy_model", type=str, help="Model")
     parser.add_argument("--input_dim", default=20, type=int, help="Input dimensions")
+    parser.add_argument("--hidden_dims", default=[128, 64], type=list, help="Hidden")
     parser.add_argument("--output_dim", default=1, type=int, help="Output dimensions")
 
     # Criterion

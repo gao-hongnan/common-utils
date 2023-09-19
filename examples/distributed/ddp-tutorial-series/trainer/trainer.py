@@ -238,7 +238,7 @@ class Trainer:
             module_name = str(module)
             self._temp_activation_storage[module_name] = output.detach()
 
-        for layer in model.children():
+        for layer in model.named_modules():  # children vs named_modules?
             layer.register_forward_hook(hook_fn)
 
     def _update_state(
