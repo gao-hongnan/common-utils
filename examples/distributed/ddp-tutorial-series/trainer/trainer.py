@@ -676,13 +676,76 @@ class Trainer:
             torch.distributed.barrier()
 
 
-def compute_stats(tensor: torch.Tensor) -> Dict[str, float]:
+def compute_stats(
+    tensor: torch.Tensor,
+    near_zero_threshold: float = 1e-3,
+    explosive_threshold: float = 1e3,
+) -> Dict[str, float]:
+    """
+    Compute diagnostic statistics for a given tensor.
+
+    This function calculates and returns key statistics for the input tensor.
+    These statistics can be beneficial for understanding the behavior and
+    distribution of data, activations, or gradients in neural networks.
+
+    Parameters
+    ----------
+    tensor : torch.Tensor
+        The input tensor for which the statistics are computed.
+
+    Returns
+    -------
+    dict
+        A dictionary containing the following statistics:
+
+        mean : float
+            The mean of the tensor values.
+        std : float
+            The standard deviation of the tensor values.
+        skewness : float
+            Indicates the degree of asymmetry of the tensor's distribution
+            around its mean. A skewness close to 0 indicates a symmetrical
+            distribution of values.
+        kurtosis : float
+            Indicates the "tailedness" of the tensor's distribution. Positive
+            kurtosis indicates a distribution with heavier tails, while
+            negative kurtosis indicates lighter tails.
+        near_zero : float
+            The fraction of tensor values close to zero (absolute value < 1e-3).
+        maybe_explosive : float
+            The fraction of tensor values with large magnitude
+            (absolute value > 1e3). High values can indicate potential issues
+            like exploding gradients.
+        has_nan : bool
+            Indicates whether the tensor contains any NaN values. A True value
+            suggests numerical issues in computations.
+        l2_norm : float
+            The L2 (Euclidean) norm of the tensor, providing a measure of the
+            tensor's magnitude.
+
+    Examples
+    --------
+    >>> tensor = torch.tensor([1.0, 2.0, 3.0, 4.0])
+    >>> stats = compute_stats(tensor)
+    >>> print(stats["mean"])
+    2.5
+
+    Notes
+    -----
+    - Skewness close to 0 indicates a symmetrical distribution of values.
+    - Positive kurtosis indicates a distribution with heavier tails, while negative
+      kurtosis indicates a distribution with lighter tails.
+    - High values in "maybe_explosive" can indicate potential issues like exploding gradients.
+    - A "has_nan" value of True is typically a cause for concern and indicates
+      numerical issues in computations.
+    - The L2 norm of a tensor provides a measure of the tensor's magnitude.
+    """
     mean = tensor.mean().item()
     std = tensor.std().item()
     skewness = ((tensor - mean) ** 3).mean().item() / std**3
     kurtosis = ((tensor - mean) ** 4).mean().item() / std**4 - 3
-    near_zero = (tensor.abs() < 1e-3).float().mean().item()
-    maybe_explosive = (tensor.abs() > 1e3).float().mean().item()
+    near_zero = (tensor.abs() < near_zero_threshold).float().mean().item()
+    maybe_explosive = (tensor.abs() > explosive_threshold).float().mean().item()
     has_nan = torch.isnan(tensor).any().item()
     l2_norm = torch.linalg.vector_norm(tensor).item()
 
