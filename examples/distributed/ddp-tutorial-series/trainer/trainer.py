@@ -9,7 +9,20 @@ NOTE: Made a conscious choice not to save model state dict in batch.
 
 NOTE: The model state of the last batch the same as the end of that epoch.
 
+When using Distributed Data Parallel (DDP) in PyTorch, the original model is
+wrapped inside the `DDP` module. To access attributes or methods of the original
+model, you should use `self.model.module`.
 
+In the context of saving gradients, if you wish to access the gradients of the
+original model (and not the DDP wrapper), you should indeed use `self.model.module`.
+
+This ensures you're accessing the named parameters of the original model and not
+the DDP wrapper. Although DDP synchronizes gradients across all processes,
+gradients accessed through `self.model.module` are the same as those accessed
+directly through `self.model`. This is due to their representation of the
+synchronized gradients across all GPUs. Nonetheless, it's best practice to
+access the original model's attributes and methods via `self.model.module` when
+using DDP.
 """
 from __future__ import annotations
 
