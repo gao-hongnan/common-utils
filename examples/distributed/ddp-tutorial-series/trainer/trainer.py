@@ -6,13 +6,15 @@ it will have the state of all processes on other ranks.
 Now you can only have state object in master process 0.
 
 NOTE: Made a conscious choice not to save model state dict in batch.
+
+NOTE: The model state of the last batch the same as the end of that epoch.
 """
 from __future__ import annotations
 
 import gc
 import logging
 import os
-from typing import Any, Dict, List, Optional, Tuple, Union, Literal
+from typing import Any, Dict, List, Optional, Tuple, Union, Literal, OrderedDict
 
 
 import torch
@@ -173,6 +175,13 @@ class Trainer:
             lrs.append(param_group["lr"])
         return lrs
 
+    def get_gradient_state(self) -> OrderedDict[str, torch.Tensor]:
+        gradient_state = {}
+        for name, param in self.model.named_parameters():
+            if param.grad is not None:
+                gradient_state[name] = param.grad.clone()
+        return gradient_state
+
     def _update_state(
         self,
         mode: Literal["train", "valid", "test"] = "train",
@@ -191,6 +200,7 @@ class Trainer:
             self.epoch_state.optimizer_state = self.optimizer.state_dict()
             self.epoch_state.scheduler_state = self.scheduler.state_dict()
             self.epoch_state.torch_rng_state = torch.get_rng_state()
+            self.epoch_state.gradient_state = self.get_gradient_state()
 
         # Update other attributes based on the provided kwargs
         for key, value in kwargs.items():
@@ -246,8 +256,7 @@ class Trainer:
         # if forget add + 1, will resume from previous epoch
         self.epochs_run = self.epoch_index + 1
         self.logger.info(
-            f"Resuming training from snapshot at "
-            f"Epoch {self.epochs_run}"
+            f"Resuming training from snapshot at " f"Epoch {self.epochs_run}"
         )
 
         # Cleanup
@@ -322,6 +331,7 @@ class Trainer:
                 self.batch_state = BatchState(
                     batch_index=_batch_index,
                     avg_train_loss_per_sample_this_batch=self.avg_train_loss_per_sample_this_batch.detach().item(),
+                    gradient_state=self.get_gradient_state(),
                 )
                 self.epoch_state.batch_states.append(self.batch_state)
 
