@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 from config.base import DistributedInfo, TrainerConfig
 from core.history import History
-from core.state import State
+from core.state import State, BatchState, EpochState
 from utils.common_utils import configure_logger
 
 
@@ -40,6 +40,8 @@ class Trainer:
         "output_dir",
         "save_path",
         "state",
+        "epoch_state",
+        "batch_state",
         "history",
         "epoch_index",
         "batch_index",
@@ -72,6 +74,8 @@ class Trainer:
     save_path: str
 
     state: State
+    epoch_state: EpochState
+    batch_state: BatchState
     history: History
     epoch_index: int
     batch_index: int
@@ -113,6 +117,8 @@ class Trainer:
         )
 
         self.state: State = State()
+        self.epoch_state: EpochState = EpochState()
+        self.batch_state: BatchState = BatchState()
         self.history: History = History()
 
         self.epochs_run = 0
@@ -177,16 +183,16 @@ class Trainer:
         """
         # Update the model, optimizer, and scheduler states
         if mode == "train":
-            self.state.model_state = self.model.module.state_dict()
-            self.state.optimizer_state = self.optimizer.state_dict()
-            self.state.scheduler_state = self.scheduler.state_dict()
-            self.state.torch_rng_state = torch.get_rng_state()
+            self.epoch_state.model_state = self.model.module.state_dict()
+            self.epoch_state.optimizer_state = self.optimizer.state_dict()
+            self.epoch_state.scheduler_state = self.scheduler.state_dict()
+            self.epoch_state.torch_rng_state = torch.get_rng_state()
 
         # Update other attributes based on the provided kwargs
         for key, value in kwargs.items():
             if isinstance(value, torch.Tensor):
                 value = value.detach().item()
-            setattr(self.state, key, value)
+            setattr(self.epoch_state, key, value)
 
     def _save_snapshot(self, epoch: int, batch: Optional[int] = None) -> None:
         """Save snapshot of the model, optimizer, and other training states."""
@@ -321,6 +327,12 @@ class Trainer:
                 train_progress_bar.set_description(
                     f"Epoch {epoch}, Avg Batch Loss: {self.avg_train_loss_per_sample_this_batch.item():.4f}"
                 )
+                if _batch_index % self.trainer_config.log_state_every_n_batches == 0:
+                    self.batch_state = BatchState(
+                        batch_index=_batch_index,
+                        avg_train_loss_per_sample_this_batch=self.avg_train_loss_per_sample_this_batch,
+                    )
+                    self.epoch_state.batch_states["train"].append(self.batch_state)
 
         # Calculate average loss for the epoch per sample
         self.avg_train_loss_per_sample_this_epoch = total_epoch_loss / total_samples
@@ -338,6 +350,8 @@ class Trainer:
             op=torch.distributed.ReduceOp.SUM,
         )
 
+        self.lr_or_ls_this_epoch = self._get_current_lr_or_lrs()
+
         if self.dist_info.global_rank == 0:
             world_size = self.dist_info.world_size
             avg_train_loss_per_sample_this_epoch_all_reduce /= world_size
@@ -345,8 +359,6 @@ class Trainer:
                 f"TRAIN: Epoch {epoch} | "
                 f"[AVG_EPOCH_LOSS_ALL_REDUCE]: {avg_train_loss_per_sample_this_epoch_all_reduce:.4f}"
             )
-
-        self.lr_or_ls_this_epoch = self._get_current_lr_or_lrs()
 
         self.logger.info(
             (
@@ -400,6 +412,21 @@ class Trainer:
                 )
                 total_samples += source.size(0)
 
+                # Update tqdm progress bar if on rank 0
+                if self.global_rank == 0:
+                    valid_progress_bar.set_description(
+                        f"Epoch {epoch}, Avg Batch Loss: {self.avg_valid_loss_per_sample_this_batch.item():.4f}"
+                    )
+                    if (
+                        _batch_index % self.trainer_config.log_state_every_n_batches
+                        == 0
+                    ):
+                        self.batch_state = BatchState(
+                            batch_index=_batch_index,
+                            avg_valid_loss_per_sample_this_batch=self.avg_valid_loss_per_sample_this_batch,
+                        )
+                        self.epoch_state.batch_states["valid"].append(self.batch_state)
+
                 # TODO: by right saving mechanism is usually done in the callback
                 # and also based on the previous metric performance.
                 if self.trainer_config.save_checkpoint_interval_batch:
@@ -434,11 +461,10 @@ class Trainer:
 
         for epoch in range(self.epochs_run, self.trainer_config.max_epochs):
             self.epoch_index = epoch
+            self.epoch_state = EpochState(epoch_index=epoch)
             self._run_train_epoch(epoch)
             self._update_state(
                 mode="train",
-                batch_index=self.batch_index,
-                epoch_index=epoch,
                 lr_or_ls_this_epoch=self._get_current_lr_or_lrs(),
                 avg_train_loss_per_sample_this_batch=self.avg_train_loss_per_sample_this_batch,
                 avg_train_loss_per_sample_this_epoch=self.avg_train_loss_per_sample_this_epoch,
@@ -451,7 +477,7 @@ class Trainer:
                     avg_valid_loss_per_sample_this_epoch=self.avg_valid_loss_per_sample_this_epoch,
                 )
 
-            self.history.add_state(self.state)
+            # self.history.add_state(self.state)
 
             if self.scheduler:
                 self.scheduler.step()
