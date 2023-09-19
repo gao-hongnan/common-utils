@@ -42,6 +42,10 @@ class BatchState(Serializable):
     activation_state: Optional[Dict[str, torch.Tensor]] = field(
         default=None, metadata={"help": "State dictionary of the activations."}
     )
+    activation_statistics_state: Optional[Dict[str, torch.Tensor]] = field(
+        default=None,
+        metadata={"help": "State dictionary of the activation statistics."},
+    )
 
     def state_dict(self) -> Dict[str, Any]:
         """Convert the BatchState dataclass to a dictionary."""
