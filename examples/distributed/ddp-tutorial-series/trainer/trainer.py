@@ -4,6 +4,8 @@ the master process is to save time. If you choose to save
 on all processes, it will provide more information because
 it will have the state of all processes on other ranks.
 Now you can only have state object in master process 0.
+
+NOTE: Made a conscious choice not to save model state dict in batch.
 """
 from __future__ import annotations
 
@@ -222,6 +224,7 @@ class Trainer:
         )
 
     def _load_snapshot(self, load_path: str, map_location: str) -> None:
+        # NOTE: now it only supports loading from EpochState
         # Load the serialized dictionary
         serialized_state = torch.load(load_path, map_location=map_location)
 
@@ -235,7 +238,6 @@ class Trainer:
 
         # Populate other self.state variables
         self.epoch_index = self.epoch_state.epoch_index
-        self.batch_index = self.epoch_state.batch_index
         self.lr_or_ls_this_epoch = self.epoch_state.lr_or_ls_this_epoch
 
         # Ensure that the RNG self.state of PyTorch is also restored
@@ -245,8 +247,7 @@ class Trainer:
         self.epochs_run = self.epoch_index + 1
         self.logger.info(
             f"Resuming training from snapshot at "
-            f"Epoch {self.epochs_run} and "
-            f"Batch {self.batch_index}"
+            f"Epoch {self.epochs_run}"
         )
 
         # Cleanup
