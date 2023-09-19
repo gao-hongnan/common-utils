@@ -414,7 +414,7 @@ class Trainer:
                         #     avg_valid_loss_per_sample_this_batch=self.avg_valid_loss_per_sample_this_batch,
                         # )
                         self.epoch_state.batch_states[
-                            _batch_index
+                            _batch_index - 1 # batch_index starts from 1
                         ].avg_valid_loss_per_sample_this_batch = (
                             self.avg_valid_loss_per_sample_this_batch.detach().item()
                         )
