@@ -4,7 +4,7 @@ from copy import deepcopy
 
 import torch
 
-from core.state import State
+from core.state import EpochState
 
 # H = TypeVar('H', bound='History')
 
@@ -33,9 +33,9 @@ from core.state import State
 
 @dataclass
 class History:
-    states: List[State] = field(default_factory=list)
+    states: List[EpochState] = field(default_factory=list)
 
-    def add_state(self, state: State) -> None:
+    def add_state(self, state: EpochState) -> None:
         """Add a new state after processing a batch."""
         copied_state = deepcopy(state)
         self.states.append(copied_state)

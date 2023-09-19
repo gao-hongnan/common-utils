@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 from config.base import DistributedInfo, TrainerConfig
 from core.history import History
-from core.state import State, BatchState, EpochState
+from core.state import BatchState, EpochState
 from utils.common_utils import configure_logger
 
 
@@ -39,7 +39,6 @@ class Trainer:
         "epochs_run",
         "output_dir",
         "save_path",
-        "state",
         "epoch_state",
         "batch_state",
         "history",
@@ -73,7 +72,6 @@ class Trainer:
     output_dir: str
     save_path: str
 
-    state: State
     epoch_state: EpochState
     batch_state: BatchState
     history: History
@@ -116,9 +114,6 @@ class Trainer:
             rank="all_reduce", print_to_console=True
         )
 
-        self.state: State = State()
-        self.epoch_state: EpochState = EpochState()
-        self.batch_state: BatchState = BatchState()
         self.history: History = History()
 
         self.epochs_run = 0
@@ -224,20 +219,20 @@ class Trainer:
         serialized_state = torch.load(load_path, map_location=map_location)
 
         # Rehydrate the State object from the serialized dictionary
-        self.state = State(**serialized_state)
+        self.epoch_state = EpochState(**serialized_state)
 
         # Populate your model, optimizer, and scheduler using the self.state
-        self.model.load_state_dict(self.state.model_state)
-        self.optimizer.load_state_dict(self.state.optimizer_state)
-        self.scheduler.load_state_dict(self.state.scheduler_state)
+        self.model.load_state_dict(self.epoch_state.model_state)
+        self.optimizer.load_state_dict(self.epoch_state.optimizer_state)
+        self.scheduler.load_state_dict(self.epoch_state.scheduler_state)
 
         # Populate other self.state variables
-        self.epoch_index = self.state.epoch_index
-        self.batch_index = self.state.batch_index
-        self.lr_or_ls_this_epoch = self.state.lr_or_ls_this_epoch
+        self.epoch_index = self.epoch_state.epoch_index
+        self.batch_index = self.epoch_state.batch_index
+        self.lr_or_ls_this_epoch = self.epoch_state.lr_or_ls_this_epoch
 
         # Ensure that the RNG self.state of PyTorch is also restored
-        # torch.set_rng_state(self.state.torch_rng_state)
+        # torch.set_rng_state(self.epoch_state.torch_rng_state)
 
         # if forget add + 1, will resume from previous epoch
         self.epochs_run = self.epoch_index + 1
@@ -409,12 +404,13 @@ class Trainer:
                         _batch_index % self.trainer_config.log_state_every_n_batches
                         == 0
                     ):
-                        # self.batch_state = BatchState(
-                        #     batch_index=_batch_index,
-                        #     avg_valid_loss_per_sample_this_batch=self.avg_valid_loss_per_sample_this_batch,
-                        # )
+                        # Here is where we update the batch state
+                        # of the epoch state for validation.
+                        # note I slice the batch_states list by the current
+                        # batch index so it can complete the validation statistics
+                        # for the current batch as originally it is -1.
                         self.epoch_state.batch_states[
-                            _batch_index - 1 # batch_index starts from 1
+                            _batch_index - 1  # batch_index starts from 1
                         ].avg_valid_loss_per_sample_this_batch = (
                             self.avg_valid_loss_per_sample_this_batch.detach().item()
                         )
