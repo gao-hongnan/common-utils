@@ -332,7 +332,7 @@ def parse_args() -> argparse.Namespace:
         help="How often to save a snapshot",
     )
     parser.add_argument(
-        "--log_state_every_n_batches",
+        "--save_state_every_n_batches",
         default=1,
         type=int,
         help="Log state every n batches",

@@ -317,7 +317,7 @@ class Trainer:
                 train_progress_bar.set_description(
                     f"Epoch {epoch}, Avg Batch Loss: {self.avg_train_loss_per_sample_this_batch.item():.4f}"
                 )
-                if _batch_index % self.trainer_config.log_state_every_n_batches == 0:
+                if _batch_index % self.trainer_config.save_state_every_n_batches == 0:
                     self.batch_state = BatchState(
                         batch_index=_batch_index,
                         avg_train_loss_per_sample_this_batch=self.avg_train_loss_per_sample_this_batch.detach().item(),
@@ -408,7 +408,7 @@ class Trainer:
                         f"Epoch {epoch}, Avg Batch Loss: {self.avg_valid_loss_per_sample_this_batch.item():.4f}"
                     )
                     if (
-                        _batch_index % self.trainer_config.log_state_every_n_batches
+                        _batch_index % self.trainer_config.save_state_every_n_batches
                         == 0
                     ):
                         # Here is where we update the batch state

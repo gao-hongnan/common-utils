@@ -56,7 +56,7 @@ class TrainerConfig:
     save_checkpoint_interval_batch: Optional[int] = field(
         default=None, metadata={"help": "Save checkpoint every n batches."}
     )
-    log_state_every_n_batches: int = field(
+    save_state_every_n_batches: int = field(
         default=1, metadata={"help": "Log state every n batches."}
     )
     batch_size: int = field(
