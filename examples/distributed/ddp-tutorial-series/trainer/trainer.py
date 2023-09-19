@@ -1,3 +1,10 @@
+"""Trainer class for training a model
+NOTE: The choice of saving states only on global rank 0
+the master process is to save time. If you choose to save
+on all processes, it will provide more information because
+it will have the state of all processes on other ranks.
+Now you can only have state object in master process 0.
+"""
 from __future__ import annotations
 
 import gc
@@ -450,19 +457,21 @@ class Trainer:
             self.epoch_index = epoch
             self.epoch_state = EpochState(epoch_index=epoch)
             self._run_train_epoch(epoch)
-            self._update_state(
-                mode="train",
-                lr_or_ls_this_epoch=self._get_current_lr_or_lrs(),
-                avg_train_loss_per_sample_this_batch=self.avg_train_loss_per_sample_this_batch,
-                avg_train_loss_per_sample_this_epoch=self.avg_train_loss_per_sample_this_epoch,
-            )
+            if self.global_rank == 0:
+                self._update_state(
+                    mode="train",
+                    lr_or_ls_this_epoch=self._get_current_lr_or_lrs(),
+                    avg_train_loss_per_sample_this_batch=self.avg_train_loss_per_sample_this_batch,
+                    avg_train_loss_per_sample_this_epoch=self.avg_train_loss_per_sample_this_epoch,
+                )
             if self.valid_loader is not None:
                 self._run_valid_epoch(epoch)
-                self._update_state(
-                    mode="valid",
-                    avg_valid_loss_per_sample_this_batch=self.avg_valid_loss_per_sample_this_batch,
-                    avg_valid_loss_per_sample_this_epoch=self.avg_valid_loss_per_sample_this_epoch,
-                )
+                if self.global_rank == 0:
+                    self._update_state(
+                        mode="valid",
+                        avg_valid_loss_per_sample_this_batch=self.avg_valid_loss_per_sample_this_batch,
+                        avg_valid_loss_per_sample_this_epoch=self.avg_valid_loss_per_sample_this_epoch,
+                    )
 
             self.history.add_state(self.epoch_state)
 
