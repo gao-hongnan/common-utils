@@ -183,7 +183,9 @@ class Trainer:
         # snapshot["MODEL_STATE"].module in sync with the save of the snapshot.
         self.model = DDP(self.model, device_ids=[self.local_rank])
 
-        self._register_activation_hooks(self.model)
+        self._register_activation_hooks(
+            self.model.module if hasattr(self.model, "module") else self.model
+        )
 
     def _determine_output_dir(self) -> str:
         """Determine the output directory based on trainer configuration."""
