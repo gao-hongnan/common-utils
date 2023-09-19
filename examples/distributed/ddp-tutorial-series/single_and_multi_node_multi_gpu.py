@@ -67,23 +67,18 @@ from torch.utils.data.distributed import DistributedSampler
 from config._criterion import build_criterion
 from config._optim import build_optimizer
 from config._scheduler import build_scheduler
-from config.base import (
-    CRITERION_NAME_TO_CONFIG_MAPPING,
-    OPTIMIZER_NAME_TO_CONFIG_MAPPING,
-    SCHEDULER_NAME_TO_CONFIG_MAPPING,
-    DataLoaderConfig,
-    DistributedInfo,
-    DistributedSamplerConfig,
-    InitEnvArgs,
-    InitProcessGroupArgs,
-    TrainerConfig,
-)
+from config.base import (CRITERION_NAME_TO_CONFIG_MAPPING,
+                         OPTIMIZER_NAME_TO_CONFIG_MAPPING,
+                         SCHEDULER_NAME_TO_CONFIG_MAPPING, DataLoaderConfig,
+                         DistributedInfo, DistributedSamplerConfig,
+                         InitEnvArgs, InitProcessGroupArgs, TrainerConfig)
 from core._init import init_env, init_process
 from core._seed import seed_all
 from data.toy_dataset import ToyDataset, prepare_dataloader
 from models.toy_model import ExtendedToyModel, ToyModel
 from trainer.trainer import Trainer
-from utils.common_utils import calculate_global_rank, configure_logger, deprecated
+from utils.common_utils import (calculate_global_rank, configure_logger,
+                                deprecated)
 
 
 @deprecated("Use build_all_elegant instead.")
