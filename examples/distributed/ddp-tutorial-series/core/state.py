@@ -1,4 +1,4 @@
-from dataclasses import asdict, dataclass, fields, MISSING, field
+from dataclasses import MISSING, asdict, dataclass, field, fields
 from typing import Any, Dict, List, Optional, OrderedDict, Union
 
 import torch

@@ -1,6 +1,6 @@
+from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Any, Dict, Generic, List, OrderedDict, TypeVar, Union
-from copy import deepcopy
 
 import torch
 

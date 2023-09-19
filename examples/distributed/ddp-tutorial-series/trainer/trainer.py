@@ -29,8 +29,7 @@ from __future__ import annotations
 import gc
 import logging
 import os
-from typing import Any, Dict, List, Optional, Tuple, Union, Literal
-
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
 import torch
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -232,6 +231,7 @@ class Trainer:
         return gradient_state, l2_norm_gradient_state, global_l2_norm_gradient_state
 
     def _register_activation_hooks(self, model: torch.nn.Module):
+        # pylint: disable=unused-argument,redefined-builtin
         def hook_fn(
             module: torch.nn.Module, input: torch.Tensor, output: torch.Tensor
         ) -> None:
@@ -413,7 +413,7 @@ class Trainer:
                     global_l2_norm_gradient_state=global_l2_norm_gradient_state,
                     activation_state=self._temp_activation_storage,
                 )
-                self._temp_activation_storage.clear()
+                self._temp_activation_storage = {}
                 self.epoch_state.batch_states.append(self.batch_state)
 
         # Calculate average loss for the epoch per sample

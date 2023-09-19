@@ -51,7 +51,6 @@ torchrun \
 multinode.py 50 10
 """
 from __future__ import annotations
-from rich.pretty import pprint
 
 import argparse
 import copy
@@ -61,6 +60,7 @@ from typing import Tuple
 
 import torch
 import torch.multiprocessing as mp
+from rich.pretty import pprint
 from torch.distributed import destroy_process_group
 from torch.utils.data.distributed import DistributedSampler
 
@@ -81,7 +81,7 @@ from config.base import (
 from core._init import init_env, init_process
 from core._seed import seed_all
 from data.toy_dataset import ToyDataset, prepare_dataloader
-from models.toy_model import ToyModel
+from models.toy_model import ExtendedToyModel, ToyModel
 from trainer.trainer import Trainer
 from utils.common_utils import calculate_global_rank, configure_logger, deprecated
 
@@ -126,6 +126,7 @@ def build_all_elegant(
     )
 
     model = ToyModel(input_dim=args.input_dim, output_dim=args.output_dim)
+    # model = ExtendedToyModel(input_dim=20, hidden_dims=[128, 64], output_dim=1)
 
     criterion_config = CRITERION_NAME_TO_CONFIG_MAPPING[args.criterion_name](
         name=args.criterion_name, reduction=args.reduction
