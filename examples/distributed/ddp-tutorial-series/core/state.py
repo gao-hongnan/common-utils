@@ -27,7 +27,7 @@ class BatchState(Serializable):
         },
     )
 
-    gradient_state: Optional[OrderedDict[str, torch.Tensor]] = field(
+    gradient_state: Optional[Dict[str, torch.Tensor]] = field(
         default=None, metadata={"help": "State dictionary of the gradients."}
     )
 
@@ -80,7 +80,7 @@ class EpochState(Serializable):
     torch_rng_state: Optional[torch.ByteTensor] = field(
         default=None, metadata={"help": "Random number generator state of PyTorch."}
     )
-    gradient_state: Optional[OrderedDict[str, torch.Tensor]] = field(
+    gradient_state: Optional[Dict[str, torch.Tensor]] = field(
         default=None, metadata={"help": "State dictionary of the gradients."}
     )
 

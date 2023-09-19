@@ -8,13 +8,15 @@ Now you can only have state object in master process 0.
 NOTE: Made a conscious choice not to save model state dict in batch.
 
 NOTE: The model state of the last batch the same as the end of that epoch.
+
+
 """
 from __future__ import annotations
 
 import gc
 import logging
 import os
-from typing import Any, Dict, List, Optional, Tuple, Union, Literal, OrderedDict
+from typing import Any, Dict, List, Optional, Tuple, Union, Literal
 
 
 import torch
@@ -96,6 +98,7 @@ class Trainer:
 
     def __init__(
         self,
+        *,
         model: torch.nn.Module,
         criterion: torch.nn.Module,  # hard to type hint _Loss
         optimizer: torch.optim.Optimizer,
@@ -175,9 +178,10 @@ class Trainer:
             lrs.append(param_group["lr"])
         return lrs
 
-    def get_gradient_state(self) -> OrderedDict[str, torch.Tensor]:
+    def get_gradient_state(self) -> Dict[str, torch.Tensor]:
+        model = self.model.module if hasattr(self.model, "module") else self.model
         gradient_state = {}
-        for name, param in self.model.named_parameters():
+        for name, param in model.named_parameters():
             if param.grad is not None:
                 gradient_state[name] = param.grad.clone()
         return gradient_state
@@ -196,7 +200,11 @@ class Trainer:
         """
         # Update the model, optimizer, and scheduler states
         if mode == "train":
-            self.epoch_state.model_state = self.model.module.state_dict()
+            self.epoch_state.model_state = (
+                self.model.module.state_dict()
+                if hasattr(self.model, "module")
+                else self.model.state_dict()
+            )
             self.epoch_state.optimizer_state = self.optimizer.state_dict()
             self.epoch_state.scheduler_state = self.scheduler.state_dict()
             self.epoch_state.torch_rng_state = torch.get_rng_state()
