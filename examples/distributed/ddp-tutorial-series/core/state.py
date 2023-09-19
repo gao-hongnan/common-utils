@@ -39,6 +39,10 @@ class BatchState(Serializable):
         metadata={"help": "State dictionary of the global L2 norm of the gradients."},
     )
 
+    activation_state: Optional[Dict[str, torch.Tensor]] = field(
+        default=None, metadata={"help": "State dictionary of the activations."}
+    )
+
     def state_dict(self) -> Dict[str, Any]:
         """Convert the BatchState dataclass to a dictionary."""
         return asdict(self)
@@ -88,6 +92,7 @@ class EpochState(Serializable):
     torch_rng_state: Optional[torch.ByteTensor] = field(
         default=None, metadata={"help": "Random number generator state of PyTorch."}
     )
+
     gradient_state: Optional[Dict[str, torch.Tensor]] = field(
         default=None, metadata={"help": "State dictionary of the gradients."}
     )
@@ -99,6 +104,14 @@ class EpochState(Serializable):
         default=None,
         metadata={"help": "State dictionary of the global L2 norm of the gradients."},
     )
+
+    activation_state: Optional[Dict[str, torch.Tensor]] = field(
+        default=None, metadata={"help": "State dictionary of the activations."}
+    )
+    # l2_norm_activation_state: Optional[Dict[str, torch.Tensor]] = field(
+    #     default=None,
+    #     metadata={"help": "State dictionary of the L2 norm of the activations."},
+    # )
 
     def state_dict(self) -> Dict[str, Any]:
         """Convert the EpochState dataclass to a dictionary."""

@@ -65,6 +65,7 @@ class Trainer:
         "epochs_run",
         "output_dir",
         "save_path",
+        "_temp_activation_storage",
         "epoch_state",
         "batch_state",
         "history",
@@ -97,6 +98,8 @@ class Trainer:
     epochs_run: int
     output_dir: str
     save_path: str
+
+    _temp_activation_storage: Dict[str, torch.Tensor]
 
     epoch_state: EpochState
     batch_state: BatchState
@@ -141,6 +144,9 @@ class Trainer:
             rank="all_reduce", print_to_console=True
         )
 
+        # Temporary storage for activations
+        self._temp_activation_storage = {}
+
         self.history: History = History()
 
         self.epochs_run = 0
@@ -177,6 +183,8 @@ class Trainer:
         # snapshot["MODEL_STATE"].module in sync with the save of the snapshot.
         self.model = DDP(self.model, device_ids=[self.local_rank])
 
+        self._register_activation_hooks(self.model)
+
     def _determine_output_dir(self) -> str:
         """Determine the output directory based on trainer configuration."""
         return self.trainer_config.output_dir or self.trainer_config.run_id
@@ -195,14 +203,17 @@ class Trainer:
         self,
     ) -> Tuple[Dict[str, torch.Tensor], Dict[str, float], float]:
         """NOTE: Sanity check is to check epoch level gradients are exactly same
-        as the last batch of the epoch."""
+        as the last batch of the epoch.
+
+        NOTE: The gradients in DDP are synchronised and averaged across all processes.
+        """
         model = self.model.module if hasattr(self.model, "module") else self.model
         gradient_state = {}
         l2_norm_gradient_state = {}
         global_l2_norm_gradient_state_squared = 0.0
 
-        for name, param in model.named_parameters():
-            if param.grad is not None:
+        for name, param in model.named_parameters(recurse=True, remove_duplicate=True):
+            if param.grad is not None and param.requires_grad:
                 gradient = param.grad.clone()
                 gradient_state[name] = gradient
 
@@ -217,6 +228,16 @@ class Trainer:
         global_l2_norm_gradient_state = global_l2_norm_gradient_state_squared**0.5
 
         return gradient_state, l2_norm_gradient_state, global_l2_norm_gradient_state
+
+    def _register_activation_hooks(self, model: torch.nn.Module):
+        def hook_fn(
+            module: torch.nn.Module, input: torch.Tensor, output: torch.Tensor
+        ) -> None:
+            module_name = str(module)
+            self._temp_activation_storage[module_name] = output.detach()
+
+        for layer in model.children():
+            layer.register_forward_hook(hook_fn)
 
     def _update_state(
         self,
@@ -250,6 +271,7 @@ class Trainer:
             self.epoch_state.global_l2_norm_gradient_state = (
                 global_l2_norm_gradient_state
             )
+            # self.epoch_state.activation_state = self._temp_activation_storage
 
         # Update other attributes based on the provided kwargs
         for key, value in kwargs.items():
@@ -387,7 +409,9 @@ class Trainer:
                     gradient_state=gradient_state,
                     l2_norm_gradient_state=l2_norm_gradient_state,
                     global_l2_norm_gradient_state=global_l2_norm_gradient_state,
+                    activation_state=self._temp_activation_storage,
                 )
+                self._temp_activation_storage.clear()
                 self.epoch_state.batch_states.append(self.batch_state)
 
         # Calculate average loss for the epoch per sample
