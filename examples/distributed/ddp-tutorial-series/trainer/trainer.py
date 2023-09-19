@@ -23,6 +23,81 @@ directly through `self.model`. This is due to their representation of the
 synchronized gradients across all GPUs. Nonetheless, it's best practice to
 access the original model's attributes and methods via `self.model.module` when
 using DDP.
+
+NOTE:
+
+To add statistics to your model's training, you can follow Fastai's approach by
+computing the mean, standard deviation, skewness, and kurtosis of the model
+activations and gradients.
+
+1. **Why compute these statistics?**
+
+    - **Mean and Standard Deviation (Std)**: These two are basic statistics that
+      give you an idea about the center and spread of your data. In the context
+      of neural networks, observing the mean and standard deviation of
+      activations and gradients can provide insights into whether your network
+      is learning or if there are any irregularities.
+    - **Skewness**: This measures the asymmetry of the probability distribution
+      of a real-valued random variable about its mean. In the context of neural
+      networks, a large skewness might indicate that activations or gradients
+      are not being distributed symmetrically.
+    - **Kurtosis**: This measures the "tailedness" of the probability
+      distribution of a real-valued random variable. High kurtosis might suggest
+      that there are many outliers.
+    - **Near Zero (Vanishing activations)**: The concern with vanishing
+      activations is that during backpropagation, the gradients can become too
+      small for the network to learn effectively. This can be especially
+      problematic in deep networks.
+
+2. **How to compute these statistics?**
+
+    You can use PyTorch to compute these statistics. Here's an example of how
+    you might compute these statistics for a tensor:
+
+    ```python
+    def compute_stats(tensor: torch.Tensor) -> Dict[str, float]:
+        mean = tensor.mean().item()
+        std = tensor.std().item()
+        skewness = ((tensor - mean) ** 3).mean().item() / std ** 3
+        kurtosis = ((tensor - mean) ** 4).mean().item() / std ** 4 - 3
+        near_zero = (tensor.abs() < 1e-3).float().mean().item()
+
+        return {
+            'mean': mean,
+            'std': std,
+            'skewness': skewness,
+            'kurtosis': kurtosis,
+            'near_zero': near_zero
+        }
+    ```
+
+3. **Integrating into your code**:
+
+    You can integrate the computation of these statistics into your
+    `_register_activation_hooks` method. Modify the `hook_fn` function to
+    compute these statistics and store them:
+
+    ```python
+    def hook_fn(module: torch.nn.Module, input: torch.Tensor, output: torch.Tensor) -> None:
+        module_name = str(module)
+        stats = compute_stats(output)
+        self._temp_activation_storage[module_name] = stats
+    ```
+
+    Similarly, you can compute these statistics for the gradients in the
+    `get_gradient_state_and_norms` method.
+
+4. **Visualization**:
+
+    Once you have these statistics, it's highly beneficial to visualize them,
+    perhaps using tensorboard or matplotlib, to see how they evolve over
+    training epochs. Observing these statistics can give you insights into
+    potential problems in your network, such as vanishing or exploding
+    gradients, or whether certain layers aren't learning.
+
+By regularly monitoring these statistics during training, you can gain a better
+understanding of the internal workings of your neural network and diagnose
+potential issues.
 """
 from __future__ import annotations
 
@@ -65,6 +140,7 @@ class Trainer:
         "output_dir",
         "save_path",
         "_temp_activation_storage",
+        "_temp_activation_statistics_storage",
         "epoch_state",
         "batch_state",
         "history",
@@ -99,6 +175,7 @@ class Trainer:
     save_path: str
 
     _temp_activation_storage: Dict[str, torch.Tensor]
+    _temp_activation_statistics_storage: Dict[str, torch.Tensor]
 
     epoch_state: EpochState
     batch_state: BatchState
@@ -145,6 +222,7 @@ class Trainer:
 
         # Temporary storage for activations
         self._temp_activation_storage = {}
+        self._temp_activation_statistics_storage = {}
 
         self.history: History = History()
 
@@ -236,10 +314,14 @@ class Trainer:
             module: torch.nn.Module, input: torch.Tensor, output: torch.Tensor
         ) -> None:
             module_name = str(module)
-            self._temp_activation_storage[module_name] = output.detach()
+            output = output.detach()
+            self._temp_activation_storage[module_name] = output
+            self._temp_activation_statistics_storage[module_name] = compute_stats(
+                output
+            )
 
         for name, layer in model.named_modules():  # children vs named_modules?
-            if name != "": # NOTE: this is to skip the root modules like Sequential
+            if name != "":  # NOTE: this is to skip the root modules like Sequential
                 layer.register_forward_hook(hook_fn)
 
     def _update_state(
@@ -413,8 +495,10 @@ class Trainer:
                     l2_norm_gradient_state=l2_norm_gradient_state,
                     global_l2_norm_gradient_state=global_l2_norm_gradient_state,
                     activation_state=self._temp_activation_storage,
+                    activation_statistics_state=self._temp_activation_statistics_storage,
                 )
                 self._temp_activation_storage = {}
+                self._temp_activation_statistics_storage = {}
                 self.epoch_state.batch_states.append(self.batch_state)
 
         # Calculate average loss for the epoch per sample
@@ -590,3 +674,25 @@ class Trainer:
             # has finished saving before other processes potentially load or
             # continue with other operations
             torch.distributed.barrier()
+
+
+def compute_stats(tensor: torch.Tensor) -> Dict[str, float]:
+    mean = tensor.mean().item()
+    std = tensor.std().item()
+    skewness = ((tensor - mean) ** 3).mean().item() / std**3
+    kurtosis = ((tensor - mean) ** 4).mean().item() / std**4 - 3
+    near_zero = (tensor.abs() < 1e-3).float().mean().item()
+    maybe_explosive = (tensor.abs() > 1e3).float().mean().item()
+    has_nan = torch.isnan(tensor).any().item()
+    l2_norm = torch.linalg.vector_norm(tensor).item()
+
+    return {
+        "mean": mean,
+        "std": std,
+        "skewness": skewness,
+        "kurtosis": kurtosis,
+        "near_zero": near_zero,
+        "maybe_explosive": maybe_explosive,
+        "has_nan": has_nan,
+        "l2_norm": l2_norm,
+    }
