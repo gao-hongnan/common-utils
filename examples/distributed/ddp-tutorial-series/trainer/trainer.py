@@ -191,13 +191,32 @@ class Trainer:
             lrs.append(param_group["lr"])
         return lrs
 
-    def get_gradient_state(self) -> Dict[str, torch.Tensor]:
+    def get_gradient_state_and_norms(
+        self,
+    ) -> Tuple[Dict[str, torch.Tensor], Dict[str, float], float]:
+        """NOTE: Sanity check is to check epoch level gradients are exactly same
+        as the last batch of the epoch."""
         model = self.model.module if hasattr(self.model, "module") else self.model
         gradient_state = {}
+        l2_norm_gradient_state = {}
+        global_l2_norm_gradient_state_squared = 0.0
+
         for name, param in model.named_parameters():
             if param.grad is not None:
-                gradient_state[name] = param.grad.clone()
-        return gradient_state
+                gradient = param.grad.clone()
+                gradient_state[name] = gradient
+
+                # Compute L2 norm for this gradient and store it
+                l2_norm = torch.linalg.vector_norm(gradient).item()
+                l2_norm_gradient_state[name] = l2_norm
+
+                # Update the global L2 squared
+                global_l2_norm_gradient_state_squared += l2_norm**2
+
+        # Compute the global L2 norm
+        global_l2_norm_gradient_state = global_l2_norm_gradient_state_squared**0.5
+
+        return gradient_state, l2_norm_gradient_state, global_l2_norm_gradient_state
 
     def _update_state(
         self,
@@ -221,7 +240,16 @@ class Trainer:
             self.epoch_state.optimizer_state = self.optimizer.state_dict()
             self.epoch_state.scheduler_state = self.scheduler.state_dict()
             self.epoch_state.torch_rng_state = torch.get_rng_state()
-            self.epoch_state.gradient_state = self.get_gradient_state()
+            (
+                gradient_state,
+                l2_norm_gradient_state,
+                global_l2_norm_gradient_state,
+            ) = self.get_gradient_state_and_norms()
+            self.epoch_state.gradient_state = gradient_state
+            self.epoch_state.l2_norm_gradient_state = l2_norm_gradient_state
+            self.epoch_state.global_l2_norm_gradient_state = (
+                global_l2_norm_gradient_state
+            )
 
         # Update other attributes based on the provided kwargs
         for key, value in kwargs.items():
@@ -348,11 +376,13 @@ class Trainer:
                 train_progress_bar.set_description(
                     f"Epoch {epoch}, Avg Batch Loss: {self.avg_train_loss_per_sample_this_batch.item():.4f}"
                 )
-
+                gradient_state, l2_norm_gradient_state, global_l2_norm_gradient_state = self.get_gradient_state_and_norms()
                 self.batch_state = BatchState(
                     batch_index=_batch_index,
                     avg_train_loss_per_sample_this_batch=self.avg_train_loss_per_sample_this_batch.detach().item(),
-                    gradient_state=self.get_gradient_state(),
+                    gradient_state=gradient_state,
+                    l2_norm_gradient_state=l2_norm_gradient_state,
+                    global_l2_norm_gradient_state=global_l2_norm_gradient_state,
                 )
                 self.epoch_state.batch_states.append(self.batch_state)
 
