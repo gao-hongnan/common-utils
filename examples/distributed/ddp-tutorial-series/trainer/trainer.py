@@ -471,6 +471,15 @@ class Trainer:
 
             # TODO: here you can have a checkpoint callback to save "best" model
             # save monolithic snapshot on global rank 0
+            # In distributed training using Distributed Data Parallel (DDP) in PyTorch,
+            # each process (or GPU) runs a copy of the model. However, all these models
+            # are synchronized with each other, ensuring they all have the same weights
+            # after each forward and backward pass.
+
+            # When saving the model's state, it's common to save only from one process
+            # (typically the one with rank 0) to avoid redundant saves from each process.
+            # This approach prevents multiple processes from trying to write to the
+            # same file simultaneously or having multiple copies of the same model.
             if (
                 self.global_rank == 0
                 and epoch % self.trainer_config.save_checkpoint_interval_epoch == 0

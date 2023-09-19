@@ -210,10 +210,10 @@ def main(
     )
     trainer.fit(train_loader=train_loader, valid_loader=valid_loader)
     if global_rank == 0:
-        state = trainer.state
+        epoch_state = trainer.epoch_state
         history = trainer.history.states
 
-        pprint(state)
+        pprint(epoch_state)
         pprint(history)
     destroy_process_group()
 
