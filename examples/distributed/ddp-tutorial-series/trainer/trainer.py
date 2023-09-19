@@ -317,12 +317,12 @@ class Trainer:
                 train_progress_bar.set_description(
                     f"Epoch {epoch}, Avg Batch Loss: {self.avg_train_loss_per_sample_this_batch.item():.4f}"
                 )
-                if _batch_index % self.trainer_config.save_state_every_n_batches == 0:
-                    self.batch_state = BatchState(
-                        batch_index=_batch_index,
-                        avg_train_loss_per_sample_this_batch=self.avg_train_loss_per_sample_this_batch.detach().item(),
-                    )
-                    self.epoch_state.batch_states.append(self.batch_state)
+
+                self.batch_state = BatchState(
+                    batch_index=_batch_index,
+                    avg_train_loss_per_sample_this_batch=self.avg_train_loss_per_sample_this_batch.detach().item(),
+                )
+                self.epoch_state.batch_states.append(self.batch_state)
 
         # Calculate average loss for the epoch per sample
         self.avg_train_loss_per_sample_this_epoch = total_epoch_loss / total_samples
@@ -407,20 +407,18 @@ class Trainer:
                     valid_progress_bar.set_description(
                         f"Epoch {epoch}, Avg Batch Loss: {self.avg_valid_loss_per_sample_this_batch.item():.4f}"
                     )
-                    if (
-                        _batch_index % self.trainer_config.save_state_every_n_batches
-                        == 0
-                    ):
-                        # Here is where we update the batch state
-                        # of the epoch state for validation.
-                        # note I slice the batch_states list by the current
-                        # batch index so it can complete the validation statistics
-                        # for the current batch as originally it is -1.
-                        self.epoch_state.batch_states[
-                            _batch_index - 1  # batch_index starts from 1
-                        ].avg_valid_loss_per_sample_this_batch = (
-                            self.avg_valid_loss_per_sample_this_batch.detach().item()
-                        )
+
+                    # Here is where we update the batch state
+                    # of the epoch state for validation.
+                    # note I slice the batch_states list by the current
+                    # batch index so it can complete the validation statistics
+                    # for the current batch as originally it is -1.
+                    self.epoch_state.batch_states[
+                        _batch_index - 1  # batch_index starts from 1
+                    ].avg_valid_loss_per_sample_this_batch = (
+                        self.avg_valid_loss_per_sample_this_batch.detach().item()
+                    )
+
                 # TODO: by right saving mechanism is usually done in the callback
                 # and also based on the previous metric performance.
                 if self.trainer_config.save_checkpoint_interval_batch:
