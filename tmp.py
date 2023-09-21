@@ -462,3 +462,53 @@ class CustomAllocator:
 # # Checking the pointer addresses to ensure reuse
 # print(f"Tensor1 address: {tensor1.data_ptr()}")
 # print(f"Tensor3 address: {tensor3.data_ptr()}")  # This should be same as tensor1's address if reuse was successful
+
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+from common_utils.core.common import seed_all
+seed_all(1992, seed_torch=True)
+
+# Initialize input with variance 1
+input_data = torch.randn(1000, 10)  # 1000 samples, each with 10 features
+
+# Define a simple feed-forward neural network with two hidden layers
+class SimpleNN(nn.Module):
+    def __init__(self):
+        super(SimpleNN, self).__init__()
+        self.fc1 = nn.Linear(10, 20)
+        self.fc2 = nn.Linear(20, 30)
+        self.fc3 = nn.Linear(30, 1)
+
+        # Initialize weights with mean=0 and std=1
+        #nn.init.normal_(self.fc1.weight, mean=0., std=1.)
+        #nn.init.normal_(self.fc2.weight, mean=0., std=1.)
+        # Initialize weights using Xavier initialization
+        #nn.init.xavier_normal_(self.fc1.weight)
+        #nn.init.xavier_normal_(self.fc2.weight)
+        # Initialize weights using He initialization
+        nn.init.kaiming_normal_(self.fc1.weight, nonlinearity='relu')
+        nn.init.kaiming_normal_(self.fc2.weight, nonlinearity='relu')
+        nn.init.kaiming_normal_(self.fc3.weight, nonlinearity='relu')
+
+    def forward(self, x):
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)  # No activation in the last layer
+        return x
+
+# Initialize the model
+model = SimpleNN()
+
+# Forward pass and compute variance at each layer
+with torch.no_grad():
+    output1 = F.relu(model.fc1(input_data))
+    print(f"Variance after first hidden layer: {output1.var().item():.4f}")
+
+    output2 = F.relu(model.fc2(output1))
+    print(f"Variance after second hidden layer: {output2.var().item():.4f}")
+
+    output3 = model.fc3(output2)
+    print(f"Variance after output layer: {output3.var().item():.4f}")
