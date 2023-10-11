@@ -13,7 +13,6 @@ from rich.pretty import pprint
 import torch.nn as nn
 
 
-
 class MemoryUnits(IntEnum):
     MB = int(1e6)
     GB = int(1e9)
@@ -469,10 +468,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from common_utils.core.common import seed_all
+
 seed_all(1992, seed_torch=True)
 
 # Initialize input with variance 1
 input_data = torch.randn(1000, 10)  # 1000 samples, each with 10 features
+
 
 # Define a simple feed-forward neural network with two hidden layers
 class SimpleNN(nn.Module):
@@ -483,21 +484,22 @@ class SimpleNN(nn.Module):
         self.fc3 = nn.Linear(30, 1)
 
         # Initialize weights with mean=0 and std=1
-        #nn.init.normal_(self.fc1.weight, mean=0., std=1.)
-        #nn.init.normal_(self.fc2.weight, mean=0., std=1.)
+        # nn.init.normal_(self.fc1.weight, mean=0., std=1.)
+        # nn.init.normal_(self.fc2.weight, mean=0., std=1.)
         # Initialize weights using Xavier initialization
-        #nn.init.xavier_normal_(self.fc1.weight)
-        #nn.init.xavier_normal_(self.fc2.weight)
+        # nn.init.xavier_normal_(self.fc1.weight)
+        # nn.init.xavier_normal_(self.fc2.weight)
         # Initialize weights using He initialization
-        nn.init.kaiming_normal_(self.fc1.weight, nonlinearity='relu')
-        nn.init.kaiming_normal_(self.fc2.weight, nonlinearity='relu')
-        nn.init.kaiming_normal_(self.fc3.weight, nonlinearity='relu')
+        nn.init.kaiming_normal_(self.fc1.weight, nonlinearity="relu")
+        nn.init.kaiming_normal_(self.fc2.weight, nonlinearity="relu")
+        nn.init.kaiming_normal_(self.fc3.weight, nonlinearity="relu")
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = self.fc3(x)  # No activation in the last layer
         return x
+
 
 # Initialize the model
 model = SimpleNN()
