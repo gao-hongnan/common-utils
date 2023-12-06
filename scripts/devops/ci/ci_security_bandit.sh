@@ -20,7 +20,7 @@ usage() {
     logger "CODE" "$ bandit --help"
     empty_line
     logger "INFO" "Example:"
-    logger "CODE_MULTI" \
+    logger "BLOCK" \
         "$ ci_bandit_check \\
             --severity-level=low \\
             --format=json \\

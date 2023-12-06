@@ -21,7 +21,7 @@ usage() {
     logger "CODE" "$ black --help"
     empty_line
     logger "INFO" "Example:"
-    logger "CODE_MULTI" \
+    logger "BLOCK" \
         "$ ci_black_check \\
             --diff \\
             --color \\

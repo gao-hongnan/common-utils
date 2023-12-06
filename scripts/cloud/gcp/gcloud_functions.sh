@@ -97,7 +97,7 @@ gar_docker_setup() {
 
     logger "INFO" "Step 2. Create a Docker repository in Artifact Registry"
     logger "INFO" "Here's a sample command:"
-    logger "CODE_MULTI" \
+    logger "BLOCK" \
         "$ gcloud artifacts repositories create <REPO_NAME> \\
             --repository-format=docker \\
             --location=<REGION> \\
@@ -113,7 +113,7 @@ gar_docker_setup() {
     empty_line
 
     logger "INFO" "Step 4. Tag a Docker image"
-    logger "CODE_MULTI" \
+    logger "BLOCK" \
         "$ docker tag <IMAGE_NAME> \\
             <LOCATION>-docker.pkg.dev/<PROJECT_ID>/<REPO_NAME>/<IMAGE_NAME>:<TAG>"
     empty_line
@@ -323,7 +323,7 @@ vm_ssh_to_gcp_instance() {
     logger "INFO" "Here's a sample command:"
     empty_line
 
-    logger "CODE_MULTI" \
+    logger "BLOCK" \
         "$ gcloud compute ssh \\
             --project=<PROJECT_ID> \\
             --zone=<ZONE> \\

@@ -21,7 +21,7 @@ usage() {
     logger "CODE" "$ isort --help"
     empty_line
     logger "INFO" "Example:"
-    logger "CODE_MULTI" \
+    logger "BLOCK" \
         "$ ci_isort_check \\
             --diff \\
             --color \\

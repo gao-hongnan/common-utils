@@ -37,7 +37,7 @@ test_dbt() {
 
 usage() {
     logger "INFO" "Sample Usage:"
-    logger "CODE_MULTI" \
+    logger "BLOCK" \
         "$ bash $0 \\
             <PATH_TO_DBT_PROJECT_DIRECTORY>"
     empty_line

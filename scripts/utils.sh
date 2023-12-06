@@ -13,6 +13,10 @@ PURPLE='\033[0;35m'
 WHITE='\033[1;37m'
 RESET='\033[0m' # No Color
 
+LOG_LEVEL_WIDTH=10
+MESSAGE_START=$(( LOG_LEVEL_WIDTH + 21 ))
+DESIRED_WIDTH=79
+
 # Logger function
 logger() {
     local level=$1
@@ -20,7 +24,7 @@ logger() {
     local message=$@
 
     TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
-    PADDED_LOG_LEVEL=$(printf '%-5s' "$level")
+    PADDED_LOG_LEVEL=$(printf "%-${LOG_LEVEL_WIDTH}s" "[$level]")
 
     case $level in
     "INFO")
@@ -35,9 +39,23 @@ logger() {
     "CODE")
         color=$CYAN
         ;;
-    "CODE_MULTI")
+    "BLOCK")
         color=$CYAN
-        printf "${color}$TIMESTAMP [$PADDED_LOG_LEVEL]:\n\n    ${message}${RESET}\n"
+
+        # Split the message into an array of lines
+        readarray -t lines <<<"$message"
+
+        # Print the first line of the mssage on the same line as the log level/timestamp
+        printf "${color}$TIMESTAMP $PADDED_LOG_LEVEL ${lines[0]}"
+
+        # Print the rest of the lines, each on their own line, with the correct padding
+        for i in "${!lines[@]}"; do
+            if [ "$i" != "0" ]; then
+                printf "\n%-${MESSAGE_START}s%s" " " "${lines[$i]}"
+            fi
+        done
+
+        printf "${RESET}\n"
         return
         ;;
     "TIP")
@@ -51,7 +69,20 @@ logger() {
         ;;
     esac
 
-    printf "${color}$TIMESTAMP [$PADDED_LOG_LEVEL]: ${message}${RESET}\n" "$level"
+# subshell
+(
+    IFS=$'\n'
+    first=1
+    printf -v msg "%s" "$message"
+    for line in $(echo "$msg" | fold -w $DESIRED_WIDTH -s); do
+        if [ $first -eq 1 ]; then
+            printf "${color}$TIMESTAMP $PADDED_LOG_LEVEL ${line}${RESET}\n"
+            first=0
+        else
+            printf "${color}%-${MESSAGE_START}s%s${RESET}\n" " " "${line}"
+        fi
+    done
+)
 }
 
 empty_line() {

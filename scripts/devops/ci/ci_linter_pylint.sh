@@ -20,7 +20,7 @@ usage() {
     logger "CODE" "$ pylint --help"
     empty_line
     logger "INFO" "Example:"
-    logger "CODE_MULTI" \
+    logger "BLOCK" \
         "$ ci_pylint_check \\
             --rcfile=pyproject.toml \\
             --fail-under=10 \\
