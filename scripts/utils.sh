@@ -43,14 +43,14 @@ logger() {
         color=$CYAN
 
         # Split the message into an array of lines
-        readarray -t lines <<<"$message"
+        readarray -t lines <<< "$message"
 
         # Print the first line of the mssage on the same line as the log level/timestamp
         printf "${color}$TIMESTAMP $PADDED_LOG_LEVEL ${lines[0]}"
 
         # Print the rest of the lines, each on their own line, with the correct padding
         for i in "${!lines[@]}"; do
-            if [ "$i" != "0" ]; then
+            if [ "$i" -ne 0 ]; then
                 printf "\n%-${MESSAGE_START}s%s" " " "${lines[$i]}"
             fi
         done
@@ -117,6 +117,14 @@ check_if_installed() {
 
     if ! command -v $tool &>/dev/null; then
         logger "ERROR" "$tool is not installed. Please install it and retry."
+        exit 1
+    fi
+}
+
+check_bash_version() {
+    local major_version=$(echo "$BASH_VERSION" | cut -d '.' -f1)
+    if [ "$major_version" -lt 4 ]; then
+        echo "This script requires Bash version 4.0 or higher. You are using Bash version $BASH_VERSION."
         exit 1
     fi
 }
