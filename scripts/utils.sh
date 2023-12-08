@@ -44,6 +44,12 @@ logger() {
     "BLOCK")
         color=$CYAN
 
+        # Check if readarray command is available
+        if ! type readarray > /dev/null 2>&1; then
+            echo "Error: 'readarray' command not found. This script requires Bash 4.0 or higher."
+            exit 1
+        fi
+
         # Split the message into an array of lines
         readarray -t lines <<< "$message"
 
