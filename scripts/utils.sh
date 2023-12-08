@@ -130,3 +130,20 @@ check_bash_version() {
         exit 1
     fi
 }
+
+check_config_files() {
+    local allowed_config_files=("$@")
+    local found_files=()
+
+    for file in "${allowed_config_files[@]}"; do
+        if [[ -f "$file" ]]; then
+            found_files+=("$file")  # Add to found files
+        fi
+    done
+
+    if [[ ${#found_files[@]} -eq 0 ]]; then
+        logger "WARN" "No configuration files found. Defaults will be used."
+    else
+        logger "INFO" "Found configuration files: ${found_files[*]}"
+    fi
+}
