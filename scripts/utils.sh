@@ -17,15 +17,17 @@ LOG_LEVEL_WIDTH=10
 MESSAGE_START=$(( LOG_LEVEL_WIDTH + 21 ))
 DESIRED_WIDTH=79
 
-# Logger function
 logger() {
     local level=$1
     shift
-    local message=$@
+    local message="$@"  # Ensures that the message is treated as a single string
 
     TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
+
+    # Left-align the log level within the fixed width
     PADDED_LOG_LEVEL=$(printf "%-${LOG_LEVEL_WIDTH}s" "[$level]")
 
+    # Determine the color based on the log level
     case $level in
     "INFO")
         color=$GREEN
@@ -45,16 +47,17 @@ logger() {
         # Split the message into an array of lines
         readarray -t lines <<< "$message"
 
-        # Print the first line of the mssage on the same line as the log level/timestamp
+        # Print the first line of the message on the same line as the timestamp and log level
         printf "${color}$TIMESTAMP $PADDED_LOG_LEVEL ${lines[0]}"
 
-        # Print the rest of the lines, each on their own line, with the correct padding
+        # Print the rest of the lines with the correct indentation
         for i in "${!lines[@]}"; do
-            if [ "$i" -ne 0 ]; then
-                printf "\n%-${MESSAGE_START}s%s" " " "${lines[$i]}"
+            if [ $i -ne 0 ]; then  # Skip the first line
+                printf "\n%-${MESSAGE_START}s%s" " " "${lines[i]}"
             fi
         done
 
+        # Reset the color after printing all lines
         printf "${RESET}\n"
         return
         ;;
@@ -69,17 +72,16 @@ logger() {
         ;;
     esac
 
-# subshell
 (
     IFS=$'\n'
     first=1
     printf -v msg "%s" "$message"
     for line in $(echo "$msg" | fold -w $DESIRED_WIDTH -s); do
         if [ $first -eq 1 ]; then
-            printf "${color}$TIMESTAMP $PADDED_LOG_LEVEL ${line}${RESET}\n"
+            printf "${color}$TIMESTAMP $PADDED_LOG_LEVEL $line${RESET}\n"
             first=0
         else
-            printf "${color}%-${MESSAGE_START}s%s${RESET}\n" " " "${line}"
+            printf "${color}%-${MESSAGE_START}s%s${RESET}\n" " " "$line"
         fi
     done
 )
