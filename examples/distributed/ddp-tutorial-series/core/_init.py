@@ -5,7 +5,6 @@ from dataclasses import asdict
 from typing import Callable, Dict, Optional
 
 import torch.distributed as dist
-
 from config.base import DistributedInfo, InitEnvArgs, InitProcessGroupArgs
 from utils.common_utils import display_dist_info
 

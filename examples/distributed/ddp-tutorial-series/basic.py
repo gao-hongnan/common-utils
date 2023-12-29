@@ -83,7 +83,6 @@ import argparse
 
 import torch
 import torch.multiprocessing as mp
-
 from config.base import DistributedInfo, InitEnvArgs, InitProcessGroupArgs
 from core._init import init_env, init_process
 from utils.common_utils import calculate_global_rank, configure_logger

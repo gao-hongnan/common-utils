@@ -10,7 +10,6 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from rich.pretty import pprint
-import torch.nn as nn
 
 
 class MemoryUnits(IntEnum):

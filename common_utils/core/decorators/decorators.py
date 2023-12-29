@@ -6,7 +6,6 @@ import time
 from datetime import datetime
 from typing import Any, Callable, Dict, TypeVar
 
-import numpy as np
 import psutil
 from fastapi import Request
 from prettytable import PrettyTable

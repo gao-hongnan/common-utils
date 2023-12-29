@@ -11,7 +11,6 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 import numpy as np
-import rich
 import torch
 import yaml
 from dotenv import load_dotenv

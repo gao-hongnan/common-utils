@@ -107,13 +107,12 @@ import os
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
 import torch
-from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.utils.data import DataLoader
-from tqdm import tqdm
-
 from config.base import DistributedInfo, TrainerConfig
 from core.history import History
 from core.state import BatchState, EpochState
+from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.utils.data import DataLoader
+from tqdm import tqdm
 from utils.common_utils import configure_logger
 
 

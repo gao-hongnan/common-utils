@@ -3,7 +3,6 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, Generic, List, OrderedDict, TypeVar, Union
 
 import torch
-
 from core.state import EpochState
 
 # H = TypeVar('H', bound='History')

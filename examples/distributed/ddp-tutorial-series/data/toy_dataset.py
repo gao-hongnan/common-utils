@@ -2,9 +2,8 @@ from dataclasses import asdict
 from typing import Tuple
 
 import torch
-from torch.utils.data import DataLoader, Dataset
-
 from config.base import DataLoaderConfig
+from torch.utils.data import DataLoader, Dataset
 
 
 class ToyDataset(Dataset):

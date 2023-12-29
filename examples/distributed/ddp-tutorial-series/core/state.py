@@ -2,7 +2,6 @@ from dataclasses import MISSING, asdict, dataclass, field, fields
 from typing import Any, Dict, List, Optional, OrderedDict, Union
 
 import torch
-
 from core.serializable import Serializable
 
 

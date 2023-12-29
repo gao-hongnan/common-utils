@@ -6,10 +6,9 @@ from dataclasses import asdict
 from typing import Any, Callable, Dict, Optional, Union
 
 import torch.distributed as dist
+from config.base import DistributedInfo
 from rich.logging import RichHandler
 from tabulate import tabulate
-
-from config.base import DistributedInfo
 
 
 def get_dist_info(rank: int, world_size: int) -> Dict[str, Union[int, str, bool]]:
