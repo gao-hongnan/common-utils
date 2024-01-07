@@ -9,6 +9,7 @@ from typing import Optional, Union
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.theme import Theme
+from typing_extensions import deprecated
 
 console = Console(
     theme=Theme(
@@ -27,11 +28,12 @@ console = Console(
 class CustomFormatter(logging.Formatter):
     """This class overrides logging.Formatter's pathname to be relative path."""
 
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> str:
         record.pathname = os.path.relpath(record.pathname)
         return super().format(record)
 
 
+@deprecated("See omnivault.core.logger.py")
 @dataclass
 class Logger:
     """
