@@ -11,7 +11,6 @@ import torch.nn as nn
 import torch.optim as optim
 from rich.pretty import pprint
 
-
 class MemoryUnits(IntEnum):
     MB = int(1e6)
     GB = int(1e9)

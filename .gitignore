@@ -3,6 +3,7 @@
 
 # tmp
 tmp.*
+data/
 
 # But do not ignore these specific .log files:
 *.log

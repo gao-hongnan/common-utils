@@ -101,4 +101,3 @@ Get the backend of a process group.
 # After initializing with 'nccl' backend
 print(dist.get_backend())  # Output will be 'nccl'
 ```
-
