@@ -12,14 +12,21 @@ def cosine_annealing_with_warmup(
 ) -> float:
     """Computes the learning rate multiplier using cosine annealing with warmup.
 
-    Args:
-        t (int): Current training step.
-        t_warmup (int or float): Warmup time in training steps.
-        t_max (int or float): Total duration of the scheduler in training steps.
-        alpha_f (float): Learning rate multiplier to decay to.
+    Parameters
+    ----------
+    t : int
+        Current training step.
+    t_warmup : Union[int, float]
+        Warmup time in training steps.
+    t_max : Union[int, float]
+        Total duration of the scheduler in training steps.
+    alpha_f : float
+        Learning rate multiplier to decay to.
 
-    Returns:
-        alpha (float): The learning rate multiplier at the given training step.
+    Returns
+    -------
+    alpha : float
+        The learning rate multiplier at the given training step.
     """
     if t < t_warmup:
         alpha = t / t_warmup
