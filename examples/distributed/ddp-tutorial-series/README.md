@@ -2,24 +2,24 @@
 
 ## Introduction: Distributed Data Parallel in PyTorch
 
-- <https://pytorch.org/tutorials/beginner/ddp_series_intro.html>
+-   <https://pytorch.org/tutorials/beginner/ddp_series_intro.html>
 
 ## What is Distributed Data Parallel?
 
-- <https://pytorch.org/tutorials/beginner/ddp_series_theory.html>
+-   <https://pytorch.org/tutorials/beginner/ddp_series_theory.html>
 
 ## Multi GPU Training with DDP
 
 See `01_single_node_multi_gpu.py` for a simple example of multi GPU training
 with DDP.
 
-- <https://pytorch.org/tutorials/beginner/ddp_series_multigpu.html>
+-   <https://pytorch.org/tutorials/beginner/ddp_series_multigpu.html>
 
 ## Fault Tolerance Distributed Training with Torch Distributed Elastic
 
-- `torchrun` and `torch.distributed.launch`.
+-   `torchrun` and `torch.distributed.launch`.
 
-- <https://pytorch.org/tutorials/beginner/ddp_series_fault_tolerance.html>
+-   <https://pytorch.org/tutorials/beginner/ddp_series_fault_tolerance.html>
 
 ## basic (no_world_size_in_init_process true vs false)
 
@@ -49,10 +49,10 @@ ValueError: Error initializing torch.distributed using env:// rendezvous: enviro
 
 So we have to either:
 
-- set the environment variable `WORLD_SIZE` to the total number of GPUs on
-  your machine
-- or set `world_size` in `dist.init_process_group` to the total number of GPUs
-  on your machine
+-   set the environment variable `WORLD_SIZE` to the total number of GPUs on
+    your machine
+-   or set `world_size` in `dist.init_process_group` to the total number of GPUs
+    on your machine
 
 Yes, placing a `dist.barrier()` can still make sense even if you're not loading
 a model, depending on the context. If there's a point in your distributed
@@ -80,11 +80,11 @@ Here are a few scenarios where you might want synchronization:
 
 However, it's important to be judicious in the use of barriers:
 
-- Overusing barriers can impact performance since processes spend time waiting
-  at the synchronization points.
+-   Overusing barriers can impact performance since processes spend time waiting
+    at the synchronization points.
 
-- Unnecessary barriers can negate some of the speed-up benefits you get from
-  distributed training.
+-   Unnecessary barriers can negate some of the speed-up benefits you get from
+    distributed training.
 
 In summary, if there's a specific reason to ensure all processes are at the same
 point in your code, then a barrier makes sense. If not, adding barriers can slow
@@ -98,25 +98,25 @@ down your training without providing any benefit.
 
 1. **Calculating World Size**:
 
-   - We've provided `--world_size` as an argument, but it might be clearer if
-     the world size was calculated automatically based on the number of nodes
-     and GPUs per node. $$ \text{world_size} = \text{num_nodes} \times
-     \text{num_gpus_per_node} $$
+    - We've provided `--world_size` as an argument, but it might be clearer if
+      the world size was calculated automatically based on the number of nodes
+      and GPUs per node. $$ \text{world_size} = \text{num_nodes} \times
+      \text{num_gpus_per_node} $$
 
 2. **Master Address and Port**:
 
-   - For a multi-node setting, we cannot use `localhost` as the `master_addr`
-     as it won't be accessible to other nodes. You'd need to use the IP address
-     of the node that acts as the master node.
-   - The master port (`master_port`) can be left as is, but ensure the port is
-     open and accessible from all nodes. Can use some program like `netcat` to
-     check if the port is open before running the script.
+    - For a multi-node setting, we cannot use `localhost` as the `master_addr`
+      as it won't be accessible to other nodes. You'd need to use the IP address
+      of the node that acts as the master node.
+    - The master port (`master_port`) can be left as is, but ensure the port is
+      open and accessible from all nodes. Can use some program like `netcat` to
+      check if the port is open before running the script.
 
 3. **Node Rank Determination**:
-   - We've included an argument `--node_rank`. For a truly distributed setting,
-     we'd typically determine the node rank programmatically, perhaps from
-     environment variables set by your scheduler (like PBS or SLURM). If we're
-     manually setting the node rank, ensure each node has a unique rank.
+    - We've included an argument `--node_rank`. For a truly distributed setting,
+      we'd typically determine the node rank programmatically, perhaps from
+      environment variables set by your scheduler (like PBS or SLURM). If we're
+      manually setting the node rank, ensure each node has a unique rank.
 
 ## Distributed without Torchrun
 
@@ -234,36 +234,36 @@ weights, whether they are initialized randomly or loaded from a checkpoint.
 
 1. **Model Initialization in DDP**:
 
-   When using DDP, the typical process is to initialize the model in each
-   process and then either:
+    When using DDP, the typical process is to initialize the model in each
+    process and then either:
 
-   - Broadcast the weights from one process (usually the one with rank 0) to
-     all other processes, or
-   - Load a checkpoint in each process independently.
+    - Broadcast the weights from one process (usually the one with rank 0) to
+      all other processes, or
+    - Load a checkpoint in each process independently.
 
 2. **Loading Checkpoints**:
 
-   If you're loading a checkpoint:
+    If you're loading a checkpoint:
 
-   - You need to ensure that each process loads the checkpoint independently.
-     This is because each process has its own model replica and operates
-     somewhat autonomously in DDP.
-   - You might think that loading a checkpoint on one GPU and then broadcasting
-     the weights to others might work (and technically, it would). However,
-     loading the checkpoint independently on each GPU can be more efficient and
-     simpler.
+    - You need to ensure that each process loads the checkpoint independently.
+      This is because each process has its own model replica and operates
+      somewhat autonomously in DDP.
+    - You might think that loading a checkpoint on one GPU and then broadcasting
+      the weights to others might work (and technically, it would). However,
+      loading the checkpoint independently on each GPU can be more efficient and
+      simpler.
 
-     ```
+        ```
 
-     if trainer_config.load_path is not None and os.path.exists(
-         trainer_config.load_path
-     ):
-         # NOTE: in DDP you would need to load the snapshot
-         # on every local rank, not just rank 0.
-         logger.info(f"Loading snapshot from {trainer_config.load_path}")
-         map_location = f"cuda:{self.local_rank}"
-         self._load_snapshot(trainer_config.load_path, map_location=map_location)
-     ```
+        if trainer_config.load_path is not None and os.path.exists(
+            trainer_config.load_path
+        ):
+            # NOTE: in DDP you would need to load the snapshot
+            # on every local rank, not just rank 0.
+            logger.info(f"Loading snapshot from {trainer_config.load_path}")
+            map_location = f"cuda:{self.local_rank}"
+            self._load_snapshot(trainer_config.load_path, map_location=map_location)
+        ```
 
 In DDP, each process should load the snapshot for its own model replica. The
 reason is, as mentioned, each process in DDP handles a separate model replica,
@@ -282,43 +282,43 @@ To give intuition:
 
 1. **Static Rendezvous Backend**:
 
-   The `static` backend, as the name suggests, means the addresses and ports
-   are predetermined. It's the more traditional way to set up distributed
-   training, where one explicitly specifies the master node's address and port.
-   This is where processes will rendezvous to set up their communication.
+    The `static` backend, as the name suggests, means the addresses and ports
+    are predetermined. It's the more traditional way to set up distributed
+    training, where one explicitly specifies the master node's address and port.
+    This is where processes will rendezvous to set up their communication.
 
-   - If you use the `static` backend, you need to specify the `master_addr` and
-     `master_port` unless a `rdzv_endpoint` is provided.
-   - For instance, if you're initiating a distributed process group with
-     `torch.distributed`, you might see something like:
+    - If you use the `static` backend, you need to specify the `master_addr` and
+      `master_port` unless a `rdzv_endpoint` is provided.
+    - For instance, if you're initiating a distributed process group with
+      `torch.distributed`, you might see something like:
 
-     ```python
-     torch.distributed.init_process_group(
-        backend='nccl',
-        init_method='tcp://192.168.1.1:12345',  # where 192.168.1.1 is master_addr and 12345 is master_port
-        rank=rank,
-        world_size=world_size
-     )
-     ```
+        ```python
+        torch.distributed.init_process_group(
+           backend='nccl',
+           init_method='tcp://192.168.1.1:12345',  # where 192.168.1.1 is master_addr and 12345 is master_port
+           rank=rank,
+           world_size=world_size
+        )
+        ```
 
 2. **Dynamic Rendezvous Backend**:
 
-   Some modern approaches to distributed training utilize dynamic rendezvous
-   methods. Instead of hardcoding `master_addr` and `master_port`, the system
-   might discover available nodes dynamically and negotiate who does what. This
-   is handy for cloud environments or kubernetes setups where you might not
-   always have a fixed IP and port.
+    Some modern approaches to distributed training utilize dynamic rendezvous
+    methods. Instead of hardcoding `master_addr` and `master_port`, the system
+    might discover available nodes dynamically and negotiate who does what. This
+    is handy for cloud environments or kubernetes setups where you might not
+    always have a fixed IP and port.
 
-   - If you're using a dynamic rendezvous backend like `etcd`, `c10d`, etc.,
-     the setup might look different. In such cases, `rdzv_endpoint` might be
-     provided to point to the service handling the rendezvous.
+    - If you're using a dynamic rendezvous backend like `etcd`, `c10d`, etc.,
+      the setup might look different. In such cases, `rdzv_endpoint` might be
+      provided to point to the service handling the rendezvous.
 
 For clarity, when using the `static` backend:
 
-- If `rdzv_endpoint` is **not** specified, `master_addr` and `master_port` are
-  used.
-- If `rdzv_endpoint` is specified, it takes precedence over `master_addr` and
-  `master_port`.
+-   If `rdzv_endpoint` is **not** specified, `master_addr` and `master_port` are
+    used.
+-   If `rdzv_endpoint` is specified, it takes precedence over `master_addr` and
+    `master_port`.
 
 When you're setting up distributed training, ensure you're consistent in the
 choice of your rendezvous method and the corresponding parameters to avoid
