@@ -1,19 +1,152 @@
 # Distributed Data Parallel
 
-## Introduction: Distributed Data Parallel in PyTorch
+## Point-to-Point Communication
 
--   <https://pytorch.org/tutorials/beginner/ddp_series_intro.html>
+### [Send and Recv](https://pytorch.org/tutorials/intermediate/dist_tuto.html#id1)
 
-## What is Distributed Data Parallel?
+A transfer of data from one process to another is called a point-to-point
+communication. These are achieved through the `send` and `recv` functions or
+their immediate counter-parts, `isend` and `irecv`.
 
--   <https://pytorch.org/tutorials/beginner/ddp_series_theory.html>
+```python
+def run(rank: int, world_size: int) -> None:
+    """Blocking point-to-point communication."""
+    tensor = torch.zeros(1)
+    print('Rank ', rank, ' has data ', tensor[0])
+    tensor = tensor.to(rank) # in 1 node, global rank = local rank
+    if rank == 0:
+        tensor += 1
+        # Send the tensor to processes other than 0
+        for other_rank in range(1, world_size):  # Sending to all other ranks
+            dist.send(tensor=tensor, dst=other_rank)
+    else:
+        # Receive tensor from process 0
+        dist.recv(tensor=tensor, src=0)
 
-## Multi GPU Training with DDP
+    print('Rank ', rank, ' has data ', tensor[0])
+```
 
-See `01_single_node_multi_gpu.py` for a simple example of multi GPU training
-with DDP.
+Each rank effectively runs its own instance of the `run` function due to the
+`mp.Process` instantiation. Here's how it works in a step-by-step manner:
 
--   <https://pytorch.org/tutorials/beginner/ddp_series_multigpu.html>
+1. **For Rank 0**:
+
+    - The process with `rank=0` starts and executes `run` function.
+    - The `if rank == 0:` condition is true.
+    - It increments its tensor from 0 to 1.
+    - It performs `dist.send` to send this tensor to ranks 1, 2, and 3.
+    - At this point, it has sent the data but hasn't confirmed that the data has
+      been received by other ranks.
+
+2. **For Rank 1**:
+
+    - A new process is spawned with `rank=1`.
+    - This process runs the `run` function.
+    - The `else:` clause is executed.
+    - It waits to receive the tensor from `rank=0` using `dist.recv`.
+    - Once received, it prints the value, confirming the data transfer.
+
+3. **For Rank 2 and 3**:
+    - Similar to `rank=1`, new processes are spawned for `rank=2` and `rank=3`.
+    - They also go into the `else:` clause and wait to receive the tensor from
+      `rank=0`.
+
+The `mp.Process` initiates these separate processes, and the `dist.send` and
+`dist.recv` functions handle the point-to-point data communication between these
+processes. Thus, the state (tensor) of `rank=0` is successfully transferred to
+ranks 1, 2, and 3.
+
+In the above example, both processes start with a zero tensor, then process 0
+increments the tensor and sends it to process 1 so that they both end up with
+1.0. Notice that processes 1,2 and 3 need to allocate memory in order to store
+the data it will receive.
+
+#### What does it mean by it needs to allocate memory?
+
+In a scenario with four processes, each process initializes its own tensor
+filled with zeroes in its respective memory space. Here's how the data flows:
+
+-   **Process 0**: Modifies its tensor to 1 and sends this updated tensor to
+    Processes 1, 2, and 3.
+-   **Processes 1, 2, 3**: Each has its own pre-allocated tensor initialized to
+    zero. When they execute `dist.recv`, they wait for the incoming data from
+    Process 0.
+
+Upon receiving the data, each of Processes 1, 2, and 3 overwrites its initially
+zero-valued tensor with the received value of 1. Each process thus ends up with
+a tensor containing the value 1, but these tensors are separate instances stored
+in each process's individual memory space. The operation is in-place, meaning
+the pre-allocated memory for the tensors in Processes 1, 2, and 3 is directly
+updated. Process 0's tensor remains at its updated value of 1 and is not
+affected by the receive operations in the other processes.
+
+> The key is that `dist.recv` performs an in-place operation, modifying the
+> tensor directly. The name `tensor` refers to a location in memory, and calling
+> `dist.recv` changes the value stored in that memory location for Process 1.
+> After the receive operation, the tensor's value in Process 1 becomes 1,
+> replacing the initial zero. This does not affect the tensor in Process 0; they
+> are separate instances in separate memory spaces.
+
+## References and Further Readings
+
+-   <https://pytorch.org/tutorials/intermediate/dist_tuto.html>
+-   <https://github.com/seba-1511/dist_tuto.pth/blob/gh-pages/train_dist.py>
+
+## Multi-Node Multi-GPU Training with DistributedDataParallel (DDP)
+
+```bash
+torchrun --nproc_per_node=2 \
+         --nnodes=2 \
+         --node_rank=0 \
+         --rdzv_id=my_job \
+         --rdzv_backend=c10d \
+         --rdzv_endpoint=10.168.0.11:29603 \
+         multinode.py 50 10 --batch_size 32
+
+torchrun --nproc_per_node=2 \
+         --nnodes=2 \
+         --node_rank=1 \
+         --rdzv_id=my_job \
+         --rdzv_backend=c10d \
+         --rdzv_endpoint=10.168.0.11:29603 \
+         multinode.py 50 10 --batch_size 32
+```
+
+## How to load only 1 shard if you trained on multiple shards?
+
+Say you trained on 32 nodes of 8 gpus each (256 GPUs in total) and you only want
+to load 1 shard.
+
+```python
+import os
+import torch
+
+import torch.distributed as dist
+from torch.distributed import _shard
+
+os.environ['MASTER_ADDR'] = 'localhost' # or find what address you used
+os.environ['MASTER_PORT'] = '12355'
+dist.init_process_group(backend='gloo', world_size=1, rank=0)
+
+
+def custom_setstate(self, state):
+    # Bypass the process group check
+    self._sharded_tensor_id = None
+
+    # Continue with the original logic
+    self._local_shards, self._metadata, pg_state, self._sharding_spec, self._init_rrefs = state
+
+# Replace the original __setstate__ method with the custom one
+_shard.sharded_tensor.api.ShardedTensor.__setstate__ = custom_setstate
+
+path = "/multi-node/ep0-ba20500-rank0.pt"
+print(path)
+shard = torch.load(path, map_location='cpu')
+# print(shard['state']['model'])
+print(shard['state']['schedulers'])
+print(shard['state']['optimizers']["DecoupledAdamW"].keys())
+print(shard['state']['optimizers']["DecoupledAdamW"]["param_groups"])
+```
 
 ## Fault Tolerance Distributed Training with Torch Distributed Elastic
 
@@ -125,8 +258,6 @@ GPUs, the coordination of when each script/process starts is crucial. The
 processes do not need to start simultaneously down to the millisecond, but they
 should all begin their work roughly at the same time and be aware of each other
 to effectively synchronize and communicate.
-
-Here's a step-by-step breakdown of the process:
 
 1. **Initialization**: Before the actual training starts, there's an
    initialization phase. During this phase, each process initializes its

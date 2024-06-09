@@ -2,7 +2,7 @@
 NOTE: I think the original torch code is not entirely efficient
 since it saves on the local rank of each node.
 
-NOTE: With 4 gpus in DDP you will have 4 Trainers!
+NOTE: With 4 gpus in DDP you will have 4 Trainers which = 4 replicas of the model and optimizer but not data.
 
 NOTE: Effective batch size usually implies the same result ensues
 if you train on all 4 gpus vs 1 gpus just by maintaining the same effective
