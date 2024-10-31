@@ -5,6 +5,7 @@ import pandas as pd
 from IPython.display import HTML, display
 
 from common_utils.core.logger import Logger
+from typing_extensions import deprecated
 
 
 def compare_test_case(
@@ -56,6 +57,7 @@ def compare_test_cases(
         )
 
 
+@deprecated("see omnivault.")
 def compare_test_case_dsa(actual: Any, expected: Any, description: str = "") -> None:
     try:
         assert actual == expected
@@ -72,6 +74,7 @@ def compare_test_case_dsa(actual: Any, expected: Any, description: str = "") -> 
         )
 
 
+@deprecated("see omnivault.")
 def compare_test_cases_dsa(
     actual_list: List[Any],
     expected_list: List[Any],
